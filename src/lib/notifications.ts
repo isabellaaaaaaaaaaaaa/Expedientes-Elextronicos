@@ -1,17 +1,28 @@
 import { employees, expedients, documents } from '../data/mockData';
 import type { Planta } from '../types';
 
+export type NotificationGroup = 'expedientes' | 'examenes' | 'novedades';
+
 export interface NotificationCategory {
   id: string;
   label: string;
   count: number;
   icon: 'revision' | 'pendiente' | 'venceHoy' | 'venceSemana' | 'finalizadoHoy' | 'nuevosDocs' | 'nuevosEmpleados';
+  group: NotificationGroup;
   action: {
     page: 'expedients' | 'employees' | 'documents';
     statusFilter?: string;
     examDue?: 'today' | 'week';
   };
 }
+
+export const NOTIFICATION_GROUP_ORDER: NotificationGroup[] = ['expedientes', 'examenes', 'novedades'];
+
+export const NOTIFICATION_GROUP_LABELS: Record<NotificationGroup, string> = {
+  expedientes: 'Expedientes',
+  examenes: 'Exámenes médicos',
+  novedades: 'Novedades',
+};
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -43,13 +54,13 @@ export function computeNotifications(planta: Planta): NotificationCategory[] {
     .length;
 
   const cats: NotificationCategory[] = [
-    { id: 'revision', label: 'expedientes en revisión', count: enRevision, icon: 'revision', action: { page: 'expedients', statusFilter: 'En revisión' } },
-    { id: 'pendiente', label: 'expedientes pendientes de verificación', count: pendiente, icon: 'pendiente', action: { page: 'expedients', statusFilter: 'Pendiente de verificación' } },
-    { id: 'venceHoy', label: 'exámenes médicos vencen hoy', count: venceHoy, icon: 'venceHoy', action: { page: 'employees', examDue: 'today' } },
-    { id: 'venceSemana', label: 'exámenes médicos vencen esta semana', count: venceSemana, icon: 'venceSemana', action: { page: 'employees', examDue: 'week' } },
-    { id: 'finalizadoHoy', label: 'expedientes finalizados hoy', count: finalizadoHoy, icon: 'finalizadoHoy', action: { page: 'expedients', statusFilter: 'Finalizado' } },
-    { id: 'nuevosDocs', label: 'nuevos documentos agregados', count: nuevosDocs, icon: 'nuevosDocs', action: { page: 'documents' as const } },
-    { id: 'nuevosEmpleados', label: 'nuevos empleados registrados', count: nuevosEmpleados, icon: 'nuevosEmpleados', action: { page: 'employees' } },
+    { id: 'revision', label: 'expedientes en revisión', count: enRevision, icon: 'revision', group: 'expedientes', action: { page: 'expedients', statusFilter: 'En revisión' } },
+    { id: 'pendiente', label: 'pendientes de verificación', count: pendiente, icon: 'pendiente', group: 'expedientes', action: { page: 'expedients', statusFilter: 'Pendiente de verificación' } },
+    { id: 'finalizadoHoy', label: 'finalizados hoy', count: finalizadoHoy, icon: 'finalizadoHoy', group: 'expedientes', action: { page: 'expedients', statusFilter: 'Finalizado' } },
+    { id: 'venceHoy', label: 'exámenes vencen hoy', count: venceHoy, icon: 'venceHoy', group: 'examenes', action: { page: 'employees', examDue: 'today' } },
+    { id: 'venceSemana', label: 'exámenes vencen esta semana', count: venceSemana, icon: 'venceSemana', group: 'examenes', action: { page: 'employees', examDue: 'week' } },
+    { id: 'nuevosDocs', label: 'nuevos documentos', count: nuevosDocs, icon: 'nuevosDocs', group: 'novedades', action: { page: 'documents' as const } },
+    { id: 'nuevosEmpleados', label: 'nuevos empleados', count: nuevosEmpleados, icon: 'nuevosEmpleados', group: 'novedades', action: { page: 'employees' } },
   ];
 
   return cats.filter(c => c.count > 0);

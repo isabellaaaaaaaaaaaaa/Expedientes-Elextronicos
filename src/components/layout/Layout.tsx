@@ -14,6 +14,7 @@ interface LayoutProps {
   planta: Planta;
   onPlantaChange: (p: Planta) => void;
   onNotifAction: (notifId: string, filter?: { page: NavigationPage; statusFilter?: string; examDue?: 'today' | 'week' }) => void;
+  onMarkAllRead: () => void;
   notifReadIds: Set<string>;
 }
 
@@ -27,6 +28,7 @@ export default function Layout({
   planta,
   onPlantaChange,
   onNotifAction,
+  onMarkAllRead,
   notifReadIds,
 }: LayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
@@ -51,6 +53,7 @@ export default function Layout({
         planta={planta}
         onPlantaChange={onPlantaChange}
         onNotifAction={onNotifAction}
+        onMarkAllRead={onMarkAllRead}
         notifReadIds={notifReadIds}
       />
       <main className={`${leftOffset} pt-16 min-h-screen transition-[margin] duration-200`}>

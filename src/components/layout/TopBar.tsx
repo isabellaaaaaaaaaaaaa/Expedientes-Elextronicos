@@ -7,7 +7,7 @@ import {
 import type { AuthUser, NavigationPage, Planta, Employee } from '../../types';
 import { PLANTAS } from '../../types';
 import { employees } from '../../data/mockData';
-import { computeNotifications, type NotificationCategory } from '../../lib/notifications';
+import { computeNotifications, NOTIFICATION_GROUP_ORDER, NOTIFICATION_GROUP_LABELS, type NotificationCategory } from '../../lib/notifications';
 
 interface TopBarProps {
   user: AuthUser;
@@ -19,6 +19,7 @@ interface TopBarProps {
   planta: Planta;
   onPlantaChange: (p: Planta) => void;
   onNotifAction: (notifId: string, filter?: { page: NavigationPage; statusFilter?: string; examDue?: 'today' | 'week' }) => void;
+  onMarkAllRead: () => void;
   notifReadIds: Set<string>;
 }
 
@@ -64,7 +65,7 @@ const notifAccent: Record<NotificationCategory['icon'], { bg: string; text: stri
 
 export default function TopBar({
   user, onLogout, onNavigate, onSelectEmployee, currentPage, collapsed,
-  planta, onPlantaChange, onNotifAction, notifReadIds,
+  planta, onPlantaChange, onNotifAction, onMarkAllRead, notifReadIds,
 }: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [plantaOpen, setPlantaOpen] = useState(false);
@@ -254,17 +255,24 @@ export default function TopBar({
               <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Bell size={15} className="text-slate-500" />
-                  <p className="text-sm font-bold text-gray-900">Notificaciones</p>
+                  <p className="text-sm font-bold text-gray-900">Centro de Notificaciones</p>
                   {notifCount > 0 && (
                     <span className="text-[10px] font-bold text-white bg-blue-500 px-1.5 py-0.5 rounded-full">{notifCount}</span>
                   )}
                 </div>
-                <button onClick={() => setNotifOpen(false)} className="text-slate-400 hover:text-slate-600">
-                  <X size={15} />
-                </button>
+                <div className="flex items-center gap-1">
+                  {notifCount > 0 && (
+                    <button onClick={onMarkAllRead} className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition-colors px-1.5 py-1 rounded-md hover:bg-blue-50">
+                      Marcar todas
+                    </button>
+                  )}
+                  <button onClick={() => setNotifOpen(false)} className="text-slate-400 hover:text-slate-600">
+                    <X size={15} />
+                  </button>
+                </div>
               </div>
 
-              <div className="max-h-96 overflow-y-auto">
+              <div className="max-h-[28rem] overflow-y-auto">
                 {notifications.length === 0 ? (
                   <div className="py-10 text-center">
                     <CheckCircle2 size={26} className="mx-auto text-green-300 mb-2" />
@@ -272,25 +280,38 @@ export default function TopBar({
                     <p className="text-xs text-slate-300 mt-0.5">No hay notificaciones pendientes</p>
                   </div>
                 ) : (
-                  notifications.map(n => {
-                    const Icon = notifIcon[n.icon];
-                    const a = notifAccent[n.icon];
+                  NOTIFICATION_GROUP_ORDER.map(group => {
+                    const groupItems = notifications.filter(n => n.group === group);
+                    if (groupItems.length === 0) return null;
+                    const groupTotal = groupItems.reduce((s, n) => s + n.count, 0);
                     return (
-                      <button
-                        key={n.id}
-                        onClick={() => handleNotifClick(n)}
-                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left border-b border-slate-50 last:border-0 group"
-                      >
-                        <div className={`w-8 h-8 ${a.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
-                          <Icon size={15} className={a.text} />
+                      <div key={group}>
+                        <div className="px-4 pt-3 pb-1.5 flex items-center justify-between bg-slate-50/60 border-b border-slate-100">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{NOTIFICATION_GROUP_LABELS[group]}</span>
+                          <span className="text-[10px] font-bold text-slate-400 tabular-nums">{groupTotal}</span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-gray-700 leading-snug">
-                            <span className="font-bold text-gray-900 tabular-nums">{n.count}</span> {n.label}
-                          </p>
-                        </div>
-                        <ChevronDown size={14} className="text-slate-300 -rotate-90 group-hover:text-blue-500 transition-colors flex-shrink-0" />
-                      </button>
+                        {groupItems.map(n => {
+                          const Icon = notifIcon[n.icon];
+                          const a = notifAccent[n.icon];
+                          return (
+                            <button
+                              key={n.id}
+                              onClick={() => handleNotifClick(n)}
+                              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50/50 transition-colors text-left border-b border-slate-50 last:border-0 group"
+                            >
+                              <div className={`w-8 h-8 ${a.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                                <Icon size={15} className={a.text} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-gray-700 leading-snug">
+                                  <span className="font-bold text-gray-900 tabular-nums">{n.count}</span> {n.label}
+                                </p>
+                              </div>
+                              <ChevronRight size={14} className="text-slate-300 group-hover:text-blue-500 transition-colors flex-shrink-0" />
+                            </button>
+                          );
+                        })}
+                      </div>
                     );
                   })
                 )}

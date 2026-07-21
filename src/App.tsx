@@ -13,6 +13,7 @@ import EmployeeProfile from './views/EmployeeProfile';
 import PrintPreview from './views/PrintPreview';
 import Configuracion from './views/Configuracion';
 import type { NavigationPage, AuthUser, Planta, ExpedientListFilter } from './types';
+import { computeNotifications } from './lib/notifications';
 
 export default function App() {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -81,6 +82,14 @@ export default function App() {
     });
   };
 
+  const markAllRead = () => {
+    setNotifReadIds(prev => {
+      const copy = new Set(prev);
+      computeNotifications(planta).forEach(n => copy.add(n.id));
+      return copy;
+    });
+  };
+
   if (!user) {
     return <Login onLogin={handleLogin} />;
   }
@@ -102,6 +111,7 @@ export default function App() {
           handleNavigate('expedients');
         }
       }}
+      onMarkAllRead={markAllRead}
       notifReadIds={notifReadIds}
     >
       {currentPage === 'dashboard' && (
