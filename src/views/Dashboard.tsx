@@ -5,7 +5,7 @@ import {
   CalendarClock, CalendarDays, Inbox, Briefcase, Users, Timer, CalendarClock as CalendarClockIcon, X,
 } from 'lucide-react';
 import { employees, expedients, documents } from '../data/mockData';
-import type { NavigationPage, AuthUser, Planta, ExpedientListFilter } from '../types';
+import type { NavigationPage, AuthUser, Planta, ExpedientListFilter, UserRole } from '../types';
 import { EmployeeTable, avatarColors, getInitials } from '../components/employee/EmployeeTable';
 import { EmptyState } from '../components/ui/empty-state';
 import { getAllBitacora } from '../lib/auditLog';
@@ -36,6 +36,16 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
     if (h < 12) return 'Buenos días';
     if (h < 19) return 'Buenas tardes';
     return 'Buenas noches';
+  };
+
+  const roleHonorific = (role: UserRole): string => {
+    switch (role) {
+      case 'Doctora': return 'Dra.';
+      case 'Enfermera': return 'Enfermera';
+      case 'Administrador': return 'Admin';
+      case 'Auditor': return 'Auditor';
+      default: return '';
+    }
   };
 
   const stats = [
@@ -274,8 +284,11 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
     <div className="space-y-8">
       {/* Greeting */}
       <div>
-        <h2 className="text-xl font-bold text-gray-900">{greeting()}, {user.username}</h2>
-        <p className="text-sm text-slate-400 mt-0.5">
+        <h2 className="text-xl font-bold text-gray-900">
+          {greeting()}, {roleHonorific(user.role)} {user.username} <span className="inline-block">👋</span>
+        </h2>
+        <p className="text-sm text-slate-400 mt-0.5">Bienvenido al sistema de gestión de expedientes médicos</p>
+        <p className="text-xs text-slate-300 mt-0.5 capitalize">
           {new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
       </div>
