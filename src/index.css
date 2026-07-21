@@ -1,0 +1,180 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 20% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 20% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 20% 10%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 20% 10%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 25 95% 53%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
+    --radius: 0.75rem;
+    --chart-1: 217 91% 60%;
+    --chart-2: 142 76% 36%;
+    --chart-3: 25 95% 53%;
+    --chart-4: 262 83% 58%;
+    --chart-5: 0 84% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html, body, #root {
+    @apply h-full;
+  }
+  body {
+    @apply bg-[#FAFBFC] text-gray-900 m-0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  button {
+    @apply cursor-pointer;
+    padding: 0;
+    border: none;
+    background: none;
+    font-family: inherit;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight;
+  }
+}
+
+@layer components {
+  /* Card surface */
+  .card {
+    @apply bg-white rounded-2xl border border-slate-200/60 shadow-[0_1px_3px_rgba(0,0,0,0.04)];
+  }
+  /* Lightweight table */
+  .data-table {
+    @apply w-full;
+  }
+  .data-table thead th {
+    @apply text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-5 py-3.5 text-left border-b border-slate-100;
+  }
+  .data-table tbody td {
+    @apply px-5 py-4 text-sm border-b border-slate-50;
+  }
+  .data-table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+  .data-table tbody tr {
+    @apply transition-colors;
+  }
+  .data-table tbody tr:hover {
+    @apply bg-slate-50/50;
+  }
+  /* Status dot */
+  .status-dot {
+    @apply inline-block w-2 h-2 rounded-full;
+  }
+  /* Input styling */
+  .input-base {
+    @apply w-full px-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/15 focus:border-blue-400 transition-all;
+  }
+  .input-label {
+    @apply text-xs font-semibold text-slate-500 mb-2 block;
+  }
+  /* Section heading */
+  .section-title {
+    @apply text-base font-bold text-gray-900;
+  }
+  .section-subtitle {
+    @apply text-sm text-slate-400 mt-0.5;
+  }
+}
+
+/* Subtle scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+
+/* ===== Print preview (A4 document) ===== */
+.print-sheet {
+  width: 100%;
+  max-width: 210mm;
+  min-height: 297mm;
+  padding: 18mm 16mm;
+  box-sizing: border-box;
+  font-size: 12pt;
+  color: #1f2937;
+  line-height: 1.5;
+}
+.print-header {
+  margin-bottom: 8mm;
+}
+.print-info {
+  margin-bottom: 6mm;
+  padding: 4mm 5mm;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+.print-section {
+  margin-bottom: 5mm;
+  page-break-inside: avoid;
+}
+.print-section-title {
+  font-size: 10pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #0f172a;
+  padding-bottom: 2mm;
+  margin-bottom: 3mm;
+  border-bottom: 1px solid #cbd5e1;
+}
+.print-section-body {
+  padding: 0 1mm;
+}
+.print-footer {
+  margin-top: 8mm;
+}
+
+@media print {
+  body { background: #fff !important; }
+  .print-toolbar { display: none !important; }
+  .print-sheet {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+  @page {
+    size: A4;
+    margin: 16mm 14mm;
+  }
+}
