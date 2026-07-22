@@ -8,6 +8,7 @@ import { getAllBitacora } from '../lib/auditLog';
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from '../components/ui/sheet';
+import { toast } from 'sonner';
 
 interface DashboardProps {
   user: AuthUser;
@@ -403,8 +404,9 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
             </div>
             <div className="px-6 py-3 border-t border-slate-100">
               <button
-                onClick={() => onNavigate('configuracion')}
-                className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1.5 transition-colors"
+                onClick={() => toast.info('La vista completa de actividad estará disponible próximamente.')}
+                className="text-sm font-semibold text-slate-400 flex items-center gap-1.5 transition-colors cursor-not-allowed"
+                title="Módulo no disponible"
               >
                 Ver toda la actividad <ArrowRight size={14} />
               </button>
