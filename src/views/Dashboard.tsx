@@ -48,14 +48,6 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
     }
   };
 
-  const stats = [
-    { label: 'Total expedientes', value: totalExpedients, icon: FolderOpen,  accent: 'blue' },
-    { label: 'Sin revisar',       value: sinRevisar,      icon: AlertCircle, accent: 'slate' },
-    { label: 'En revisión',       value: enRevision,      icon: Clock,       accent: 'amber' },
-    { label: 'Pendiente',         value: pendiente,       icon: AlertCircle, accent: 'orange' },
-    { label: 'Finalizados',       value: finalizado,      icon: CheckCircle2, accent: 'green' },
-  ];
-
   const accentMap: Record<string, { iconBg: string; iconText: string }> = {
     blue:   { iconBg: 'bg-blue-50',   iconText: 'text-blue-600' },
     slate:  { iconBg: 'bg-slate-100', iconText: 'text-slate-500' },
@@ -308,27 +300,17 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
         </div>
       </div>
 
-      {/* 1. Indicators */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-5">
-        {stats.map(({ label, value, icon: Icon, accent }) => {
-          const a = accentMap[accent];
-          return (
-            <div key={label} className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6">
-              <div className={`w-10 h-10 ${a.iconBg} rounded-xl flex items-center justify-center mb-5`}>
-                <Icon size={18} className={a.iconText} />
-              </div>
-              <p className="text-3xl font-bold text-gray-900 tracking-tight tabular-nums">{value.toLocaleString()}</p>
-              <p className="text-sm text-slate-500 mt-1.5">{label}</p>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* 2. Avance de digitalización */}
+      {/* Avance de digitalización — gráfica + indicadores unificados */}
       <div className="card p-6">
-        <p className="section-title">Avance de digitalización</p>
-        <p className="section-subtitle">Resumen visual del estado de los expedientes</p>
-        <div className="mt-5 space-y-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="section-title">Avance de digitalización</p>
+            <p className="section-subtitle">Resumen visual del estado de los expedientes</p>
+          </div>
+        </div>
+        <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+          {/* Lado izquierdo: gráfica de avance */}
+          <div className="space-y-5">
             {[
               { label: 'Finalizados',  value: finalizado,  pct: totalExpedients ? (finalizado / totalExpedients) * 100 : 0, bar: 'bg-green-500',  track: 'bg-green-50' },
               { label: 'Pendiente',    value: pendiente,   pct: totalExpedients ? (pendiente / totalExpedients) * 100 : 0, bar: 'bg-orange-500', track: 'bg-orange-50' },
@@ -349,6 +331,28 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
               </div>
             ))}
           </div>
+
+          {/* Lado derecho: indicadores numéricos */}
+          <div className="grid grid-cols-2 gap-4">
+            {[
+              { label: 'Total de expedientes', value: totalExpedients, icon: FolderOpen,   accent: 'blue' },
+              { label: 'Finalizados',          value: finalizado,      icon: CheckCircle2, accent: 'green' },
+              { label: 'En revisión',          value: enRevision,      icon: Clock,        accent: 'amber' },
+              { label: 'Pendientes de verificación', value: pendiente, icon: AlertCircle,  accent: 'orange' },
+            ].map(({ label, value, icon: Icon, accent }) => {
+              const a = accentMap[accent];
+              return (
+                <div key={label} className="rounded-xl border border-slate-100 p-4 bg-slate-50/40">
+                  <div className={`w-9 h-9 ${a.iconBg} rounded-lg flex items-center justify-center mb-3`}>
+                    <Icon size={16} className={a.iconText} />
+                  </div>
+                  <p className="text-2xl font-bold text-gray-900 tracking-tight tabular-nums">{value.toLocaleString()}</p>
+                  <p className="text-xs font-semibold text-slate-500 mt-1 leading-snug">{label}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Actividad reciente */}
