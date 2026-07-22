@@ -366,36 +366,46 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
         {recentActivity.length === 0 ? (
           <EmptyState icon={Activity} title="Sin actividad reciente" description="Aún no se han registrado acciones en el sistema." />
         ) : (
-          <div className="px-6 py-2">
-            {recentActivity.map((act, idx) => {
-              const isLast = idx === recentActivity.length - 1;
-              return (
-                <div key={idx} className="flex gap-3.5 py-3.5">
-                  <div className="relative flex flex-col items-center flex-shrink-0">
-                    <div className={`w-8 h-8 rounded-full ${act.iconBg} flex items-center justify-center z-10`}>
-                      <act.icon size={15} className={act.iconText} />
+          <>
+            <div className="px-6 py-2">
+              {recentActivity.slice(0, 5).map((act, idx) => {
+                const isLast = idx === 4;
+                return (
+                  <div key={idx} className="flex gap-3.5 py-3.5">
+                    <div className="relative flex flex-col items-center flex-shrink-0">
+                      <div className={`w-8 h-8 rounded-full ${act.iconBg} flex items-center justify-center z-10`}>
+                        <act.icon size={15} className={act.iconText} />
+                      </div>
+                      {!isLast && <div className="absolute top-8 bottom-0 w-px bg-slate-100" />}
                     </div>
-                    {!isLast && <div className="absolute top-8 bottom-0 w-px bg-slate-100" />}
-                  </div>
-                  <div className="flex-1 min-w-0 pt-0.5 pb-1">
-                    <p className="text-sm font-semibold text-gray-800">{act.text}</p>
-                    {act.sub && (
-                      <p className="text-xs text-slate-400 mt-0.5 truncate">{act.sub}</p>
+                    <div className="flex-1 min-w-0 pt-0.5 pb-1">
+                      <p className="text-sm font-semibold text-gray-800">{act.text}</p>
+                      {act.sub && (
+                        <p className="text-xs text-slate-400 mt-0.5 truncate">{act.sub}</p>
+                      )}
+                      <p className="text-xs text-slate-400 mt-1">{relativeTime(act.ts)}</p>
+                    </div>
+                    {act.onClick && (
+                      <button
+                        onClick={act.onClick}
+                        className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors pt-1 flex-shrink-0"
+                      >
+                        Ver <ArrowRight size={12} />
+                      </button>
                     )}
-                    <p className="text-xs text-slate-400 mt-1">{relativeTime(act.ts)}</p>
                   </div>
-                  {act.onClick && (
-                    <button
-                      onClick={act.onClick}
-                      className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors pt-1 flex-shrink-0"
-                    >
-                      Ver <ArrowRight size={12} />
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+            <div className="px-6 py-3 border-t border-slate-100">
+              <button
+                onClick={() => onNavigate('configuracion')}
+                className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1.5 transition-colors"
+              >
+                Ver toda la actividad <ArrowRight size={14} />
+              </button>
+            </div>
+          </>
         )}
       </div>
 
