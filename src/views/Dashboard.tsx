@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { FolderOpen, CircleCheck as CheckCircle2, Clock, CircleAlert as AlertCircle, ArrowRight, User, FileText, UserPlus, FileSpreadsheet, Search, Activity, CalendarClock, CalendarDays, Inbox, ChartBar as BarChart3, Users, Timer, CalendarClock as CalendarClockIcon, X } from 'lucide-react';
+import { FolderOpen, CircleCheck as CheckCircle2, Clock, CircleAlert as AlertCircle, ArrowRight, User, FileText, UserPlus, FileSpreadsheet, Search, Activity, Inbox, ChartBar as BarChart3, Users, Timer, X } from 'lucide-react';
 import { employees, expedients, documents } from '../data/mockData';
 import type { NavigationPage, AuthUser, Planta, ExpedientListFilter, UserRole } from '../types';
 import { EmployeeTable, avatarColors, getInitials } from '../components/employee/EmployeeTable';
@@ -84,18 +84,6 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
       ? Math.round((tiempos.reduce((s, t) => s + t, 0) / tiempos.length) * 10) / 10
       : 0;
 
-    // Exámenes próximos a vencer (próximos 7 días, incluido hoy)
-    const today0 = new Date();
-    today0.setHours(0, 0, 0, 0);
-    const daysFromToday = (dateStr: string) => {
-      const target = new Date(dateStr + 'T12:00:00');
-      return (target.getTime() - today0.getTime()) / (1000 * 60 * 60 * 24);
-    };
-    const proximosVencer = expedients.filter(e => {
-      const diff = daysFromToday(e.date);
-      return diff >= 0 && diff <= 7;
-    }).length;
-
     return [
       { label: 'Total de empleados',           value: totalEmpleados.toLocaleString(),     icon: Users,             accent: 'blue',   hint: 'Plantilla activa' },
       { label: 'Total de expedientes',          value: totalExps.toLocaleString(),          icon: FolderOpen,        accent: 'blue',   hint: 'Registros médicos' },
@@ -103,7 +91,6 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
       { label: 'Expedientes en revisión',       value: enRev.toLocaleString(),              icon: Clock,             accent: 'amber',  hint: 'En proceso' },
       { label: 'Pendientes de verificación',    value: pendientesVerif.toLocaleString(),    icon: AlertCircle,       accent: 'orange', hint: 'Requieren atención' },
       { label: 'Tiempo prom. de captura',       value: `${tiempoPromedio} d`,              icon: Timer,             accent: 'slate',  hint: 'Días de ciclo' },
-      { label: 'Exámenes próximos a vencer',    value: proximosVencer.toLocaleString(),    icon: CalendarClockIcon, accent: 'rose',   hint: 'Próximos 7 días' },
     ];
   }, []);
 
@@ -112,19 +99,12 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
     const enRevisionCount = allItems.filter(e => e.status === 'En revisión').length;
     const pendienteCount = allItems.filter(e => e.status === 'Pendiente de verificación').length;
 
-    const todayStr = new Date().toISOString().slice(0, 10);
     const today0 = new Date();
     today0.setHours(0, 0, 0, 0);
     const daysFromToday = (dateStr: string) => {
       const target = new Date(dateStr + 'T12:00:00');
       return (target.getTime() - today0.getTime()) / (1000 * 60 * 60 * 24);
     };
-
-    const venceHoyCount = allItems.filter(e => e.date === todayStr).length;
-    const venceSemanaCount = allItems.filter(e => {
-      const diff = daysFromToday(e.date);
-      return diff >= 0 && diff <= 7 && e.date !== todayStr;
-    }).length;
     const nuevosDocsCount = documents.filter(d => {
       const diff = daysFromToday(d.uploadDate);
       return diff >= 0 && diff <= 7;
@@ -135,10 +115,6 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
         onClick: () => onNavigate('expedients', undefined, undefined, undefined, { status: 'En revisión' }) },
       { label: 'Expedientes pendientes de verificación', count: pendienteCount || 2, icon: AlertCircle, accent: 'orange',
         onClick: () => onNavigate('expedients', undefined, undefined, undefined, { status: 'Pendiente de verificación' }) },
-      { label: 'Empleados con evaluación médica que vence hoy', count: venceHoyCount || 4, icon: CalendarClock, accent: 'rose',
-        onClick: () => onNavigate('employees', undefined, undefined, undefined, { examDue: 'today' }) },
-      { label: 'Empleados con evaluación médica que vence esta semana', count: venceSemanaCount || 11, icon: CalendarDays, accent: 'amber',
-        onClick: () => onNavigate('employees', undefined, undefined, undefined, { examDue: 'week' }) },
       { label: 'Documentos nuevos', count: nuevosDocsCount || 5, icon: FileText, accent: 'blue',
         onClick: () => onNavigate('documents') },
     ];
@@ -337,7 +313,7 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
           <h3 className="text-base font-bold text-gray-900">Mi bandeja de trabajo</h3>
         </div>
         <p className="text-sm text-slate-400 mb-4 ml-7">Tareas pendientes de {user.username}</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {bandejaItems.map(({ label, count, icon: Icon, accent, onClick }) => {
             const a = accentMap[accent];
             return (
