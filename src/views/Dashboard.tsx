@@ -483,6 +483,7 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
         <EmployeeTable
           items={recentEmployees}
           onNavigate={onNavigate}
+          canCreateExpedient={false}
           emptyState={
             <EmptyState icon={User} title="Sin actividad reciente" description="Aún no hay expedientes registrados." compact />
           }

@@ -62,10 +62,11 @@ export function sortEmployees(items: Employee[], sortKey: SortKey, sortDir: Sort
 }
 
 function EmployeeRowActions({
-  emp, onNavigate,
+  emp, onNavigate, canCreateExpedient = true,
 }: {
   emp: Employee;
   onNavigate: (page: NavigationPage, employeeId?: string, expedientId?: string) => void;
+  canCreateExpedient?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -81,13 +82,15 @@ function EmployeeRowActions({
 
   return (
     <div className="flex items-center justify-end gap-1" ref={ref}>
-      <button
-        onClick={() => onNavigate('record-type-select', emp.id)}
-        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-        title="Nuevo expediente"
-      >
-        <Plus size={15} />
-      </button>
+      {canCreateExpedient && (
+        <button
+          onClick={() => onNavigate('record-type-select', emp.id)}
+          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+          title="Nuevo expediente"
+        >
+          <Plus size={15} />
+        </button>
+      )}
       <button
         onClick={() => onNavigate('employee-profile', emp.id)}
         className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
@@ -140,10 +143,11 @@ interface EmployeeTableProps {
   sortDir?: SortDir;
   onSortChange?: (key: SortKey) => void;
   emptyState?: ReactNode;
+  canCreateExpedient?: boolean;
 }
 
 export function EmployeeTable({
-  items, onNavigate, sortKey, sortDir, onSortChange, emptyState,
+  items, onNavigate, sortKey, sortDir, onSortChange, emptyState, canCreateExpedient = true,
 }: EmployeeTableProps) {
   const sortable = !!onSortChange;
   const sortCls = 'cursor-pointer select-none hover:text-slate-600 transition-colors';
@@ -245,7 +249,7 @@ export function EmployeeTable({
                     )}
                   </td>
                   <td className="text-right">
-                    <EmployeeRowActions emp={emp} onNavigate={onNavigate} />
+                    <EmployeeRowActions emp={emp} onNavigate={onNavigate} canCreateExpedient={canCreateExpedient} />
                   </td>
                 </tr>
               );
