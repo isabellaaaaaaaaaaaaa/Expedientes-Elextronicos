@@ -1,14 +1,13 @@
 import { useState, useMemo } from 'react';
-import {
-  FolderOpen, CircleCheck as CheckCircle2, Clock, CircleAlert as AlertCircle,
-  ArrowRight, User, FileText, UserPlus, FileSpreadsheet, Search, Activity,
-  CalendarClock, CalendarDays, Inbox, Briefcase, Users, Timer, CalendarClock as CalendarClockIcon, X,
-} from 'lucide-react';
+import { FolderOpen, CircleCheck as CheckCircle2, Clock, CircleAlert as AlertCircle, ArrowRight, User, FileText, UserPlus, FileSpreadsheet, Search, Activity, CalendarClock, CalendarDays, Inbox, ChartBar as BarChart3, Users, Timer, CalendarClock as CalendarClockIcon, X } from 'lucide-react';
 import { employees, expedients, documents } from '../data/mockData';
 import type { NavigationPage, AuthUser, Planta, ExpedientListFilter, UserRole } from '../types';
 import { EmployeeTable, avatarColors, getInitials } from '../components/employee/EmployeeTable';
 import { EmptyState } from '../components/ui/empty-state';
 import { getAllBitacora } from '../lib/auditLog';
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+} from '../components/ui/sheet';
 
 interface DashboardProps {
   user: AuthUser;
@@ -20,6 +19,7 @@ interface DashboardProps {
 export default function Dashboard({ user, planta: _planta, onNavigate }: DashboardProps) {
   void _planta;
   const [search, setSearch] = useState('');
+  const [summaryOpen, setSummaryOpen] = useState(false);
 
   // planta is UI context only; all data shown until persistence-based filtering exists
   const plantaEmployees = useMemo(() => employees, [employees]);
@@ -282,43 +282,53 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
 
   return (
     <div className="space-y-8">
-      {/* Greeting */}
-      <div>
-        <h2 className="text-xl font-bold text-gray-900">
-          {greeting()}, {roleHonorific(user.role)} {user.username} <span className="inline-block">👋</span>
-        </h2>
-        <p className="text-sm text-slate-400 mt-0.5">Bienvenido al sistema de gestión de expedientes médicos</p>
-        <p className="text-xs text-slate-300 mt-0.5 capitalize">
-          {new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-        </p>
+      {/* Greeting + Resumen button */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">
+            {greeting()}, {roleHonorific(user.role)} {user.username} <span className="inline-block">👋</span>
+          </h2>
+          <p className="text-sm text-slate-400 mt-0.5">Bienvenido al sistema de gestión de expedientes médicos</p>
+          <p className="text-xs text-slate-300 mt-0.5 capitalize">
+            {new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          </p>
+        </div>
+        <button
+          onClick={() => setSummaryOpen(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:border-blue-200 hover:text-blue-600 hover:shadow-sm transition-all flex-shrink-0"
+        >
+          <BarChart3 size={16} />
+          Resumen
+        </button>
       </div>
 
-      {/* Resumen Ejecutivo */}
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <Briefcase size={18} className="text-slate-700" />
-          <h3 className="text-base font-bold text-gray-900">Resumen Ejecutivo</h3>
-        </div>
-        <p className="text-sm text-slate-400 mb-4 ml-7">Indicadores clave para supervisores y coordinadores</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
-          {executiveSummary.map(({ label, value, icon: Icon, accent, hint }) => {
-            const a = accentMap[accent];
-            return (
-              <div
-                key={label}
-                className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 hover:shadow-md transition-all"
-              >
-                <div className={`w-10 h-10 ${a.iconBg} rounded-xl flex items-center justify-center mb-4`}>
-                  <Icon size={18} className={a.iconText} />
+      {/* Resumen drawer */}
+      <Sheet open={summaryOpen} onOpenChange={setSummaryOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader className="mb-6">
+            <SheetTitle className="text-lg font-bold text-gray-900">Resumen</SheetTitle>
+            <SheetDescription className="text-sm text-slate-400">Indicadores clave</SheetDescription>
+          </SheetHeader>
+          <div className="grid grid-cols-2 gap-4">
+            {executiveSummary.map(({ label, value, icon: Icon, accent, hint }) => {
+              const a = accentMap[accent];
+              return (
+                <div
+                  key={label}
+                  className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5"
+                >
+                  <div className={`w-10 h-10 ${a.iconBg} rounded-xl flex items-center justify-center mb-4`}>
+                    <Icon size={18} className={a.iconText} />
+                  </div>
+                  <p className="text-2xl font-bold text-gray-900 tracking-tight tabular-nums">{value}</p>
+                  <p className="text-sm font-semibold text-slate-600 mt-1.5 leading-snug">{label}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{hint}</p>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 tracking-tight tabular-nums">{value}</p>
-                <p className="text-sm font-semibold text-slate-600 mt-1.5 leading-snug">{label}</p>
-                <p className="text-xs text-slate-400 mt-0.5">{hint}</p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+              );
+            })}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Mi bandeja de trabajo */}
       <div>
