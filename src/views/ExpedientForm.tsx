@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Camera, Save, User, Building2, Phone, FileText, UserCheck, CircleCheck as CheckCircle2, ChevronRight, Plus, Trash2, FolderOpen, Stethoscope, FlaskConical, ClipboardList, Flag, Lock, Upload, Pencil, X, Eye } from 'lucide-react';
+import { ArrowLeft, Camera, Save, User, Building2, Phone, FileText, UserCheck, CircleCheck as CheckCircle2, ChevronRight, Plus, Trash2, FolderOpen, Stethoscope, FlaskConical, ClipboardList, Flag, Lock, Upload, Pencil, X } from 'lucide-react';
 import { employees, expedients, documents } from '../data/mockData';
 import { getDraft, clearDraft } from '../data/newExpedientDraft';
 import CaptureModule from '../components/capture/CaptureModule';
@@ -7,7 +7,6 @@ import UnlockModal from '../components/employee/UnlockModal';
 import { ConfirmDialog } from '../components/ui/confirm-dialog';
 import { BitacoraPanel } from '../components/record/AuditPanels';
 import { useExpedientProgress } from '../components/record/ExpedientProgress';
-import { PreviewScreen } from '../components/record/PreviewScreen';
 import { statusConfig } from '../lib/statusConfig';
 import { logAction, logChange } from '../lib/auditLog';
 import { EmptyState } from '../components/ui/empty-state';
@@ -161,8 +160,8 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
   const [unlockOpen, setUnlockOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editFichaOpen, setEditFichaOpen] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
-  const [confirmState, setConfirmState] = useState<{ kind: 'finalize' | 'status' | 'edit-finalized' | null; next?: ExpedientStatus }>({ kind: null });
+  const [confirmFinalize, setConfirmFinalize] = useState(false);
+  const [confirmState, setConfirmState] = useState<{ kind: 'status' | 'edit-finalized' | null; next?: ExpedientStatus }>({ kind: null });
   const [localDocs, setLocalDocs] = useState<MedDocument[]>(
     isNew ? [] : documents.filter(d => d.expedientId === expedientId),
   );
@@ -295,7 +294,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
 
   const changeStatus = (next: ExpedientStatus) => {
     if (next === expForm.status) return;
-    if (next === 'Finalizado') { setConfirmState({ kind: 'finalize', next }); return; }
+    if (next === 'Finalizado') { setConfirmFinalize(true); return; }
     if (expForm.status === 'Finalizado') { setConfirmState({ kind: 'edit-finalized', next }); return; }
     setConfirmState({ kind: 'status', next });
   };
@@ -315,23 +314,58 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
   };
 
   const handleFinalize = () => {
-    applyStatusChange('Finalizado');
-    setShowPreview(false);
-    setConfirmState({ kind: null });
+    setExpForm(f => ({ ...f, status: 'Finalizado' }));
+    if (isNew) {
+      Object.assign(employee, empForm);
+      const newId = `exp-${Date.now()}`;
+      const now = new Date().toISOString().slice(0, 10);
+      const snapshot: EmployeeSnapshot = {
+        employeeNumber: employee.employeeNumber,
+        firstName: employee.firstName,
+        lastName1: employee.lastName1,
+        lastName2: employee.lastName2,
+        curp: employee.curp,
+        rfc: employee.rfc,
+        nss: employee.nss,
+        gender: employee.gender,
+        birthDate: employee.birthDate,
+        position: employee.position,
+        department: employee.department,
+        hireDate: employee.hireDate,
+        emergencyContactName: employee.emergencyContactName,
+        emergencyContactRelationship: employee.emergencyContactRelationship,
+        emergencyContactPhone: employee.emergencyContactPhone,
+        photoDataUrl: employee.photoDataUrl,
+      };
+      const newExp: Expedient = {
+        id: newId,
+        employeeId,
+        ...expForm,
+        status: 'Finalizado',
+        employeeSnapshot: snapshot,
+        createdAt: now,
+        updatedAt: now,
+      };
+      expedients.push(newExp);
+      localDocs.forEach(doc => { doc.expedientId = newId; documents.push(doc); });
+      logAction(newId, currentUser.username, 'Creación del expediente', 'Creó el expediente');
+      logChange(newId, currentUser.username, 'Estado', '', 'Finalizado');
+      logAction(newId, currentUser.username, 'Finalización', 'Finalizó el expediente');
+      clearDraft();
+    } else if (existingExpedient) {
+      const before = { ...existingExpedient };
+      Object.assign(existingExpedient, { ...expForm, status: 'Finalizado', updatedAt: new Date().toISOString().slice(0, 10) });
+      (['recordType', 'date', 'responsibleDoctor', 'observations', 'weight', 'height', 'diagnosis', 'results'] as const).forEach(k => {
+        const oldV = String(before[k] ?? ''); const newV = String(existingExpedient[k] ?? '');
+        if (oldV !== newV) logChange(existingExpedient.id, currentUser.username, k, oldV, newV);
+      });
+      logChange(existingExpedient.id, currentUser.username, 'Estado', before.status, 'Finalizado');
+      logAction(existingExpedient.id, currentUser.username, 'Cambio de estado', 'Cambió el estado a Finalizado');
+      logAction(existingExpedient.id, currentUser.username, 'Finalización', 'Finalizó el expediente');
+    }
+    setConfirmFinalize(false);
     setTimeout(() => onNavigate('expedients'), 600);
   };
-
-  if (showPreview) {
-    return (
-      <PreviewScreen
-        employee={empForm}
-        expedient={expForm}
-        docs={localDocs}
-        onBack={() => setShowPreview(false)}
-        onFinalize={() => setConfirmState({ kind: 'finalize', next: 'Finalizado' })}
-      />
-    );
-  }
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'identificacion', label: 'Identificación' },
@@ -809,7 +843,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
 
           {/* ── LIFECYCLE BAR ── */}
           {isNew ? (
-            /* New record — Crear registro + Cancelar */
+            /* New record — Cancelar + Guardar + Guardar y finalizar */
             <div className="flex items-center justify-between card px-5 py-4">
               {saved ? (
                 <div className="flex items-center gap-2 text-green-600">
@@ -830,10 +864,18 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                 <button
                   onClick={handleSave}
                   disabled={saved || isAuditor}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold text-sm rounded-xl transition-colors shadow-sm"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 hover:text-blue-700 font-bold text-sm rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Save size={15} />
-                  Crear registro
+                  Guardar
+                </button>
+                <button
+                  onClick={() => setConfirmFinalize(true)}
+                  disabled={saved || isAuditor}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-green-500 hover:bg-green-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold text-sm rounded-xl transition-colors shadow-sm"
+                >
+                  <Flag size={15} />
+                  Guardar y finalizar
                 </button>
               </div>
             </div>
@@ -885,20 +927,11 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                   )}
                   {!isAuditor && !isFinalized && (
                     <button
-                      onClick={() => setShowPreview(true)}
-                      className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 hover:text-blue-700 font-bold text-sm rounded-xl transition-all"
-                    >
-                      <Eye size={14} />
-                      Vista previa
-                    </button>
-                  )}
-                  {!isAuditor && !isFinalized && (
-                    <button
-                      onClick={() => setShowPreview(true)}
+                      onClick={() => setConfirmFinalize(true)}
                       className="flex items-center gap-2 px-4 py-2.5 bg-green-500 hover:bg-green-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold text-sm rounded-xl transition-colors shadow-sm"
                     >
                       <Flag size={14} />
-                      Finalizar
+                      Guardar y finalizar
                     </button>
                   )}
                   {!isAuditor && isFinalized && (
@@ -973,14 +1006,16 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
       )}
 
       <ConfirmDialog
-        open={confirmState.kind === 'finalize'}
-        title="Finalizar expediente"
-        message="El expediente quedá en estado Finalizado y en modo solo lectura. Cualquier edición posterior requerirá desbloqueo con autorización."
-        confirmLabel="Finalizar"
+        open={confirmFinalize}
+        title="¿Deseas finalizar este expediente?"
+        message=""
+        confirmLabel="Finalizar expediente"
         variant="warning"
         onConfirm={handleFinalize}
-        onCancel={() => setConfirmState({ kind: null })}
-      />
+        onCancel={() => setConfirmFinalize(false)}
+      >
+        <p className="text-sm text-slate-500 leading-relaxed">Una vez finalizado, el expediente solo podrá editarse por una doctora con los permisos correspondientes.</p>
+      </ConfirmDialog>
 
       <ConfirmDialog
         open={confirmState.kind === 'status'}
