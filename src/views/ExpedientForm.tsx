@@ -6,7 +6,7 @@ import CaptureModule from '../components/capture/CaptureModule';
 import UnlockModal from '../components/employee/UnlockModal';
 import { ConfirmDialog } from '../components/ui/confirm-dialog';
 import { BitacoraPanel, HistorialPanel } from '../components/record/AuditPanels';
-import { ExpedientProgress, useExpedientProgress } from '../components/record/ExpedientProgress';
+import { useExpedientProgress } from '../components/record/ExpedientProgress';
 import { PreviewScreen } from '../components/record/PreviewScreen';
 import { statusConfig } from '../lib/statusConfig';
 import { logAction, logChange } from '../lib/auditLog';
@@ -318,6 +318,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
     applyStatusChange('Finalizado');
     setShowPreview(false);
     setConfirmState({ kind: null });
+    setTimeout(() => onNavigate('expedients'), 600);
   };
 
   if (showPreview) {
@@ -810,9 +811,6 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
           )}
 
           </div>{/* end locked tab content */}
-
-          {/* Progreso de captura (solo editable) */}
-          {!isFinalized && !isNew && <ExpedientProgress exp={expForm} />}
 
           {/* ── LIFECYCLE BAR ── */}
           {isNew ? (
