@@ -3,7 +3,7 @@ import {
   Search,
   UserPlus, FileSpreadsheet,
   ChevronLeft, ChevronRight,
-  Filter, X, Factory,
+  Filter, X, Factory, ArrowLeft,
 } from 'lucide-react';
 import { employees, expedients } from '../data/mockData';
 import type { NavigationPage, AuthUser, Planta, EmployeeStatus, Turno } from '../types';
@@ -127,6 +127,13 @@ export default function Employees({ planta, examDue, onNavigate }: EmployeesProp
 
   return (
     <div className="max-w-6xl space-y-6">
+      <button
+        onClick={() => onNavigate('dashboard')}
+        className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-colors"
+      >
+        <ArrowLeft size={16} />
+        Volver al Dashboard
+      </button>
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>

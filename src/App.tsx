@@ -169,7 +169,7 @@ export default function App() {
           onNavigate={handleNavigate}
         />
       )}
-      {currentPage === 'configuracion' && <Configuracion user={user} />}
+      {currentPage === 'configuracion' && <Configuracion user={user} onNavigate={handleNavigateSimple} />}
       {currentPage === 'usuarios' && (
         <div className="max-w-5xl">
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-12 text-center">

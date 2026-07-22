@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import {
   FileText, CircleCheck as CheckCircle2, Clock, CircleAlert as AlertCircle,
-  Search, Filter, X, Calendar, ChevronLeft, ChevronRight, Plus,
+  Search, Filter, X, Calendar, ChevronLeft, ChevronRight, Plus, ArrowLeft,
 } from 'lucide-react';
 import { employees, expedients, documents } from '../data/mockData';
 import type { NavigationPage, Planta, ExpedientListFilter } from '../types';
@@ -108,6 +108,13 @@ export default function ExpedientList({ initialFilter, onNavigate }: ExpedientLi
 
   return (
     <div className="max-w-5xl space-y-6">
+      <button
+        onClick={() => onNavigate('dashboard')}
+        className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-colors"
+      >
+        <ArrowLeft size={16} />
+        Volver al Dashboard
+      </button>
       {/* Header */}
       <div>
         <h2 className="text-xl font-bold text-gray-900">Expedientes</h2>

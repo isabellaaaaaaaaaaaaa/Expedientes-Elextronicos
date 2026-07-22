@@ -1,8 +1,9 @@
-import { Settings, Image, ShieldCheck, Users, Lock } from 'lucide-react';
-import type { AuthUser } from '../types';
+import { Settings, Image, ShieldCheck, Users, Lock, ArrowLeft } from 'lucide-react';
+import type { AuthUser, NavigationPage } from '../types';
 
 interface ConfiguracionProps {
   user: AuthUser;
+  onNavigate: (page: NavigationPage) => void;
 }
 
 function SectionCard({ title, icon: Icon, iconBg, iconColor, children }: {
@@ -49,10 +50,17 @@ const roles = [
   { nombre: 'Auditor',       descripcion: 'Solo lectura. No puede editar, crear, eliminar ni desbloquear.' },
 ];
 
-export default function Configuracion({ user }: ConfiguracionProps) {
+export default function Configuracion({ user, onNavigate }: ConfiguracionProps) {
   const isAdmin = user.role === 'Administrador';
   return (
     <div className="max-w-3xl space-y-6">
+      <button
+        onClick={() => onNavigate('dashboard')}
+        className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-colors"
+      >
+        <ArrowLeft size={16} />
+        Volver al Dashboard
+      </button>
       <div>
         <h2 className="text-xl font-bold text-gray-900">Configuración</h2>
         <p className="text-sm text-slate-400 mt-0.5">Ajustes generales del sistema SAM</p>
