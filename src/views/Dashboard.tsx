@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { FolderOpen, CircleCheck as CheckCircle2, Clock, CircleAlert as AlertCircle, ArrowRight, User, FileText, UserPlus, FileSpreadsheet, Search, Activity, Inbox, ChartBar as BarChart3, Users, Timer, X } from 'lucide-react';
+import { FolderOpen, CircleCheck as CheckCircle2, Clock, CircleAlert as AlertCircle, ArrowRight, User, FileText, UserPlus, FileSpreadsheet, Search, Activity, Inbox, ChartBar as BarChart3, Users, Timer, Upload, X } from 'lucide-react';
 import { employees, expedients, documents } from '../data/mockData';
 import type { NavigationPage, AuthUser, Planta, ExpedientListFilter, UserRole } from '../types';
 import { EmployeeTable, avatarColors, getInitials } from '../components/employee/EmployeeTable';
@@ -94,31 +94,12 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
     ];
   }, []);
 
-  // Mi bandeja de trabajo — pending tasks for the logged-in user
-  const bandejaItems = useMemo(() => {
-    const enRevisionCount = allItems.filter(e => e.status === 'En revisión').length;
-    const pendienteCount = allItems.filter(e => e.status === 'Pendiente de verificación').length;
-
-    const today0 = new Date();
-    today0.setHours(0, 0, 0, 0);
-    const daysFromToday = (dateStr: string) => {
-      const target = new Date(dateStr + 'T12:00:00');
-      return (target.getTime() - today0.getTime()) / (1000 * 60 * 60 * 24);
-    };
-    const nuevosDocsCount = documents.filter(d => {
-      const diff = daysFromToday(d.uploadDate);
-      return diff >= 0 && diff <= 7;
-    }).length;
-
-    return [
-      { label: 'Expedientes en revisión', count: enRevisionCount || 3, icon: Clock, accent: 'amber',
-        onClick: () => onNavigate('expedients', undefined, undefined, undefined, { status: 'En revisión' }) },
-      { label: 'Expedientes pendientes de verificación', count: pendienteCount || 2, icon: AlertCircle, accent: 'orange',
-        onClick: () => onNavigate('expedients', undefined, undefined, undefined, { status: 'Pendiente de verificación' }) },
-      { label: 'Documentos nuevos', count: nuevosDocsCount || 5, icon: FileText, accent: 'blue',
-        onClick: () => onNavigate('documents') },
-    ];
-  }, [allItems, onNavigate]);
+  // Mi bandeja de trabajo — accesos rápidos del sistema
+  const bandejaItems = [
+    { label: 'Nuevo empleado',  icon: UserPlus,        accent: 'blue',  onClick: () => onNavigate('new-employee') },
+    { label: 'Subir documentos', icon: Upload,          accent: 'blue',  onClick: () => onNavigate('documents') },
+    { label: 'Exportar Excel',   icon: FileSpreadsheet, accent: 'green', onClick: () => onNavigate('employees') },
+  ];
 
   const filtered = !search.trim() ? [] : plantaEmployees.filter(emp => {
     const q = search.toLowerCase();
@@ -138,12 +119,6 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
     .filter((emp): emp is typeof employees[0] => Boolean(emp))
     .filter((emp, idx, arr) => arr.findIndex(e => e.id === emp.id) === idx)
     .slice(0, 10);
-
-  const quickActions = [
-    { label: 'Nuevo empleado',  desc: 'Registrar empleado',     icon: UserPlus,        page: 'new-employee' as NavigationPage, accent: 'blue' },
-    { label: 'Nuevo expediente', desc: 'Crear registro médico', icon: FileText,        page: 'expedients' as NavigationPage,   accent: 'blue' },
-    { label: 'Exportar Excel',   desc: 'Reporte de empleados',  icon: FileSpreadsheet, page: 'employees' as NavigationPage,    accent: 'green' },
-  ];
 
   // Actividad reciente — merges live audit-log entries with derived activity from data.
   const recentActivity = useMemo(() => {
@@ -306,30 +281,27 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
         </SheetContent>
       </Sheet>
 
-      {/* Mi bandeja de trabajo */}
+      {/* Mi bandeja de trabajo — accesos rápidos */}
       <div>
         <div className="flex items-center gap-2 mb-1">
           <Inbox size={18} className="text-blue-600" />
           <h3 className="text-base font-bold text-gray-900">Mi bandeja de trabajo</h3>
         </div>
-        <p className="text-sm text-slate-400 mb-4 ml-7">Tareas pendientes de {user.username}</p>
+        <p className="text-sm text-slate-400 mb-4 ml-7">Accesos rápidos del sistema</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {bandejaItems.map(({ label, count, icon: Icon, accent, onClick }) => {
+          {bandejaItems.map(({ label, icon: Icon, accent, onClick }) => {
             const a = accentMap[accent];
             return (
               <button
                 key={label}
                 onClick={onClick}
-                className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 text-left hover:border-blue-200 hover:shadow-md transition-all group"
+                className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 flex items-center gap-4 text-left hover:border-blue-200 hover:shadow-md transition-all group"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`w-10 h-10 ${a.iconBg} rounded-xl flex items-center justify-center`}>
-                    <Icon size={18} className={a.iconText} />
-                  </div>
-                  <ArrowRight size={16} className="text-slate-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
+                <div className={`w-11 h-11 ${a.iconBg} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                  <Icon size={20} className={a.iconText} />
                 </div>
-                <p className="text-2xl font-bold text-gray-900 tracking-tight tabular-nums">{count}</p>
-                <p className="text-sm text-slate-500 mt-1.5 leading-snug">{label}</p>
+                <p className="flex-1 text-sm font-bold text-gray-900">{label}</p>
+                <ArrowRight size={16} className="text-slate-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
               </button>
             );
           })}
@@ -425,28 +397,6 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
             })}
           </div>
         )}
-      </div>
-
-      {/* 3. Quick actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {quickActions.map(({ label, desc, icon: Icon, page, accent }) => (
-          <button
-            key={label}
-            onClick={() => onNavigate(page)}
-            className="card p-5 flex items-center gap-4 text-left hover:border-blue-200 hover:shadow-md transition-all group"
-          >
-            <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${
-              accent === 'green' ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'
-            }`}>
-              <Icon size={20} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-gray-900">{label}</p>
-              <p className="text-xs text-slate-400 mt-0.5">{desc}</p>
-            </div>
-            <ArrowRight size={16} className="text-slate-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
-          </button>
-        ))}
       </div>
 
       {/* Quick search */}
