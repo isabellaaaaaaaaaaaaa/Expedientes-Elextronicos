@@ -32,7 +32,7 @@ export default function RecordActionsMenu({ employee, expedient, documents, user
   const handleDownloadPDF = (e: React.MouseEvent) => {
     e.stopPropagation();
     exportRegistroToPDF(employee, expedient);
-    logAction(expedient.id, user, 'Descarga de PDF');
+    logAction(expedient.id, user, 'Descarga de PDF', 'Descargó el PDF');
     setOpen(false);
   };
 
@@ -42,7 +42,7 @@ export default function RecordActionsMenu({ employee, expedient, documents, user
       onPrintPreview(employee.id, expedient.id);
     } else {
       printRegistro(employee, expedient);
-      logAction(expedient.id, user, 'Impresión');
+      logAction(expedient.id, user, 'Impresión', 'Realizó la impresión');
     }
     setOpen(false);
   };

@@ -5,7 +5,7 @@ import { getDraft, clearDraft } from '../data/newExpedientDraft';
 import CaptureModule from '../components/capture/CaptureModule';
 import UnlockModal from '../components/employee/UnlockModal';
 import { ConfirmDialog } from '../components/ui/confirm-dialog';
-import { BitacoraPanel, HistorialPanel } from '../components/record/AuditPanels';
+import { BitacoraPanel } from '../components/record/AuditPanels';
 import { useExpedientProgress } from '../components/record/ExpedientProgress';
 import { PreviewScreen } from '../components/record/PreviewScreen';
 import { statusConfig } from '../lib/statusConfig';
@@ -20,7 +20,7 @@ interface ExpedientFormProps {
   onNavigate: (page: NavigationPage, employeeId?: string, expedientId?: string, year?: number) => void;
 }
 
-type Tab = 'identificacion' | 'antecedentes' | 'exploracion' | 'resultados' | 'documentos' | 'bitacora' | 'historial';
+type Tab = 'identificacion' | 'antecedentes' | 'exploracion' | 'resultados' | 'documentos' | 'bitacora';
 
 const statusColor: Record<string, string> = {
   'Finalizado':  'bg-green-50 text-green-700 border-green-200',
@@ -240,7 +240,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
       };
       expedients.push(newExp);
       localDocs.forEach(doc => { doc.expedientId = newId; documents.push(doc); });
-      logAction(newId, currentUser.username, 'Creación del expediente');
+      logAction(newId, currentUser.username, 'Creación del expediente', 'Creó el expediente');
       logChange(newId, currentUser.username, 'Estado', '', 'Sin revisar');
       clearDraft();
       setSaved(true);
@@ -252,7 +252,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
         const oldV = String(before[k] ?? ''); const newV = String(existingExpedient[k] ?? '');
         if (oldV !== newV) logChange(existingExpedient.id, currentUser.username, k, oldV, newV);
       });
-      logAction(existingExpedient.id, currentUser.username, 'Edición');
+      logAction(existingExpedient.id, currentUser.username, 'Edición', 'Editó el expediente');
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     }
@@ -273,7 +273,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
     setLocalDocs(prev => [...prev, ...newDocs]);
     if (!isNew) {
       newDocs.forEach(d => documents.push(d));
-      if (existingExpedient) logAction(existingExpedient.id, currentUser.username, 'Carga de documentos');
+      if (existingExpedient) logAction(existingExpedient.id, currentUser.username, 'Carga de documentos', 'Agregó un documento');
     }
     setSaved(false);
   };
@@ -307,8 +307,8 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
       existingExpedient.status = next;
       existingExpedient.updatedAt = new Date().toISOString().slice(0, 10);
       logChange(existingExpedient.id, currentUser.username, 'Estado', prev, next);
-      logAction(existingExpedient.id, currentUser.username, 'Cambio de estado');
-      if (next === 'Finalizado') logAction(existingExpedient.id, currentUser.username, 'Finalización');
+      logAction(existingExpedient.id, currentUser.username, 'Cambio de estado', `Cambió el estado a ${next}`);
+      if (next === 'Finalizado') logAction(existingExpedient.id, currentUser.username, 'Finalización', 'Finalizó el expediente');
     }
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
@@ -341,7 +341,6 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
     { id: 'documentos',     label: 'Documentos' },
     ...(isNew ? [] : [
       { id: 'bitacora' as Tab,   label: 'Bitácora' },
-      { id: 'historial' as Tab,  label: 'Historial' },
     ]),
   ];
 
@@ -806,10 +805,6 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
             <BitacoraPanel expedientId={existingExpedient.id} />
           )}
 
-          {activeTab === 'historial' && existingExpedient && (
-            <HistorialPanel expedientId={existingExpedient.id} />
-          )}
-
           </div>{/* end locked tab content */}
 
           {/* ── LIFECYCLE BAR ── */}
@@ -1044,7 +1039,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Estado</label>
                   <select
                     value={expForm.status}
-                    onChange={e => { const next = e.target.value as ExpedientStatus; setExpForm(f => ({ ...f, status: next })); if (existingExpedient) { logChange(existingExpedient.id, currentUser.username, 'Estado', expForm.status, next); logAction(existingExpedient.id, currentUser.username, 'Cambio de estado'); existingExpedient.status = next; } }}
+                    onChange={e => { const next = e.target.value as ExpedientStatus; setExpForm(f => ({ ...f, status: next })); if (existingExpedient) { logChange(existingExpedient.id, currentUser.username, 'Estado', expForm.status, next); logAction(existingExpedient.id, currentUser.username, 'Cambio de estado', `Cambió el estado a ${next}`); existingExpedient.status = next; } }}
                     className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-gray-800"
                   >
                     <option>Sin revisar</option>
@@ -1080,7 +1075,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                     existingExpedient.status = expForm.status;
                     existingExpedient.responsibleDoctor = expForm.responsibleDoctor;
                     existingExpedient.updatedAt = new Date().toISOString().slice(0, 10);
-                    logAction(existingExpedient.id, currentUser.username, 'Edición');
+                    logAction(existingExpedient.id, currentUser.username, 'Edición', 'Editó el expediente');
                   }
                   setEditFichaOpen(false);
                 }}

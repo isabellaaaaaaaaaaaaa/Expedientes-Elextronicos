@@ -11,7 +11,7 @@ const nowParts = () => {
   };
 };
 
-export function logAction(expedientId: string, user: string, action: string) {
+export function logAction(expedientId: string, user: string, action: string, detail?: string) {
   const { date, time } = nowParts();
   const entry: BitacoraEntry = {
     id: `bit-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -20,6 +20,8 @@ export function logAction(expedientId: string, user: string, action: string) {
     date,
     time,
     action,
+    relativeTime: 'Hace un momento',
+    detail: detail ?? action,
   };
   (bitacoraStore[expedientId] ??= []).unshift(entry);
   return entry;
@@ -101,4 +103,20 @@ export function seedChanges(expedientId: string, entries: ChangeEntry[]) {
   changeStore[expedientId] = [...entries].sort((a, b) =>
     b.date.localeCompare(a.date),
   );
+}
+
+export function seedSimulatedBitacora(
+  expedientId: string,
+  entries: { user: string; action: string; detail: string; relativeTime: string }[],
+) {
+  bitacoraStore[expedientId] = entries.map((e, i) => ({
+    id: `bit-seed-${expedientId}-${i}`,
+    expedientId,
+    user: e.user,
+    date: '',
+    time: '',
+    action: e.action,
+    relativeTime: e.relativeTime,
+    detail: e.detail,
+  }));
 }

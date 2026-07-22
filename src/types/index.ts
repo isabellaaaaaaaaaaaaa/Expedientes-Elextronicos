@@ -86,6 +86,8 @@ export interface BitacoraEntry {
   date: string;
   time: string;
   action: string;
+  relativeTime?: string;
+  detail?: string;
 }
 
 export interface ChangeEntry {
