@@ -87,7 +87,6 @@ export default function TopBar({
   const q = search.trim().toLowerCase();
   const matchedEmployees: Employee[] = q
     ? employees
-        .filter(e => e.planta === planta)
         .filter(e => {
           const full = `${e.firstName} ${e.lastName1} ${e.lastName2}`.toLowerCase();
           return (
@@ -224,7 +223,7 @@ export default function TopBar({
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-800 truncate">{full}</p>
-                          <p className="text-[11px] text-slate-400 truncate">No. {emp.employeeNumber} · {emp.curp}</p>
+                          <p className="text-[11px] text-slate-400 truncate">No. {emp.employeeNumber} · Planta {emp.planta} · {emp.curp}</p>
                         </div>
                         <ChevronRight size={14} className={`flex-shrink-0 ${idx === activeIdx ? 'text-blue-500' : 'text-slate-300'}`} />
                       </button>

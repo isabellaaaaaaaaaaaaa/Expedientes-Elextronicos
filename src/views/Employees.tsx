@@ -14,6 +14,7 @@ import {
   getInitials, statusDot,
   type SortKey, type SortDir,
 } from '../components/employee/EmployeeTable';
+import { EmptyState } from '../components/ui/empty-state';
 
 interface EmployeesProps {
   user: AuthUser;
@@ -261,6 +262,17 @@ export default function Employees({ planta, examDue, onNavigate }: EmployeesProp
           sortKey={sortKey}
           sortDir={sortDir}
           onSortChange={toggleSort}
+          emptyState={
+            <EmptyState
+              icon={Search}
+              title={hasFilters || search.trim() ? 'Sin resultados' : 'No hay empleados registrados'}
+              description={hasFilters || search.trim() ? 'Ajusta los términos de búsqueda o filtros para encontrar empleados.' : 'Comienza registrando al primer empleado de la planta.'}
+              action={hasFilters || search.trim()
+                ? { label: 'Limpiar filtros', icon: X, onClick: clearFilters }
+                : { label: 'Nuevo Empleado', icon: UserPlus, onClick: () => onNavigate('new-employee') }
+              }
+            />
+          }
         />
 
         {/* Pagination */}

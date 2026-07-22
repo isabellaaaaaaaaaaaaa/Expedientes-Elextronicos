@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import {
   FileText, CircleCheck as CheckCircle2, Clock, CircleAlert as AlertCircle,
-  Search, Filter, X, Calendar, ChevronLeft, ChevronRight,
+  Search, Filter, X, Calendar, ChevronLeft, ChevronRight, Plus,
 } from 'lucide-react';
 import { employees, expedients, documents } from '../data/mockData';
 import type { NavigationPage, Planta, ExpedientListFilter } from '../types';
@@ -244,8 +244,11 @@ export default function ExpedientList({ initialFilter, onNavigate }: ExpedientLi
                   <EmptyState
                     icon={FileText}
                     title={hasFilters || search.trim() ? 'Sin resultados' : 'No hay expedientes para mostrar'}
-                    description={hasFilters || search.trim() ? 'Ajusta los términos de búsqueda o filtros para encontrar expedientes.' : undefined}
-                    action={hasFilters || search.trim() ? { label: 'Limpiar filtros', icon: X, onClick: clearFilters } : undefined}
+                    description={hasFilters || search.trim() ? 'Ajusta los términos de búsqueda o filtros para encontrar expedientes.' : 'Aún no se ha registrado ningún expediente. Crea el primero para comenzar.'}
+                    action={hasFilters || search.trim()
+                      ? { label: 'Limpiar filtros', icon: X, onClick: clearFilters }
+                      : { label: 'Crear expediente', icon: Plus, onClick: () => onNavigate('record-type-select') }
+                    }
                   />
                 </td></tr>
               ) : (
