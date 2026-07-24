@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { FolderOpen, CircleCheck as CheckCircle2, Clock, CircleAlert as AlertCircle, ArrowRight, User, FileText, Search, Activity, ChartBar as BarChart3, Users, Timer, X, Inbox, CalendarPlus } from 'lucide-react';
+import { FolderOpen, CircleCheck as CheckCircle2, Clock, CircleAlert as AlertCircle, ArrowRight, User, FileText, Search, Activity, ChartBar as BarChart3, Users, Timer, X, Inbox, CalendarPlus, FileClock } from 'lucide-react';
 import { employees, expedients, documents } from '../data/mockData';
 import type { NavigationPage, AuthUser, Planta, ExpedientListFilter, UserRole } from '../types';
 import { EmployeeTable, avatarColors, getInitials } from '../components/employee/EmployeeTable';
@@ -212,6 +212,18 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
       .slice(0, 10);
   }, [onNavigate]);
 
+  const bitacoraItems = useMemo(() => {
+    return getAllBitacora().slice(0, 12).map(e => {
+      const exp = expedients.find(x => x.id === e.expedientId);
+      const emp = exp ? employees.find(em => em.id === exp.employeeId) : undefined;
+      return {
+        ...e,
+        employeeName: emp ? `${emp.firstName} ${emp.lastName1}` : undefined,
+        onClick: exp ? () => onNavigate('employee-profile', exp.employeeId, undefined, exp.year) : undefined,
+      };
+    });
+  }, [onNavigate]);
+
   const relativeTime = (ts: number) => {
     const diff = Date.now() - ts;
     const mins = Math.floor(diff / 60000);
@@ -245,7 +257,7 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:border-blue-200 hover:text-blue-600 hover:shadow-sm transition-all flex-shrink-0"
         >
           <BarChart3 size={16} />
-          Resumen Ejecutivo
+          Resumen
         </button>
       </div>
 
@@ -263,7 +275,7 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
                   <BarChart3 size={18} className="text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-gray-900">Resumen Ejecutivo</h3>
+                  <h3 className="text-base font-bold text-gray-900">Resumen</h3>
                   <p className="text-xs text-slate-400">Indicadores clave del sistema</p>
                 </div>
               </div>
@@ -492,6 +504,59 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
             <EmptyState icon={User} title="Sin actividad reciente" description="Aún no hay expedientes registrados." compact />
           }
         />
+      </div>
+
+      {/* Bitácora */}
+      <div className="card overflow-hidden">
+        <div className="px-6 py-5 border-b border-slate-100 flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+            <FileClock size={16} className="text-blue-600" />
+          </div>
+          <div>
+            <p className="section-title">Bitácora</p>
+            <p className="section-subtitle">Historial de acciones importantes</p>
+          </div>
+        </div>
+
+        {bitacoraItems.length === 0 ? (
+          <EmptyState icon={FileClock} title="Sin registros en la bitácora" description="Aquí aparecerán las acciones importantes realizadas en el sistema (creación, edición, finalización de expedientes, etc.)." />
+        ) : (
+          <div className="px-6 py-2">
+            {bitacoraItems.slice(0, 8).map((e, idx) => {
+              const isLast = idx === 7;
+              return (
+                <div key={e.id} className="flex gap-3.5 py-3.5">
+                  <div className="relative flex flex-col items-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-white border-2 border-blue-400 flex items-center justify-center z-10">
+                      <FileClock size={14} className="text-blue-500" />
+                    </div>
+                    {!isLast && <div className="absolute top-8 bottom-0 w-px bg-slate-100" />}
+                  </div>
+                  <div className="flex-1 min-w-0 pt-0.5 pb-1">
+                    <p className="text-sm font-semibold text-gray-800">{e.action}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <User size={11} className="text-slate-400" />
+                      <p className="text-xs text-slate-500">{e.user}</p>
+                      {e.employeeName && <p className="text-xs text-slate-400">· {e.employeeName}</p>}
+                    </div>
+                    {e.detail && e.detail !== e.action && (
+                      <p className="text-xs text-slate-500 mt-1">{e.detail}</p>
+                    )}
+                    <p className="text-xs text-slate-400 mt-1">{e.relativeTime ?? `${e.date} · ${e.time}`}</p>
+                  </div>
+                  {e.onClick && (
+                    <button
+                      onClick={e.onClick}
+                      className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors pt-1 flex-shrink-0"
+                    >
+                      Ver <ArrowRight size={12} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
     </div>
