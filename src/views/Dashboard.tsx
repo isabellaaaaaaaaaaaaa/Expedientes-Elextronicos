@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { FolderOpen, CircleCheck as CheckCircle2, Clock, CircleAlert as AlertCircle, ArrowRight, User, FileText, Search, Activity, ChartBar as BarChart3, Users, Timer, X, ChevronDown, Inbox, CalendarPlus } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { FolderOpen, CircleCheck as CheckCircle2, Clock, CircleAlert as AlertCircle, ArrowRight, User, FileText, Search, Activity, ChartBar as BarChart3, Users, Timer, X, Inbox, CalendarPlus } from 'lucide-react';
 import { employees, expedients, documents } from '../data/mockData';
 import type { NavigationPage, AuthUser, Planta, ExpedientListFilter, UserRole } from '../types';
 import { EmployeeTable, avatarColors, getInitials } from '../components/employee/EmployeeTable';
@@ -18,6 +18,15 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
   void _planta;
   const [search, setSearch] = useState('');
   const [summaryOpen, setSummaryOpen] = useState(false);
+
+  useEffect(() => {
+    if (!summaryOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSummaryOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [summaryOpen]);
   // planta is UI context only; all data shown until persistence-based filtering exists
   const plantaEmployees = useMemo(() => employees, [employees]);
   const allItems = useMemo(() => expedients, [expedients]);
@@ -232,40 +241,57 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
           </p>
         </div>
         <button
-          onClick={() => setSummaryOpen(o => !o)}
+          onClick={() => setSummaryOpen(true)}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:border-blue-200 hover:text-blue-600 hover:shadow-sm transition-all flex-shrink-0"
         >
           <BarChart3 size={16} />
-          Resumen
-          <ChevronDown size={15} className={`transition-transform ${summaryOpen ? 'rotate-180' : ''}`} />
+          Resumen Ejecutivo
         </button>
       </div>
 
-      {/* Resumen — panel desplegable de indicadores ejecutivos */}
+      {/* Resumen Ejecutivo — panel lateral derecho */}
       {summaryOpen && (
-        <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6">
-          <div className="flex items-center gap-2 mb-5">
-            <BarChart3 size={18} className="text-blue-600" />
-            <div>
-              <h3 className="text-base font-bold text-gray-900">Resumen</h3>
-              <p className="text-xs text-slate-400">Indicadores clave</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {executiveSummary.map(({ label, value, icon: Icon, accent, hint }) => {
-              const a = accentMap[accent];
-              return (
-                <div key={label} className="rounded-xl border border-slate-100 p-4">
-                  <div className={`w-9 h-9 ${a.iconBg} rounded-lg flex items-center justify-center mb-3`}>
-                    <Icon size={16} className={a.iconText} />
-                  </div>
-                  <p className="text-2xl font-bold text-gray-900 tracking-tight tabular-nums">{value}</p>
-                  <p className="text-xs font-semibold text-slate-500 mt-1 leading-snug">{label}</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">{hint}</p>
+        <div className="fixed inset-0 z-50">
+          <div
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] transition-opacity duration-300"
+            onClick={() => setSummaryOpen(false)}
+          />
+          <aside className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl flex flex-col animate-[slideInRight_0.3s_ease-out]">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                  <BarChart3 size={18} className="text-blue-600" />
                 </div>
-              );
-            })}
-          </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">Resumen Ejecutivo</h3>
+                  <p className="text-xs text-slate-400">Indicadores clave del sistema</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSummaryOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-6 py-5">
+              <div className="grid grid-cols-2 gap-3">
+                {executiveSummary.map(({ label, value, icon: Icon, accent, hint }) => {
+                  const a = accentMap[accent];
+                  return (
+                    <div key={label} className="rounded-xl border border-slate-100 p-4 hover:border-slate-200 transition-colors">
+                      <div className={`w-9 h-9 ${a.iconBg} rounded-lg flex items-center justify-center mb-3`}>
+                        <Icon size={16} className={a.iconText} />
+                      </div>
+                      <p className="text-2xl font-bold text-gray-900 tracking-tight tabular-nums">{value}</p>
+                      <p className="text-xs font-semibold text-slate-500 mt-1 leading-snug">{label}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">{hint}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </aside>
         </div>
       )}
 
@@ -324,6 +350,58 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
         </div>
       </div>
 
+      {/* Búsqueda rápida */}
+      <div className="card p-6">
+        <p className="section-title">Búsqueda rápida</p>
+        <p className="section-subtitle">Localiza un empleado por nombre, número o CURP</p>
+        <div className="relative mt-4">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Número de empleado, nombre, apellido o CURP..."
+            className="input-base pl-11"
+          />
+        </div>
+
+        {search.trim() && filtered.length > 0 && (
+          <div className="mt-4 divide-y divide-slate-50">
+            {filtered.slice(0, 5).map((emp, idx) => {
+              const colorClass = avatarColors[idx % avatarColors.length];
+              return (
+                <button
+                  key={emp.id}
+                  onClick={() => onNavigate('employee-profile', emp.id)}
+                  className="w-full flex items-center gap-3 py-3 hover:bg-slate-50/50 -mx-2 px-2 rounded-lg transition-colors text-left"
+                >
+                  <div className={`w-8 h-8 rounded-full ${colorClass} flex items-center justify-center flex-shrink-0 text-[11px] font-bold`}>
+                    {getInitials(emp.firstName, emp.lastName1)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-gray-800 truncate">{emp.firstName} {emp.lastName1}</p>
+                    <p className="text-xs text-slate-400">{emp.employeeNumber} · {emp.department}</p>
+                  </div>
+                  <ArrowRight size={14} className="text-slate-300" />
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {search.trim() && filtered.length === 0 && (
+          <div className="mt-4">
+            <EmptyState
+              icon={Search}
+              title={`Sin resultados para "${search}"`}
+              description="Prueba con otro nombre, número de empleado o CURP."
+              action={{ label: 'Limpiar búsqueda', icon: X, onClick: () => setSearch('') }}
+              compact
+            />
+          </div>
+        )}
+      </div>
+
       {/* Actividad reciente */}
       <div className="card overflow-hidden">
         <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
@@ -380,58 +458,6 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
               </button>
             </div>
           </>
-        )}
-      </div>
-
-      {/* Quick search */}
-      <div className="card p-6">
-        <p className="section-title">Búsqueda rápida</p>
-        <p className="section-subtitle">Localiza un empleado por nombre, número o CURP</p>
-        <div className="relative mt-4">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Número de empleado, nombre, apellido o CURP..."
-            className="input-base pl-11"
-          />
-        </div>
-
-        {search.trim() && filtered.length > 0 && (
-          <div className="mt-4 divide-y divide-slate-50">
-            {filtered.slice(0, 5).map((emp, idx) => {
-              const colorClass = avatarColors[idx % avatarColors.length];
-              return (
-                <button
-                  key={emp.id}
-                  onClick={() => onNavigate('employee-profile', emp.id)}
-                  className="w-full flex items-center gap-3 py-3 hover:bg-slate-50/50 -mx-2 px-2 rounded-lg transition-colors text-left"
-                >
-                  <div className={`w-8 h-8 rounded-full ${colorClass} flex items-center justify-center flex-shrink-0 text-[11px] font-bold`}>
-                    {getInitials(emp.firstName, emp.lastName1)}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-gray-800 truncate">{emp.firstName} {emp.lastName1}</p>
-                    <p className="text-xs text-slate-400">{emp.employeeNumber} · {emp.department}</p>
-                  </div>
-                  <ArrowRight size={14} className="text-slate-300" />
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {search.trim() && filtered.length === 0 && (
-          <div className="mt-4">
-            <EmptyState
-              icon={Search}
-              title={`Sin resultados para "${search}"`}
-              description="Prueba con otro nombre, número de empleado o CURP."
-              action={{ label: 'Limpiar búsqueda', icon: X, onClick: () => setSearch('') }}
-              compact
-            />
-          </div>
         )}
       </div>
 
