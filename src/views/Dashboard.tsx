@@ -307,14 +307,18 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
           {/* Lado izquierdo: gráfica de avance */}
           <div className="space-y-5">
             {[
-              { label: 'Finalizados',  value: finalizado,  pct: totalExpedients ? (finalizado / totalExpedients) * 100 : 0, bar: 'bg-green-500',  track: 'bg-green-50' },
-              { label: 'Pendiente',    value: pendiente,   pct: totalExpedients ? (pendiente / totalExpedients) * 100 : 0, bar: 'bg-orange-500', track: 'bg-orange-50' },
-              { label: 'En revisión',  value: enRevision,   pct: totalExpedients ? (enRevision / totalExpedients) * 100 : 0, bar: 'bg-amber-500',  track: 'bg-amber-50' },
-              { label: 'Sin revisar',  value: sinRevisar,   pct: totalExpedients ? (sinRevisar / totalExpedients) * 100 : 0, bar: 'bg-slate-400',  track: 'bg-slate-100' },
+              { label: 'Finalizados',  value: finalizado,  pct: totalExpedients ? (finalizado / totalExpedients) * 100 : 0, bar: 'bg-green-500',  track: 'bg-green-50',  status: 'Finalizado' },
+              { label: 'Pendiente',    value: pendiente,   pct: totalExpedients ? (pendiente / totalExpedients) * 100 : 0, bar: 'bg-orange-500', track: 'bg-orange-50', status: 'Pendiente de verificación' },
+              { label: 'En revisión',  value: enRevision,   pct: totalExpedients ? (enRevision / totalExpedients) * 100 : 0, bar: 'bg-amber-500',  track: 'bg-amber-50',  status: 'En revisión' },
+              { label: 'Sin revisar',  value: sinRevisar,   pct: totalExpedients ? (sinRevisar / totalExpedients) * 100 : 0, bar: 'bg-slate-400',  track: 'bg-slate-100', status: 'Sin revisar' },
             ].map(item => (
-              <div key={item.label}>
+              <button
+                key={item.label}
+                onClick={() => onNavigate('expedients', undefined, undefined, undefined, { status: item.status })}
+                className="block w-full text-left group rounded-lg p-1 -m-1 hover:bg-slate-50 transition-colors cursor-pointer"
+              >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold text-slate-600">{item.label}</span>
+                  <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">{item.label}</span>
                   <span className="text-sm font-semibold text-slate-400 tabular-nums">{item.value} / {totalExpedients}</span>
                 </div>
                 <div className={`h-2 rounded-full overflow-hidden ${item.track}`}>
@@ -323,27 +327,31 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
                     style={{ width: `${item.pct}%` }}
                   />
                 </div>
-              </div>
+              </button>
             ))}
           </div>
 
           {/* Lado derecho: indicadores numéricos */}
           <div className="grid grid-cols-2 gap-4">
             {[
-              { label: 'Total de expedientes', value: totalExpedients, icon: FolderOpen,   accent: 'blue' },
-              { label: 'Finalizados',          value: finalizado,      icon: CheckCircle2, accent: 'green' },
-              { label: 'En revisión',          value: enRevision,      icon: Clock,        accent: 'amber' },
-              { label: 'Pendientes de verificación', value: pendiente, icon: AlertCircle,  accent: 'orange' },
-            ].map(({ label, value, icon: Icon, accent }) => {
+              { label: 'Total de expedientes', value: totalExpedients, icon: FolderOpen,   accent: 'blue',   status: undefined as string | undefined },
+              { label: 'Finalizados',          value: finalizado,      icon: CheckCircle2, accent: 'green',  status: 'Finalizado' },
+              { label: 'En revisión',          value: enRevision,      icon: Clock,        accent: 'amber',  status: 'En revisión' },
+              { label: 'Pendientes de verificación', value: pendiente, icon: AlertCircle,  accent: 'orange', status: 'Pendiente de verificación' },
+            ].map(({ label, value, icon: Icon, accent, status }) => {
               const a = accentMap[accent];
               return (
-                <div key={label} className="rounded-xl border border-slate-100 p-4 bg-slate-50/40">
+                <button
+                  key={label}
+                  onClick={() => onNavigate('expedients', undefined, undefined, undefined, status ? { status } : undefined)}
+                  className="text-left rounded-xl border border-slate-100 p-4 bg-slate-50/40 hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer w-full"
+                >
                   <div className={`w-9 h-9 ${a.iconBg} rounded-lg flex items-center justify-center mb-3`}>
                     <Icon size={16} className={a.iconText} />
                   </div>
                   <p className="text-2xl font-bold text-gray-900 tracking-tight tabular-nums">{value.toLocaleString()}</p>
                   <p className="text-xs font-semibold text-slate-500 mt-1 leading-snug">{label}</p>
-                </div>
+                </button>
               );
             })}
           </div>
