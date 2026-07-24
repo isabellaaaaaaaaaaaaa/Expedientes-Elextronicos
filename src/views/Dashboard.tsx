@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { FolderOpen, CircleCheck as CheckCircle2, Clock, CircleAlert as AlertCircle, ArrowRight, User, FileText, Search, Activity, ChartBar as BarChart3, Users, Timer, X } from 'lucide-react';
+import { FolderOpen, CircleCheck as CheckCircle2, Clock, CircleAlert as AlertCircle, ArrowRight, User, FileText, Search, Activity, ChartBar as BarChart3, Users, Timer, X, ChevronDown, Inbox, CalendarPlus } from 'lucide-react';
 import { employees, expedients, documents } from '../data/mockData';
 import type { NavigationPage, AuthUser, Planta, ExpedientListFilter, UserRole } from '../types';
 import { EmployeeTable, avatarColors, getInitials } from '../components/employee/EmployeeTable';
@@ -17,6 +17,7 @@ interface DashboardProps {
 export default function Dashboard({ user, planta: _planta, onNavigate }: DashboardProps) {
   void _planta;
   const [search, setSearch] = useState('');
+  const [summaryOpen, setSummaryOpen] = useState(false);
   // planta is UI context only; all data shown until persistence-based filtering exists
   const plantaEmployees = useMemo(() => employees, [employees]);
   const allItems = useMemo(() => expedients, [expedients]);
@@ -59,9 +60,12 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
     const totalExps = expedients.length;
     const finalizados = expedients.filter(e => e.status === 'Finalizado').length;
     const enRev = expedients.filter(e => e.status === 'En revisión').length;
+    const sinRev = expedients.filter(e => e.status === 'Sin revisar').length;
     const pendientesVerif = expedients.filter(e => e.status === 'Pendiente de verificación').length;
+    const hoy = new Date().toISOString().slice(0, 10);
+    const creadosHoy = expedients.filter(e => e.createdAt === hoy).length;
 
-    // Tiempo promedio de captura (días entre createdAt y updatedAt)
+    // Tiempo promedio de digitalización (días entre createdAt y updatedAt)
     const tiempos = expedients
       .map(e => {
         const c = new Date(e.createdAt + 'T00:00:00').getTime();
@@ -73,12 +77,14 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
       : 0;
 
     return [
-      { label: 'Total de empleados',           value: totalEmpleados.toLocaleString(),     icon: Users,             accent: 'blue',   hint: 'Plantilla activa' },
-      { label: 'Total de expedientes',          value: totalExps.toLocaleString(),          icon: FolderOpen,        accent: 'blue',   hint: 'Registros médicos' },
-      { label: 'Expedientes finalizados',       value: finalizados.toLocaleString(),        icon: CheckCircle2,      accent: 'green',  hint: 'Completados' },
-      { label: 'Expedientes en revisión',       value: enRev.toLocaleString(),              icon: Clock,             accent: 'amber',  hint: 'En proceso' },
-      { label: 'Pendientes de verificación',    value: pendientesVerif.toLocaleString(),    icon: AlertCircle,       accent: 'orange', hint: 'Requieren atención' },
-      { label: 'Tiempo prom. de captura',       value: `${tiempoPromedio} d`,              icon: Timer,             accent: 'slate',  hint: 'Días de ciclo' },
+      { label: 'Total de empleados',              value: totalEmpleados.toLocaleString(),     icon: Users,        accent: 'blue',   hint: 'Plantilla activa' },
+      { label: 'Total de expedientes',             value: totalExps.toLocaleString(),          icon: FolderOpen,   accent: 'blue',   hint: 'Registros médicos' },
+      { label: 'Expedientes finalizados',          value: finalizados.toLocaleString(),        icon: CheckCircle2, accent: 'green',  hint: 'Completados' },
+      { label: 'Expedientes en revisión',          value: enRev.toLocaleString(),              icon: Clock,        accent: 'amber',  hint: 'En proceso' },
+      { label: 'Expedientes sin revisar',          value: sinRev.toLocaleString(),             icon: Inbox,        accent: 'slate',  hint: 'Sin iniciar' },
+      { label: 'Pendientes de verificación',       value: pendientesVerif.toLocaleString(),    icon: AlertCircle,  accent: 'orange', hint: 'Requieren atención' },
+      { label: 'Tiempo prom. de digitalización',   value: `${tiempoPromedio} d`,              icon: Timer,        accent: 'slate',  hint: 'Días de ciclo' },
+      { label: 'Expedientes creados hoy',          value: creadosHoy.toLocaleString(),         icon: CalendarPlus, accent: 'blue',   hint: 'Nuevos hoy' },
     ];
   }, []);
 
@@ -215,42 +221,53 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
   return (
     <div className="space-y-8">
       {/* Greeting + Resumen button */}
-      <div>
-        <h2 className="text-xl font-bold text-gray-900">
-          {greeting()}, {roleHonorific(user.role)} {user.username} <span className="inline-block">👋</span>
-        </h2>
-        <p className="text-sm text-slate-400 mt-0.5">Bienvenido al sistema de gestión de expedientes médicos</p>
-        <p className="text-xs text-slate-300 mt-0.5 capitalize">
-          {new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">
+            {greeting()}, {roleHonorific(user.role)} {user.username}
+          </h2>
+          <p className="text-sm text-slate-400 mt-0.5">Bienvenido al sistema de gestión de expedientes médicos</p>
+          <p className="text-xs text-slate-300 mt-0.5 capitalize">
+            {new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          </p>
+        </div>
+        <button
+          onClick={() => setSummaryOpen(o => !o)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:border-blue-200 hover:text-blue-600 hover:shadow-sm transition-all flex-shrink-0"
+        >
+          <BarChart3 size={16} />
+          Resumen
+          <ChevronDown size={15} className={`transition-transform ${summaryOpen ? 'rotate-180' : ''}`} />
+        </button>
       </div>
 
-      {/* Resumen Ejecutivo — KPIs prominentes */}
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <BarChart3 size={18} className="text-blue-600" />
-          <h3 className="text-base font-bold text-gray-900">Resumen Ejecutivo</h3>
-        </div>
-        <p className="text-sm text-slate-400 mb-4 ml-7">Indicadores clave del sistema</p>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          {executiveSummary.map(({ label, value, icon: Icon, accent, hint }) => {
-            const a = accentMap[accent];
-            return (
-              <div
-                key={label}
-                className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5"
-              >
-                <div className={`w-10 h-10 ${a.iconBg} rounded-xl flex items-center justify-center mb-4`}>
-                  <Icon size={18} className={a.iconText} />
+      {/* Resumen — panel desplegable de indicadores ejecutivos */}
+      {summaryOpen && (
+        <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6">
+          <div className="flex items-center gap-2 mb-5">
+            <BarChart3 size={18} className="text-blue-600" />
+            <div>
+              <h3 className="text-base font-bold text-gray-900">Resumen</h3>
+              <p className="text-xs text-slate-400">Indicadores clave</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {executiveSummary.map(({ label, value, icon: Icon, accent, hint }) => {
+              const a = accentMap[accent];
+              return (
+                <div key={label} className="rounded-xl border border-slate-100 p-4">
+                  <div className={`w-9 h-9 ${a.iconBg} rounded-lg flex items-center justify-center mb-3`}>
+                    <Icon size={16} className={a.iconText} />
+                  </div>
+                  <p className="text-2xl font-bold text-gray-900 tracking-tight tabular-nums">{value}</p>
+                  <p className="text-xs font-semibold text-slate-500 mt-1 leading-snug">{label}</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">{hint}</p>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 tracking-tight tabular-nums">{value}</p>
-                <p className="text-sm font-semibold text-slate-600 mt-1.5 leading-snug">{label}</p>
-                <p className="text-xs text-slate-400 mt-0.5">{hint}</p>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Avance de digitalización — gráfica + indicadores unificados */}
       <div className="card p-6">
