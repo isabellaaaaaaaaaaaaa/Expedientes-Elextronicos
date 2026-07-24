@@ -137,6 +137,7 @@ export default function App() {
       )}
       {currentPage === 'expedient-form' && selectedEmployeeId && (
         <ExpedientForm
+          key={selectedExpedientId ?? 'new'}
           employeeId={selectedEmployeeId}
           expedientId={selectedExpedientId}
           currentUser={user}

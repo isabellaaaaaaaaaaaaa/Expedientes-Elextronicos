@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Camera, Save, User, Building2, Phone, FileText, UserCheck, CircleCheck as CheckCircle2, ChevronRight, Plus, Trash2, FolderOpen, Stethoscope, FlaskConical, ClipboardList, Flag, Lock, Upload, Pencil, X } from 'lucide-react';
+import { ArrowLeft, Camera, Save, User, Building2, Phone, FileText, UserCheck, CircleCheck as CheckCircle2, ChevronLeft, ChevronRight, Plus, Trash2, FolderOpen, Stethoscope, FlaskConical, ClipboardList, Flag, Lock, Upload, Pencil, X, FileDown, Printer } from 'lucide-react';
 import { employees, expedients, documents } from '../data/mockData';
 import { getDraft, clearDraft } from '../data/newExpedientDraft';
 import CaptureModule from '../components/capture/CaptureModule';
@@ -9,6 +9,7 @@ import { BitacoraPanel } from '../components/record/AuditPanels';
 import { useExpedientProgress } from '../components/record/ExpedientProgress';
 import { statusConfig } from '../lib/statusConfig';
 import { logAction, logChange } from '../lib/auditLog';
+import { exportRegistroToPDF } from '../lib/exportUtils';
 import { EmptyState } from '../components/ui/empty-state';
 import type { NavigationPage, Employee, Expedient, EmployeeSnapshot, CapturedItem, DocumentType, MedDocument, ExpedientStatus } from '../types';
 
@@ -292,6 +293,13 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
   const { pct, pending: pendingSections } = useExpedientProgress(expForm);
   const progressColor = pct === 100 ? 'bg-green-500' : pct >= 50 ? 'bg-blue-500' : 'bg-amber-500';
 
+  const yearExpedients = !isNew
+    ? expedients.filter(e => e.employeeId === employeeId && e.year === expForm.year).sort((a, b) => a.date.localeCompare(b.date))
+    : [];
+  const currentIndex = yearExpedients.findIndex(e => e.id === expedientId);
+  const prevExp = currentIndex > 0 ? yearExpedients[currentIndex - 1] : null;
+  const nextExp = currentIndex >= 0 && currentIndex < yearExpedients.length - 1 ? yearExpedients[currentIndex + 1] : null;
+
   const changeStatus = (next: ExpedientStatus) => {
     if (next === expForm.status) return;
     if (next === 'Finalizado') { setConfirmFinalize(true); return; }
@@ -380,21 +388,60 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
 
   return (
     <div className="max-w-6xl space-y-5">
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-sm text-slate-400">
-        <button onClick={() => onNavigate('employee-profile', employeeId, undefined, expForm.year)} className="flex items-center gap-1.5 hover:text-blue-500 font-medium transition-colors">
-          <ArrowLeft size={13} />
-          Regresar
-        </button>
-        <ChevronRight size={11} className="text-slate-300" />
-        <span className="text-slate-600 font-semibold">
-          {expForm.year}
-        </span>
-        <ChevronRight size={11} className="text-slate-300" />
-        <span className="text-slate-600 font-semibold">
-          {isNew ? 'Nuevo registro' : (expForm.recordType || `Expediente ${expForm.year}`)}
-        </span>
-      </nav>
+      {/* Breadcrumb + acciones superiores */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <nav className="flex items-center gap-1.5 text-sm text-slate-400">
+          <button onClick={() => onNavigate('employee-profile', employeeId, undefined, expForm.year)} className="flex items-center gap-1.5 hover:text-blue-500 font-medium transition-colors">
+            <ArrowLeft size={13} />
+            Regresar
+          </button>
+          <ChevronRight size={11} className="text-slate-300" />
+          <span className="text-slate-600 font-semibold">
+            {expForm.year}
+          </span>
+          <ChevronRight size={11} className="text-slate-300" />
+          <span className="text-slate-600 font-semibold">
+            {isNew ? 'Nuevo registro' : (expForm.recordType || `Expediente ${expForm.year}`)}
+          </span>
+        </nav>
+        {!isNew && (
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => prevExp && onNavigate('expedient-form', employeeId, prevExp.id, expForm.year)}
+                disabled={!prevExp}
+                className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400"
+                title="Expediente anterior"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                onClick={() => nextExp && onNavigate('expedient-form', employeeId, nextExp.id, expForm.year)}
+                disabled={!nextExp}
+                className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400"
+                title="Expediente siguiente"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+            <div className="w-px h-6 bg-slate-200" />
+            <button
+              onClick={() => { if (existingExpedient && employee) { exportRegistroToPDF(employee, existingExpedient); logAction(existingExpedient.id, currentUser.username, 'Descarga de PDF', 'Descargó el PDF'); } }}
+              className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-lg transition-colors"
+              title="Descargar expediente"
+            >
+              <FileDown size={15} className="text-slate-500" /> Descargar
+            </button>
+            <button
+              onClick={() => onNavigate('print-preview', employeeId, expedientId)}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm shadow-blue-200"
+              title="Imprimir expediente"
+            >
+              <Printer size={15} /> Imprimir
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* ── BARRA DE PROGRESO SUPERIOR ── */}
       {!isFinalized && (
