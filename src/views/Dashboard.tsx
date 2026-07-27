@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
-import { FolderOpen, CircleCheck as CheckCircle2, Clock, CircleAlert as AlertCircle, ArrowRight, User, FileText, Search, Activity, ChartBar as BarChart3, Users, Timer, X, Inbox, CalendarPlus, FileClock } from 'lucide-react';
+import { FolderOpen, CircleCheck as CheckCircle2, Clock, CircleAlert as AlertCircle, ArrowRight, User, FileText, Activity, ChartBar as BarChart3, Users, Timer, X, Inbox, CalendarPlus, FileClock } from 'lucide-react';
 import { employees, expedients, documents } from '../data/mockData';
 import type { NavigationPage, AuthUser, Planta, ExpedientListFilter, UserRole } from '../types';
-import { EmployeeTable, avatarColors, getInitials } from '../components/employee/EmployeeTable';
+import { EmployeeTable } from '../components/employee/EmployeeTable';
 import { EmptyState } from '../components/ui/empty-state';
 import { getAllBitacora } from '../lib/auditLog';
 import { toast } from 'sonner';
@@ -16,7 +16,6 @@ interface DashboardProps {
 
 export default function Dashboard({ user, planta: _planta, onNavigate }: DashboardProps) {
   void _planta;
-  const [search, setSearch] = useState('');
   const [summaryOpen, setSummaryOpen] = useState(false);
 
   useEffect(() => {
@@ -96,18 +95,6 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
       { label: 'Expedientes creados hoy',          value: creadosHoy.toLocaleString(),         icon: CalendarPlus, accent: 'blue',   hint: 'Nuevos hoy' },
     ];
   }, []);
-
-  const filtered = !search.trim() ? [] : plantaEmployees.filter(emp => {
-    const q = search.toLowerCase();
-    return (
-      emp.employeeNumber.toLowerCase().includes(q) ||
-      emp.firstName.toLowerCase().includes(q) ||
-      emp.lastName1.toLowerCase().includes(q) ||
-      emp.lastName2.toLowerCase().includes(q) ||
-      emp.curp.toLowerCase().includes(q) ||
-      emp.department.toLowerCase().includes(q)
-    );
-  });
 
   const recentEmployees = [...allItems]
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
@@ -368,58 +355,6 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
             })}
           </div>
         </div>
-      </div>
-
-      {/* Búsqueda rápida */}
-      <div className="card p-6">
-        <p className="section-title">Búsqueda rápida</p>
-        <p className="section-subtitle">Localiza un empleado por nombre, número o CURP</p>
-        <div className="relative mt-4">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Número de empleado, nombre, apellido o CURP..."
-            className="input-base pl-11"
-          />
-        </div>
-
-        {search.trim() && filtered.length > 0 && (
-          <div className="mt-4 divide-y divide-slate-50">
-            {filtered.slice(0, 5).map((emp, idx) => {
-              const colorClass = avatarColors[idx % avatarColors.length];
-              return (
-                <button
-                  key={emp.id}
-                  onClick={() => onNavigate('employee-profile', emp.id)}
-                  className="w-full flex items-center gap-3 py-3 hover:bg-slate-50/50 -mx-2 px-2 rounded-lg transition-colors text-left"
-                >
-                  <div className={`w-8 h-8 rounded-full ${colorClass} flex items-center justify-center flex-shrink-0 text-[11px] font-bold`}>
-                    {getInitials(emp.firstName, emp.lastName1)}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-gray-800 truncate">{emp.firstName} {emp.lastName1}</p>
-                    <p className="text-xs text-slate-400">{emp.employeeNumber} · {emp.department}</p>
-                  </div>
-                  <ArrowRight size={14} className="text-slate-300" />
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {search.trim() && filtered.length === 0 && (
-          <div className="mt-4">
-            <EmptyState
-              icon={Search}
-              title={`Sin resultados para "${search}"`}
-              description="Prueba con otro nombre, número de empleado o CURP."
-              action={{ label: 'Limpiar búsqueda', icon: X, onClick: () => setSearch('') }}
-              compact
-            />
-          </div>
-        )}
       </div>
 
       {/* Actividad reciente */}

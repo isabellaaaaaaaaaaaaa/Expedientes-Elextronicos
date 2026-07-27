@@ -50,13 +50,13 @@ export default function Login({ onLogin }: LoginProps) {
 
         <div className="relative z-10 max-w-sm">
           <h1 className="text-white text-3xl font-bold leading-tight">
-            Gestión de expedientes médicos
+            Digitalización de expedientes médicos
           </h1>
           <p className="text-blue-100 mt-4 text-sm leading-relaxed">
-            Plataforma centralizada para la administración de expedientes médicos del personal, con seguimiento de registros, documentos y estados en tiempo real.
+            Plataforma para la digitalización y almacenamiento de expedientes médicos existentes. Centraliza la información médica del personal en formato electrónico, sustituyendo el archivo físico por un expediente digital que facilita la consulta segura, la organización y la administración documental.
           </p>
           <div className="mt-8 space-y-3">
-            {['Expedientes digitalizados', 'Registros médicos por año', 'Documentos adjuntos por empleado'].map((f, i) => (
+            {['Expedientes digitalizados', 'Consulta segura y centralizada', 'Archivo electrónico por empleado'].map((f, i) => (
               <div key={i} className="flex items-center gap-3">
                 <div className="w-1.5 h-1.5 bg-white/60 rounded-full" />
                 <span className="text-blue-50 text-sm">{f}</span>
