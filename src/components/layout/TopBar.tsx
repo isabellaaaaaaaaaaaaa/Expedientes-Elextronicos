@@ -137,7 +137,7 @@ export default function TopBar({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const leftOffset = collapsed ? 'ml-[68px]' : 'ml-[220px]';
+  const leftOffset = collapsed ? 'ml-[68px]' : 'ml-[224px]';
 
   const handleNotifClick = (n: NotificationCategory) => {
     onNotifAction(n.id, { page: n.action.page, statusFilter: n.action.statusFilter, examDue: n.action.examDue });
@@ -146,40 +146,40 @@ export default function TopBar({
 
   return (
     <header
-      className={`fixed top-0 ${leftOffset} right-0 h-16 bg-white/80 backdrop-blur-md border-b border-slate-200/70 flex items-center justify-between px-6 z-20 transition-[margin] duration-200`}
+      className={`fixed top-0 ${leftOffset} right-0 h-14 bg-white/85 backdrop-blur-md border-b border-slate-200/70 flex items-center justify-between px-5 z-20 transition-[margin] duration-200`}
     >
       {/* Left: page title */}
       <div className="flex items-center gap-3 min-w-0">
         <div className="min-w-0">
-          <h1 className="text-base font-bold text-gray-900 truncate">{pageTitles[currentPage]}</h1>
+          <h1 className="text-[15px] font-bold text-gray-900 truncate leading-tight">{pageTitles[currentPage]}</h1>
         </div>
       </div>
 
       {/* Right: planta selector, search, notifications, profile */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         {/* Planta selector */}
         <div className="relative" ref={plantaRef}>
           <button
             onClick={() => setPlantaOpen(o => !o)}
             className="flex items-center gap-1.5 h-9 px-2.5 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200/70 rounded-lg transition-colors"
           >
-            <Factory size={14} className="text-slate-500" />
+            <Factory size={15} className="text-slate-500" strokeWidth={2} />
             <span className="tabular-nums">{planta}</span>
-            <ChevronDown size={13} className={`text-slate-400 transition-transform ${plantaOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown size={14} className={`text-slate-400 transition-transform ${plantaOpen ? 'rotate-180' : ''}`} />
           </button>
           {plantaOpen && (
-            <div className="absolute right-0 top-full mt-1.5 w-44 bg-white rounded-xl shadow-lg border border-slate-200/70 py-1.5 z-50">
+            <div className="absolute right-0 top-full mt-1.5 w-44 bg-white rounded-xl shadow-lg border border-slate-200/70 py-1.5 z-50 origin-top-right animate-fade-in">
               <p className="px-3.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cambiar planta</p>
               {PLANTAS.map(p => (
                 <button
                   key={p}
                   onClick={() => { onPlantaChange(p); setPlantaOpen(false); }}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 text-sm transition-colors text-left ${
-                    p === planta ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-600 hover:bg-slate-50'
+                    p === planta ? 'bg-red-50 text-red-700 font-bold' : 'text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  <span className="flex items-center gap-2"><Factory size={13} className="text-slate-400" /> Planta {p}</span>
-                  {p === planta && <CheckCircle2 size={14} className="text-blue-600" />}
+                  <span className="flex items-center gap-2"><Factory size={14} className="text-slate-400" strokeWidth={2} /> Planta {p}</span>
+                  {p === planta && <CheckCircle2 size={15} className="text-red-600" />}
                 </button>
               ))}
             </div>
@@ -188,7 +188,7 @@ export default function TopBar({
 
         {/* Search */}
         <div className="relative hidden lg:block w-72" ref={searchRef}>
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" size={15} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" size={16} strokeWidth={2} />
           <input
             type="text"
             value={search}
@@ -196,10 +196,10 @@ export default function TopBar({
             onFocus={() => setSearchFocused(true)}
             onKeyDown={handleSearchKey}
             placeholder="Buscar empleado, CURP, RFC..."
-            className="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 border border-transparent rounded-lg text-gray-700 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-blue-500/10 transition-all"
+            className="w-full pl-9 pr-3 h-9 text-sm bg-slate-50 border border-transparent rounded-lg text-gray-700 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-red-500/10 transition-all"
           />
           {searchFocused && q && (
-            <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-lg border border-slate-200/70 z-50 overflow-hidden">
+            <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-lg border border-slate-200/70 z-50 overflow-hidden animate-fade-in">
               {matchedEmployees.length === 0 ? (
                 <div className="py-6 text-center">
                   <p className="text-sm text-slate-400 font-medium">Sin resultados para "{search}"</p>
@@ -216,16 +216,16 @@ export default function TopBar({
                         key={emp.id}
                         onMouseEnter={() => setActiveIdx(idx)}
                         onClick={() => selectEmployee(emp)}
-                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-left transition-colors ${idx === activeIdx ? 'bg-blue-50' : 'hover:bg-slate-50'}`}
+                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-left transition-colors ${idx === activeIdx ? 'bg-red-50' : 'hover:bg-slate-50'}`}
                       >
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center flex-shrink-0">
                           <span className="text-[10px] font-bold text-white">{emp.firstName.slice(0,1)}{emp.lastName1.slice(0,1)}</span>
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-800 truncate">{full}</p>
                           <p className="text-[11px] text-slate-400 truncate">No. {emp.employeeNumber} · Planta {emp.planta} · {emp.curp}</p>
                         </div>
-                        <ChevronRight size={14} className={`flex-shrink-0 ${idx === activeIdx ? 'text-blue-500' : 'text-slate-300'}`} />
+                        <ChevronRight size={15} className={`flex-shrink-0 ${idx === activeIdx ? 'text-red-500' : 'text-slate-300'}`} />
                       </button>
                     );
                   })}
@@ -241,22 +241,22 @@ export default function TopBar({
             onClick={() => setNotifOpen(o => !o)}
             className="relative w-9 h-9 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
           >
-            <Bell size={18} />
+            <Bell size={18} strokeWidth={2} />
             {notifCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 flex items-center justify-center bg-blue-500 text-white text-[10px] font-bold rounded-full ring-2 ring-white">
+              <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 flex items-center justify-center bg-[hsl(355,78%,51%)] text-white text-[10px] font-bold rounded-full ring-2 ring-white">
                 {notifCount > 9 ? '9+' : notifCount}
               </span>
             )}
           </button>
 
           {notifOpen && (
-            <div className="absolute right-0 top-full mt-1.5 w-80 bg-white rounded-xl shadow-lg border border-slate-200/70 z-50 origin-top-right overflow-hidden">
+            <div className="absolute right-0 top-full mt-1.5 w-80 bg-white rounded-xl shadow-lg border border-slate-200/70 z-50 origin-top-right overflow-hidden animate-fade-in">
               <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Bell size={15} className="text-slate-500" />
+                  <Bell size={15} className="text-slate-500" strokeWidth={2} />
                   <p className="text-sm font-bold text-gray-900">Centro de Notificaciones</p>
                   {notifCount > 0 && (
-                    <span className="text-[10px] font-bold text-white bg-blue-500 px-1.5 py-0.5 rounded-full">{notifCount}</span>
+                    <span className="text-[10px] font-bold text-white bg-[hsl(355,78%,51%)] px-1.5 py-0.5 rounded-full">{notifCount}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-1">
@@ -296,7 +296,7 @@ export default function TopBar({
                             <button
                               key={n.id}
                               onClick={() => handleNotifClick(n)}
-                              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50/50 transition-colors text-left border-b border-slate-50 last:border-0 group"
+                              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left border-b border-slate-50 last:border-0 group"
                             >
                               <div className={`w-8 h-8 ${a.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
                                 <Icon size={15} className={a.text} />
@@ -306,7 +306,7 @@ export default function TopBar({
                                   <span className="font-bold text-gray-900 tabular-nums">{n.count}</span> {n.label}
                                 </p>
                               </div>
-                              <ChevronRight size={14} className="text-slate-300 group-hover:text-blue-500 transition-colors flex-shrink-0" />
+                              <ChevronRight size={15} className="text-slate-300 group-hover:text-red-500 transition-colors flex-shrink-0" />
                             </button>
                           );
                         })}
@@ -327,7 +327,7 @@ export default function TopBar({
             onClick={() => setMenuOpen(o => !o)}
             className="flex items-center gap-2.5 px-1.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-sm">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[hsl(355,78%,51%)] to-[hsl(355,78%,42%)] flex items-center justify-center shadow-sm">
               <span className="text-[11px] font-bold text-white">{getInitials(user.username)}</span>
             </div>
             <div className="hidden sm:block text-left">
@@ -338,7 +338,7 @@ export default function TopBar({
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 top-full mt-1.5 w-56 bg-white rounded-xl shadow-lg border border-slate-200/70 py-1.5 z-50 origin-top-right">
+            <div className="absolute right-0 top-full mt-1.5 w-56 bg-white rounded-xl shadow-lg border border-slate-200/70 py-1.5 z-50 origin-top-right animate-fade-in">
               <div className="px-3.5 py-2.5 border-b border-slate-100">
                 <p className="text-sm font-semibold text-gray-800">{user.username}</p>
                 <p className="text-xs text-slate-400 mt-0.5">{user.role} · Planta {planta}</p>

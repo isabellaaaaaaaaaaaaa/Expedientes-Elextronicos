@@ -28,12 +28,12 @@ export default function Sidebar({ currentPage, onNavigate, collapsed, onToggleCo
   return (
     <aside
       className={`fixed left-0 top-0 h-full bg-white border-r border-slate-200/70 flex flex-col z-30 transition-[width] duration-200 ${
-        collapsed ? 'w-[68px]' : 'w-[220px]'
+        collapsed ? 'w-[68px]' : 'w-[224px]'
       }`}
     >
       {/* Brand */}
-      <div className={`flex items-center h-16 border-b border-slate-100 flex-shrink-0 ${collapsed ? 'justify-center px-2' : 'px-5'}`}>
-        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+      <div className={`flex items-center h-14 border-b border-slate-100 flex-shrink-0 ${collapsed ? 'justify-center px-2' : 'px-5'}`}>
+        <div className="w-8 h-8 rounded-lg bg-[hsl(355,78%,51%)] flex items-center justify-center flex-shrink-0 shadow-sm">
           <Stethoscope className="w-[17px] h-[17px] text-white" strokeWidth={2.2} />
         </div>
         {!collapsed && (
@@ -57,16 +57,17 @@ export default function Sidebar({ currentPage, onNavigate, collapsed, onToggleCo
                 collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
               } ${
                 active
-                  ? 'bg-blue-50 text-blue-700'
+                  ? 'bg-red-50 text-red-700'
                   : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
               }`}
             >
               {active && !collapsed && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-blue-600 rounded-r-full" />
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[hsl(355,78%,51%)] rounded-r-full" />
               )}
               <Icon
                 size={18}
-                className={`flex-shrink-0 ${active ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'}`}
+                strokeWidth={2}
+                className={`flex-shrink-0 ${active ? 'text-red-600' : 'text-slate-400 group-hover:text-slate-600'}`}
               />
               {!collapsed && <span className="flex-1 text-left truncate">{label}</span>}
             </button>
@@ -83,7 +84,7 @@ export default function Sidebar({ currentPage, onNavigate, collapsed, onToggleCo
             collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2.5'
           }`}
         >
-          {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+          {collapsed ? <PanelLeftOpen size={18} strokeWidth={2} /> : <PanelLeftClose size={18} strokeWidth={2} />}
           {!collapsed && <span>Colapsar</span>}
         </button>
       </div>

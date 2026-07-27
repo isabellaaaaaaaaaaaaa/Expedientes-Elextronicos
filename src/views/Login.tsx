@@ -34,7 +34,7 @@ export default function Login({ onLogin }: LoginProps) {
   return (
     <div className="min-h-screen flex">
       {/* Left brand panel */}
-      <div className="hidden lg:flex w-[42%] bg-gradient-to-br from-blue-600 to-blue-700 relative overflow-hidden flex-col justify-between p-12">
+      <div className="hidden lg:flex w-[42%] bg-gradient-to-br from-[hsl(355,78%,46%)] to-[hsl(355,78%,38%)] relative overflow-hidden flex-col justify-between p-12">
         <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full -translate-y-1/3 translate-x-1/3" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full translate-y-1/3 -translate-x-1/4" />
 
@@ -44,7 +44,7 @@ export default function Login({ onLogin }: LoginProps) {
           </div>
           <div>
             <p className="text-white font-bold text-lg leading-tight">MedExpedient</p>
-            <p className="text-blue-200 text-xs">Área Médica Empresarial</p>
+            <p className="text-red-100 text-xs">Área Médica Empresarial</p>
           </div>
         </div>
 
@@ -52,27 +52,27 @@ export default function Login({ onLogin }: LoginProps) {
           <h1 className="text-white text-3xl font-bold leading-tight">
             Digitalización de expedientes médicos
           </h1>
-          <p className="text-blue-100 mt-4 text-sm leading-relaxed">
+          <p className="text-red-50/90 mt-4 text-sm leading-relaxed">
             Plataforma para la digitalización y almacenamiento de expedientes médicos existentes. Centraliza la información médica del personal en formato electrónico, sustituyendo el archivo físico por un expediente digital que facilita la consulta segura, la organización y la administración documental.
           </p>
           <div className="mt-8 space-y-3">
             {['Expedientes digitalizados', 'Consulta segura y centralizada', 'Archivo electrónico por empleado'].map((f, i) => (
               <div key={i} className="flex items-center gap-3">
                 <div className="w-1.5 h-1.5 bg-white/60 rounded-full" />
-                <span className="text-blue-50 text-sm">{f}</span>
+                <span className="text-red-50/80 text-sm">{f}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <p className="relative text-blue-300 text-xs z-10">© 2026 Nexteer — Área Médica</p>
+        <p className="relative text-red-200/70 text-xs z-10">© 2026 Nexteer — Área Médica</p>
       </div>
 
       {/* Right form panel */}
       <div className="flex-1 flex items-center justify-center bg-[#FAFBFC] px-6 py-12">
         <div className="w-full max-w-sm">
           <div className="lg:hidden flex items-center gap-3 mb-10">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-[hsl(355,78%,51%)] rounded-xl flex items-center justify-center shadow-sm">
               <Stethoscope size={20} className="text-white" />
             </div>
             <div>
@@ -149,7 +149,7 @@ export default function Login({ onLogin }: LoginProps) {
 
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm rounded-xl transition-all shadow-sm shadow-blue-200 mt-2"
+              className="w-full flex items-center justify-center gap-2 h-11 bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] active:bg-[hsl(355,78%,42%)] text-white font-semibold text-sm rounded-lg transition-all shadow-sm hover:shadow mt-2 focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:ring-offset-1"
             >
               <LogIn size={16} strokeWidth={2.5} />
               Iniciar Sesión
