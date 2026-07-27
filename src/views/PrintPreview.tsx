@@ -92,8 +92,8 @@ export default function PrintPreview({ employeeId, expedientId, user, onNavigate
                 N
               </div>
               <div>
-                <p className="text-base font-bold text-gray-900 leading-tight">NEXTEER</p>
-                <p className="text-[11px] text-slate-500 leading-tight">Área Médica Empresarial</p>
+                <p className="text-base font-bold text-gray-900 leading-tight">NEXTEER · SAM</p>
+                <p className="text-[11px] text-slate-500 leading-tight">Sistema de Administración Médica</p>
               </div>
             </div>
             <div className="text-right">
@@ -207,7 +207,7 @@ export default function PrintPreview({ employeeId, expedientId, user, onNavigate
           </div>
           <div className="flex items-center justify-between gap-2 pt-8 mt-8 border-t border-slate-100">
             <p className="text-[10px] text-slate-400 flex items-center gap-1.5">
-              <Building2 size={11} /> Generado por MedExpedient · Planta {user.planta}
+              <Building2 size={11} /> Generado por SAM · Planta {user.planta}
             </p>
             <p className="text-[10px] text-slate-400">
               {new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })}

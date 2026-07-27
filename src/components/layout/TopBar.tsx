@@ -14,30 +14,12 @@ interface TopBarProps {
   onLogout: () => void;
   onNavigate: (page: NavigationPage) => void;
   onSelectEmployee: (employeeId: string) => void;
-  currentPage: NavigationPage;
-  collapsed: boolean;
   planta: Planta;
   onPlantaChange: (p: Planta) => void;
   onNotifAction: (notifId: string, filter?: { page: NavigationPage; statusFilter?: string; examDue?: 'today' | 'week' }) => void;
   onMarkAllRead: () => void;
   notifReadIds: Set<string>;
 }
-
-const pageTitles: Record<NavigationPage, string> = {
-  'dashboard':           'Dashboard',
-  'employees':           'Empleados',
-  'employee-profile':    'Expediente del empleado',
-  'capture-expedient':   'Captura de expediente',
-  'expedient-form':      'Registro médico',
-  'record-type-select':  'Nuevo registro',
-  'print-preview':        'Vista previa de impresión',
-  'expedients':          'Expedientes',
-  'documents':           'Documentos',
-  'new-employee':        'Nuevo empleado',
-  'new-expedient':       'Nuevo expediente',
-  'usuarios':            'Usuarios',
-  'configuracion':       'Configuración',
-};
 
 function getInitials(username: string) {
   return username.slice(0, 2).toUpperCase();
@@ -64,7 +46,7 @@ const notifAccent: Record<NotificationCategory['icon'], { bg: string; text: stri
 };
 
 export default function TopBar({
-  user, onLogout, onNavigate, onSelectEmployee, currentPage, collapsed,
+  user, onLogout, onNavigate, onSelectEmployee,
   planta, onPlantaChange, onNotifAction, onMarkAllRead, notifReadIds,
 }: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -137,58 +119,28 @@ export default function TopBar({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const leftOffset = collapsed ? 'ml-[68px]' : 'ml-[224px]';
-
   const handleNotifClick = (n: NotificationCategory) => {
     onNotifAction(n.id, { page: n.action.page, statusFilter: n.action.statusFilter, examDue: n.action.examDue });
     setNotifOpen(false);
   };
 
   return (
-    <header
-      className={`fixed top-0 ${leftOffset} right-0 h-14 bg-white/85 backdrop-blur-md border-b border-slate-200/70 flex items-center justify-between px-5 z-20 transition-[margin] duration-200`}
-    >
-      {/* Left: page title */}
+    <header className="fixed top-0 left-0 right-0 h-14 bg-[hsl(355,78%,46%)] flex items-center justify-between px-5 z-30 shadow-sm">
+      {/* Left: Nexteer SAM brand */}
       <div className="flex items-center gap-3 min-w-0">
-        <div className="min-w-0">
-          <h1 className="text-[15px] font-bold text-gray-900 truncate leading-tight">{pageTitles[currentPage]}</h1>
+        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/15 backdrop-blur-sm flex-shrink-0 ring-1 ring-white/20">
+          <span className="text-white font-extrabold text-sm tracking-tight">SAM</span>
+        </div>
+        <div className="hidden sm:block min-w-0 leading-none">
+          <p className="text-white font-bold text-[15px] leading-tight">SAM</p>
+          <p className="text-white/70 text-[10px] font-medium leading-tight mt-0.5">Sistema de Administración Médica</p>
         </div>
       </div>
 
-      {/* Right: planta selector, search, notifications, profile */}
-      <div className="flex items-center gap-1.5">
-        {/* Planta selector */}
-        <div className="relative" ref={plantaRef}>
-          <button
-            onClick={() => setPlantaOpen(o => !o)}
-            className="flex items-center gap-1.5 h-9 px-2.5 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200/70 rounded-lg transition-colors"
-          >
-            <Factory size={15} className="text-slate-500" strokeWidth={2} />
-            <span className="tabular-nums">{planta}</span>
-            <ChevronDown size={14} className={`text-slate-400 transition-transform ${plantaOpen ? 'rotate-180' : ''}`} />
-          </button>
-          {plantaOpen && (
-            <div className="absolute right-0 top-full mt-1.5 w-44 bg-white rounded-xl shadow-lg border border-slate-200/70 py-1.5 z-50 origin-top-right animate-fade-in">
-              <p className="px-3.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cambiar planta</p>
-              {PLANTAS.map(p => (
-                <button
-                  key={p}
-                  onClick={() => { onPlantaChange(p); setPlantaOpen(false); }}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 text-sm transition-colors text-left ${
-                    p === planta ? 'bg-red-50 text-red-700 font-bold' : 'text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  <span className="flex items-center gap-2"><Factory size={14} className="text-slate-400" strokeWidth={2} /> Planta {p}</span>
-                  {p === planta && <CheckCircle2 size={15} className="text-red-600" />}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Search */}
-        <div className="relative hidden lg:block w-72" ref={searchRef}>
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" size={16} strokeWidth={2} />
+      {/* Center: search (desktop) */}
+      <div className="hidden md:block flex-1 max-w-md mx-6">
+        <div className="relative" ref={searchRef}>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 pointer-events-none z-10" size={16} strokeWidth={2} />
           <input
             type="text"
             value={search}
@@ -196,7 +148,7 @@ export default function TopBar({
             onFocus={() => setSearchFocused(true)}
             onKeyDown={handleSearchKey}
             placeholder="Buscar empleado, CURP, RFC..."
-            className="w-full pl-9 pr-3 h-9 text-sm bg-slate-50 border border-transparent rounded-lg text-gray-700 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-200 focus:ring-2 focus:ring-red-500/10 transition-all"
+            className="w-full pl-9 pr-3 h-9 text-sm bg-white/10 border border-white/15 rounded-lg text-white placeholder:text-white/50 focus:outline-none focus:bg-white focus:text-slate-800 focus:border-transparent focus:ring-2 focus:ring-white/30 transition-all"
           />
           {searchFocused && q && (
             <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-lg border border-slate-200/70 z-50 overflow-hidden animate-fade-in">
@@ -234,16 +186,48 @@ export default function TopBar({
             </div>
           )}
         </div>
+      </div>
+
+      {/* Right: planta selector, notifications, profile */}
+      <div className="flex items-center gap-1.5">
+        {/* Planta selector */}
+        <div className="relative" ref={plantaRef}>
+          <button
+            onClick={() => setPlantaOpen(o => !o)}
+            className="flex items-center gap-1.5 h-9 px-2.5 text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <Factory size={15} className="text-white/70" strokeWidth={2} />
+            <span className="tabular-nums hidden sm:inline">{planta}</span>
+            <ChevronDown size={14} className={`text-white/60 transition-transform ${plantaOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {plantaOpen && (
+            <div className="absolute right-0 top-full mt-1.5 w-44 bg-white rounded-xl shadow-lg border border-slate-200/70 py-1.5 z-50 origin-top-right animate-fade-in">
+              <p className="px-3.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cambiar planta</p>
+              {PLANTAS.map(p => (
+                <button
+                  key={p}
+                  onClick={() => { onPlantaChange(p); setPlantaOpen(false); }}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 text-sm transition-colors text-left ${
+                    p === planta ? 'bg-red-50 text-red-700 font-bold' : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <span className="flex items-center gap-2"><Factory size={14} className="text-slate-400" strokeWidth={2} /> Planta {p}</span>
+                  {p === planta && <CheckCircle2 size={15} className="text-red-600" />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Notifications */}
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => setNotifOpen(o => !o)}
-            className="relative w-9 h-9 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+            className="relative w-9 h-9 flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
           >
             <Bell size={18} strokeWidth={2} />
             {notifCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 flex items-center justify-center bg-[hsl(355,78%,51%)] text-white text-[10px] font-bold rounded-full ring-2 ring-white">
+              <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 flex items-center justify-center bg-white text-[hsl(355,78%,46%)] text-[10px] font-bold rounded-full ring-2 ring-[hsl(355,78%,46%)]">
                 {notifCount > 9 ? '9+' : notifCount}
               </span>
             )}
@@ -299,7 +283,7 @@ export default function TopBar({
                               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left border-b border-slate-50 last:border-0 group"
                             >
                               <div className={`w-8 h-8 ${a.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
-                                <Icon size={15} className={a.text} />
+                                <Icon size={15} className={a.text} strokeWidth={2} />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm text-gray-700 leading-snug">
@@ -319,22 +303,22 @@ export default function TopBar({
           )}
         </div>
 
-        <div className="w-px h-6 bg-slate-200 mx-1 hidden sm:block" />
+        <div className="w-px h-6 bg-white/20 mx-1 hidden sm:block" />
 
         {/* Profile menu */}
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(o => !o)}
-            className="flex items-center gap-2.5 px-1.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+            className="flex items-center gap-2.5 px-1.5 py-1.5 rounded-lg hover:bg-white/10 transition-colors"
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[hsl(355,78%,51%)] to-[hsl(355,78%,42%)] flex items-center justify-center shadow-sm">
+            <div className="w-8 h-8 rounded-full bg-white/20 ring-1 ring-white/30 flex items-center justify-center flex-shrink-0">
               <span className="text-[11px] font-bold text-white">{getInitials(user.username)}</span>
             </div>
             <div className="hidden sm:block text-left">
-              <p className="text-sm font-semibold text-gray-800 leading-tight">{user.username}</p>
-              <p className="text-[11px] text-slate-400 leading-tight">{user.role}</p>
+              <p className="text-sm font-semibold text-white leading-tight">{user.username}</p>
+              <p className="text-[11px] text-white/60 leading-tight">{user.role}</p>
             </div>
-            <ChevronDown size={14} className="text-slate-400 hidden sm:block" />
+            <ChevronDown size={14} className="text-white/60 hidden sm:block" />
           </button>
 
           {menuOpen && (

@@ -43,8 +43,8 @@ export default function Login({ onLogin }: LoginProps) {
             <Stethoscope size={22} className="text-white" strokeWidth={1.8} />
           </div>
           <div>
-            <p className="text-white font-bold text-lg leading-tight">MedExpedient</p>
-            <p className="text-red-100 text-xs">Área Médica Empresarial</p>
+            <p className="text-white font-bold text-lg leading-tight">SAM</p>
+            <p className="text-red-100 text-xs">Sistema de Administración Médica</p>
           </div>
         </div>
 
@@ -76,8 +76,8 @@ export default function Login({ onLogin }: LoginProps) {
               <Stethoscope size={20} className="text-white" />
             </div>
             <div>
-              <p className="text-gray-900 font-bold leading-tight">MedExpedient</p>
-              <p className="text-slate-400 text-xs">Área Médica</p>
+              <p className="text-gray-900 font-bold leading-tight">SAM</p>
+              <p className="text-slate-400 text-xs">Sistema de Administración Médica</p>
             </div>
           </div>
 

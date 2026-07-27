@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Settings, Stethoscope, PanelLeftClose, PanelLeftOpen, FileText } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, PanelLeftClose, PanelLeftOpen, FileText } from 'lucide-react';
 import type { NavigationPage } from '../../types';
 
 interface SidebarProps {
@@ -27,23 +27,10 @@ export default function Sidebar({ currentPage, onNavigate, collapsed, onToggleCo
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-full bg-white border-r border-slate-200/70 flex flex-col z-30 transition-[width] duration-200 ${
+      className={`fixed left-0 top-14 bottom-0 bg-white border-r border-slate-200/70 flex flex-col z-20 transition-[width] duration-200 ${
         collapsed ? 'w-[68px]' : 'w-[224px]'
       }`}
     >
-      {/* Brand */}
-      <div className={`flex items-center h-14 border-b border-slate-100 flex-shrink-0 ${collapsed ? 'justify-center px-2' : 'px-5'}`}>
-        <div className="w-8 h-8 rounded-lg bg-[hsl(355,78%,51%)] flex items-center justify-center flex-shrink-0 shadow-sm">
-          <Stethoscope className="w-[17px] h-[17px] text-white" strokeWidth={2.2} />
-        </div>
-        {!collapsed && (
-          <div className="ml-3 min-w-0">
-            <p className="text-sm font-bold text-gray-900 leading-tight">MedExpedient</p>
-            <p className="text-[10px] text-slate-400 font-medium leading-tight">Área Médica</p>
-          </div>
-        )}
-      </div>
-
       {/* Navigation */}
       <nav className="flex-1 px-2.5 py-4 space-y-1 overflow-y-auto">
         {navItems.map(({ id, label, icon: Icon }) => {

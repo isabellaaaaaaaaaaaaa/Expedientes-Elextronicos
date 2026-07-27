@@ -135,7 +135,7 @@ function buildExpedienteHTML(employee: Employee, allExpedients: Expedient[], doc
   </table>` : ''}
 
   <div class="footer">
-    Documento generado por MedExpedient — ${new Date().toLocaleString('es-MX')}
+    Documento generado por SAM — ${new Date().toLocaleString('es-MX')}
   </div>
 </body>
 </html>`;
@@ -187,7 +187,7 @@ export function exportRegistroToPDF(employee: Employee, expedient: Expedient) {
 
   ${expedient.observations ? `<h2>Observaciones</h2><p class="obs">${escapeHtml(expedient.observations)}</p>` : ''}
 
-  <div class="footer">Documento generado por MedExpedient — ${new Date().toLocaleString('es-MX')}</div>
+  <div class="footer">Documento generado por SAM — ${new Date().toLocaleString('es-MX')}</div>
 </body>
 </html>`;
 
@@ -232,7 +232,7 @@ function buildRegistroHTML(employee: Employee, expedient: Expedient): string {
     ${field('Planta', employee.planta)}
   </div>
   ${expedient.observations ? `<h2>Observaciones</h2><p class="obs">${escapeHtml(expedient.observations)}</p>` : ''}
-  <div class="footer">Documento generado por MedExpedient — ${new Date().toLocaleString('es-MX')}</div>
+  <div class="footer">Documento generado por SAM — ${new Date().toLocaleString('es-MX')}</div>
 </body>
 </html>`;
 }
