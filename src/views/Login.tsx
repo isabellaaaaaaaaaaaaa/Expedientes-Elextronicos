@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Eye, EyeOff, Stethoscope, LogIn } from 'lucide-react';
+import { Eye, EyeOff, LogIn, ShieldCheck, FileClock, FolderArchive, Lock } from 'lucide-react';
 import type { AuthUser, UserRole, Planta } from '../types';
 
 interface LoginProps {
@@ -32,56 +32,61 @@ export default function Login({ onLogin }: LoginProps) {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left brand panel */}
-      <div className="hidden lg:flex w-[42%] bg-gradient-to-br from-[hsl(355,78%,46%)] to-[hsl(355,78%,38%)] relative overflow-hidden flex-col justify-between p-12">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full -translate-y-1/3 translate-x-1/3" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full translate-y-1/3 -translate-x-1/4" />
+    <div className="min-h-screen bg-[#1E2228] flex items-center justify-center px-5 py-10">
+      <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-6">
 
-        <div className="relative flex items-center gap-3 z-10">
-          <div className="w-11 h-11 bg-white/15 backdrop-blur-sm rounded-xl flex items-center justify-center">
-            <Stethoscope size={22} className="text-white" strokeWidth={1.8} />
-          </div>
+        {/* Information card */}
+        <div className="hidden lg:flex flex-col justify-between bg-white rounded-2xl shadow-xl border border-slate-200/60 p-10">
           <div>
-            <p className="text-white font-bold text-lg leading-tight">SAM</p>
-            <p className="text-red-100 text-xs">Sistema de Administración Médica</p>
-          </div>
-        </div>
-
-        <div className="relative z-10 max-w-sm">
-          <h1 className="text-white text-3xl font-bold leading-tight">
-            Digitalización de expedientes médicos
-          </h1>
-          <p className="text-red-50/90 mt-4 text-sm leading-relaxed">
-            Plataforma para la digitalización y almacenamiento de expedientes médicos existentes. Centraliza la información médica del personal en formato electrónico, sustituyendo el archivo físico por un expediente digital que facilita la consulta segura, la organización y la administración documental.
-          </p>
-          <div className="mt-8 space-y-3">
-            {['Expedientes digitalizados', 'Consulta segura y centralizada', 'Archivo electrónico por empleado'].map((f, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="w-1.5 h-1.5 bg-white/60 rounded-full" />
-                <span className="text-red-50/80 text-sm">{f}</span>
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-[hsl(355,78%,51%)] flex items-center justify-center shadow-sm">
+                <span className="text-white font-extrabold text-base tracking-tight">N</span>
               </div>
-            ))}
+              <div className="leading-none">
+                <p className="text-gray-900 font-extrabold text-base leading-tight">SAM</p>
+                <p className="text-slate-400 text-[11px] font-medium leading-tight mt-1">Sistema de Administración Médica</p>
+              </div>
+            </div>
+
+            <h1 className="mt-10 text-2xl font-bold text-gray-900 leading-tight tracking-tight">
+              Digitalización de expedientes médicos
+            </h1>
+            <p className="mt-4 text-sm text-slate-500 leading-relaxed">
+              Plataforma para la digitalización y almacenamiento de expedientes médicos existentes. Centraliza la información médica del personal en formato electrónico, sustituyendo el archivo físico por un expediente digital que facilita la consulta segura, la organización y la administración documental.
+            </p>
+
+            <div className="mt-8 space-y-4">
+              {[
+                { icon: FolderArchive, label: 'Expedientes digitalizados' },
+                { icon: ShieldCheck,    label: 'Consulta segura y centralizada' },
+                { icon: FileClock,      label: 'Archivo electrónico por empleado' },
+              ].map(({ icon: Icon, label }, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">
+                    <Icon size={15} className="text-[hsl(355,78%,51%)]" strokeWidth={2} />
+                  </div>
+                  <span className="text-sm font-medium text-slate-700">{label}</span>
+                </div>
+              ))}
+            </div>
           </div>
+
+          <p className="text-xs text-slate-400 mt-10">© 2026 Nexteer — Área Médica</p>
         </div>
 
-        <p className="relative text-red-200/70 text-xs z-10">© 2026 Nexteer — Área Médica</p>
-      </div>
-
-      {/* Right form panel */}
-      <div className="flex-1 flex items-center justify-center bg-[#FAFBFC] px-6 py-12">
-        <div className="w-full max-w-sm">
-          <div className="lg:hidden flex items-center gap-3 mb-10">
-            <div className="w-10 h-10 bg-[hsl(355,78%,51%)] rounded-xl flex items-center justify-center shadow-sm">
-              <Stethoscope size={20} className="text-white" />
+        {/* Login card */}
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-200/60 p-8 sm:p-10 flex flex-col justify-center">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-[hsl(355,78%,51%)] flex items-center justify-center shadow-sm">
+              <span className="text-white font-extrabold text-base tracking-tight">N</span>
             </div>
-            <div>
-              <p className="text-gray-900 font-bold leading-tight">SAM</p>
-              <p className="text-slate-400 text-xs">Sistema de Administración Médica</p>
+            <div className="leading-none">
+              <p className="text-gray-900 font-extrabold text-base leading-tight">SAM</p>
+              <p className="text-slate-400 text-[11px] font-medium leading-tight mt-1">Nexteer México</p>
             </div>
           </div>
 
-          <h2 className="text-2xl font-bold text-gray-900">Bienvenido</h2>
+          <h2 className="mt-8 text-2xl font-bold text-gray-900">Bienvenido</h2>
           <p className="text-slate-400 text-sm mt-1.5">Inicia sesión para continuar</p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-5">
@@ -156,7 +161,8 @@ export default function Login({ onLogin }: LoginProps) {
             </button>
           </form>
 
-          <p className="text-center text-xs text-slate-400 mt-8">
+          <p className="flex items-center justify-center gap-1.5 text-center text-xs text-slate-400 mt-8">
+            <Lock size={12} />
             Usa cualquier usuario y contraseña (mín. 4 caracteres)
           </p>
         </div>
