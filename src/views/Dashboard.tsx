@@ -183,7 +183,7 @@ export default function Dashboard({ user, planta, onNavigate }: DashboardProps) 
         iconText: 'text-amber-600',
         text: 'Se cargó un documento',
         sub: d.name,
-        onClick: () => onNavigate('documents'),
+        onClick: () => onNavigate('expedient-form', d.employeeId, d.expedientId),
       });
     }
 

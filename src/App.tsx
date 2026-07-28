@@ -7,7 +7,6 @@ import Employees from './views/Employees';
 import ExpedientList from './views/ExpedientList';
 import ExpedientForm from './views/ExpedientForm';
 import RecordTypeSelect from './views/RecordTypeSelect';
-import DocumentsGlobal from './views/DocumentsGlobal';
 import NewEmployee from './views/NewEmployee';
 import EmployeeProfile from './views/EmployeeProfile';
 import PrintPreview from './views/PrintPreview';
@@ -151,9 +150,6 @@ export default function App() {
           year={selectedYear ?? undefined}
           onNavigate={handleNavigate}
         />
-      )}
-      {currentPage === 'documents' && (
-        <DocumentsGlobal planta={planta} onNavigate={handleNavigate} />
       )}
       {currentPage === 'print-preview' && selectedExpedientId && selectedEmployeeId && (
         <PrintPreview

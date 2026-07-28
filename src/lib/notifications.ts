@@ -10,7 +10,7 @@ export interface NotificationCategory {
   icon: 'revision' | 'pendiente' | 'venceHoy' | 'venceSemana' | 'finalizadoHoy' | 'nuevosDocs' | 'nuevosEmpleados';
   group: NotificationGroup;
   action: {
-    page: 'expedients' | 'employees' | 'documents';
+    page: 'expedients' | 'employees';
     statusFilter?: string;
     examDue?: 'today' | 'week';
   };
@@ -66,7 +66,7 @@ export function computeNotifications(planta: Planta): NotificationCategory[] {
     { id: 'finalizadoHoy', label: 'finalizados hoy', count: finalizadoHoy, icon: 'finalizadoHoy', group: 'expedientes', action: { page: 'expedients', statusFilter: 'Finalizado' } },
     { id: 'venceHoy', label: 'exámenes vencen hoy', count: venceHoy, icon: 'venceHoy', group: 'examenes', action: { page: 'employees', examDue: 'today' } },
     { id: 'venceSemana', label: 'exámenes vencen esta semana', count: venceSemana, icon: 'venceSemana', group: 'examenes', action: { page: 'employees', examDue: 'week' } },
-    { id: 'nuevosDocs', label: 'nuevos documentos', count: nuevosDocs, icon: 'nuevosDocs', group: 'novedades', action: { page: 'documents' as const } },
+    { id: 'nuevosDocs', label: 'nuevos documentos', count: nuevosDocs, icon: 'nuevosDocs', group: 'novedades', action: { page: 'expedients' } },
     { id: 'nuevosEmpleados', label: 'nuevos empleados', count: nuevosEmpleados, icon: 'nuevosEmpleados', group: 'novedades', action: { page: 'employees' } },
   ];
 

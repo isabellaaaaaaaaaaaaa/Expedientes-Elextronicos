@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Settings, PanelLeftClose, PanelLeftOpen, FileText, FolderArchive } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, PanelLeftClose, PanelLeftOpen, FileText } from 'lucide-react';
 import type { NavigationPage } from '../../types';
 
 interface SidebarProps {
@@ -12,7 +12,6 @@ const navItems: { id: NavigationPage; label: string; icon: React.ElementType; ad
   { id: 'dashboard',     label: 'Dashboard',     icon: LayoutDashboard },
   { id: 'employees',     label: 'Empleados',     icon: Users },
   { id: 'expedients',    label: 'Expedientes',   icon: FileText },
-  { id: 'documents',     label: 'Documentos',    icon: FolderArchive },
   { id: 'usuarios',      label: 'Usuarios',      icon: Users, adminOnly: false },
   { id: 'configuracion', label: 'Configuración', icon: Settings },
 ];

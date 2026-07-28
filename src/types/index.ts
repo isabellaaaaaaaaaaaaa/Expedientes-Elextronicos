@@ -6,7 +6,6 @@ export type NavigationPage =
   | 'expedient-form'
   | 'record-type-select'
   | 'expedients'
-  | 'documents'
   | 'new-employee'
   | 'new-expedient'
   | 'print-preview'
