@@ -1,4 +1,4 @@
-import { ArrowLeft, FileText, ClipboardList, Stethoscope, Activity, FlaskConical, MessageSquare, FolderOpen, Printer, CheckCircle2, Pencil } from 'lucide-react';
+import { ArrowLeft, FileText, ClipboardList, Stethoscope, Activity, FlaskConical, MessageSquare, FolderOpen, Printer, CircleCheck as CheckCircle2, Pencil } from 'lucide-react';
 import type { Employee, Expedient, MedDocument } from '../../types';
 import { StatusBadge } from '../../lib/statusConfig';
 
