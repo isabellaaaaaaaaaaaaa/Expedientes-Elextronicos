@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Plus, Folder, ChevronRight, FolderOpen, Pencil, Check, X, Phone, Mail, Heart, Calendar, Layers, User as UserIcon, Loader as Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, Folder, ChevronRight, FolderOpen, Pencil, Check, X, Phone, Mail, Heart, Calendar, Layers, User as UserIcon, Loader as Loader2, ScanText, PencilLine, type LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import type { NavigationPage, AuthUser, Employee } from '../types';
 import { useEmployee, useExpedients, useDocuments } from '../hooks/useStore';
@@ -57,6 +57,17 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [activeTab, setActiveTab] = useState<'perfil'>('perfil');
   const [extraYears, setExtraYears] = useState<number[]>([]);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+
+  const openCreateDialog = () => setShowCreateDialog(true);
+  const handleDigitalize = () => {
+    setShowCreateDialog(false);
+    onNavigate('digitalization-wizard', employeeId, undefined, openYear ?? undefined);
+  };
+  const handleManualCapture = () => {
+    setShowCreateDialog(false);
+    onNavigate('record-type-select', employeeId, undefined, openYear ?? undefined);
+  };
 
   const handleCreateFolder = () => {
     const year = Number(newFolderYear);
@@ -383,7 +394,7 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
             {!isAuditor && (
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => onNavigate('digitalization-wizard', employeeId, undefined, openYear ?? undefined)}
+                  onClick={openCreateDialog}
                   className="flex items-center gap-1.5 px-4 h-9 bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] text-white text-xs font-semibold rounded-lg transition-colors shadow-sm"
                 >
                   <Plus size={13} /> Nuevo registro
@@ -397,7 +408,7 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
               icon={FolderOpen}
               title={`Sin registros en ${openYear}`}
               description="Aún no se han creado registros médicos para esta carpeta."
-              action={!isAuditor ? { label: 'Nuevo registro', icon: Plus, onClick: () => onNavigate('digitalization-wizard', employeeId, undefined, openYear ?? undefined) } : undefined}
+              action={!isAuditor ? { label: 'Nuevo registro', icon: Plus, onClick: openCreateDialog } : undefined}
               compact
             />
           ) : (
@@ -452,7 +463,7 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
             icon={Layers}
             title="Este empleado aún no tiene expedientes"
             description="Crea el primer registro médico para este empleado."
-            action={!isAuditor ? { label: 'Crear expediente', icon: Plus, onClick: () => onNavigate('digitalization-wizard', employeeId) } : undefined}
+            action={!isAuditor ? { label: 'Crear expediente', icon: Plus, onClick: openCreateDialog } : undefined}
             compact
           />
         ) : (
@@ -482,6 +493,42 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
       </div>
 
       </>)}
+
+      {/* Dialog: Crear expediente */}
+      {showCreateDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setShowCreateDialog(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="px-6 pt-6 pb-2">
+              <p className="text-lg font-bold text-gray-900">Nuevo expediente</p>
+              <p className="text-sm text-slate-400 mt-0.5">Selecciona cómo deseas crear el expediente médico</p>
+            </div>
+            <div className="p-6 space-y-3">
+              <CreateOption
+                icon={ScanText}
+                title="Digitalizar documento"
+                description="Sube un PDF o imagen. El sistema extrae automáticamente la información mediante OCR y Document AI, y la presentas para revisión."
+                accent="red"
+                onClick={handleDigitalize}
+              />
+              <CreateOption
+                icon={PencilLine}
+                title="Captura manual"
+                description="Abre un formulario vacío para que captures la información del expediente manualmente."
+                accent="slate"
+                onClick={handleManualCapture}
+              />
+            </div>
+            <div className="px-6 py-3 border-t border-slate-100 flex justify-end">
+              <button
+                onClick={() => setShowCreateDialog(false)}
+                className="px-4 h-9 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Dialog: Crear carpeta del expediente */}
       {showFolderDialog && (
@@ -526,5 +573,25 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
         </div>
       )}
     </div>
+  );
+}
+
+function CreateOption({ icon: Icon, title, description, accent, onClick }: { icon: LucideIcon; title: string; description: string; accent: 'red' | 'slate'; onClick: () => void }) {
+  const styles = accent === 'red'
+    ? { bg: 'bg-red-50', fg: 'text-[hsl(355,78%,51%)]', ring: 'hover:border-red-300 hover:bg-red-50' }
+    : { bg: 'bg-slate-100', fg: 'text-slate-600', ring: 'hover:border-slate-300 hover:bg-slate-50' };
+  return (
+    <button
+      onClick={onClick}
+      className={`group flex items-start gap-4 p-4 bg-white border border-slate-200 rounded-xl transition-all text-left ${styles.ring} w-full`}
+    >
+      <div className={`w-12 h-12 ${styles.bg} rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105`}>
+        <Icon size={22} className={styles.fg} />
+      </div>
+      <div className="min-w-0 pt-0.5">
+        <p className="text-sm font-bold text-gray-900">{title}</p>
+        <p className="text-xs text-slate-400 mt-1 leading-relaxed">{description}</p>
+      </div>
+    </button>
   );
 }

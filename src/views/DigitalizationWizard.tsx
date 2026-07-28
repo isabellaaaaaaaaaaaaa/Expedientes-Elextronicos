@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import {
   ArrowLeft, ArrowRight, ChevronRight, Check, X, Upload, FileText, Image as ImageIcon,
   Loader2, ZoomIn, Trash2, ScanText, Cpu, Eye, AlertTriangle, ClipboardCheck,
-  Save, Send, Flag, CircleCheck as CheckCircle2, Stethoscope, ClipboardList, HeartPulse,
+  Save, CircleCheck as CheckCircle2, Stethoscope, ClipboardList, HeartPulse,
   FlaskConical, Baby, UserPlus, RefreshCw, UserMinus, Activity, FilePlus2, ShieldPlus,
   ShieldAlert, Pill, FileSignature, ListChecks, Mail, Search,
   type LucideIcon,
@@ -22,21 +22,7 @@ interface DigitalizationWizardProps {
   onNavigate: (page: NavigationPage, employeeId?: string, expedientId?: string, year?: number) => void;
 }
 
-const STEPS = [
-  { id: 'type', label: 'Tipo de expediente', icon: FileText },
-  { id: 'upload', label: 'Subir documento', icon: Upload },
-  { id: 'ocr', label: 'Procesamiento OCR', icon: ScanText },
-  { id: 'docai', label: 'Document AI', icon: Cpu },
-  { id: 'preview', label: 'Vista previa', icon: Eye },
-  { id: 'fields', label: 'Campos detectados', icon: ClipboardCheck },
-  { id: 'low-confidence', label: 'Baja confianza', icon: AlertTriangle },
-  { id: 'validation', label: 'Validación manual', icon: ClipboardCheck },
-  { id: 'draft', label: 'Guardar borrador', icon: Save },
-  { id: 'review', label: 'Enviar a revisión', icon: Send },
-  { id: 'finalize', label: 'Finalizar', icon: Flag },
-] as const;
-
-type StepStatus = 'pending' | 'active' | 'completed';
+type Phase = 'type' | 'upload' | 'processing' | 'review' | 'done';
 
 const categories: RecordTypeCategory[] = [
   {
@@ -99,6 +85,13 @@ const categoryStyles: Record<string, { bg: string; fg: string; ring: string }> =
   'Salud materna':           { bg: 'bg-pink-50',   fg: 'text-pink-500',   ring: 'hover:border-pink-300 hover:bg-pink-50' },
 };
 
+const FLOW_STEPS = [
+  { label: 'Tipo de expediente', icon: FileText },
+  { label: 'Subir documento', icon: Upload },
+  { label: 'Revisión', icon: ClipboardCheck },
+  { label: 'Guardar', icon: Save },
+];
+
 interface UploadedFile {
   id: string;
   name: string;
@@ -110,20 +103,20 @@ export default function DigitalizationWizard({ employeeId, year, currentUser, on
   const employee = useEmployee(employeeId);
   const effectiveYear = year ?? new Date().getFullYear();
 
-  const [stepIndex, setStepIndex] = useState(0);
+  const [phase, setPhase] = useState<Phase>('type');
   const [selectedType, setSelectedType] = useState<MedicalRecordType | null>(null);
   const [typeQuery, setTypeQuery] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [ocrProgress, setOcrProgress] = useState(0);
-  const [docaiProgress, setDocaiProgress] = useState(0);
   const [extractedFields, setExtractedFields] = useState<ExtractedField[]>([]);
   const [validatedFields, setValidatedFields] = useState<Record<string, string>>({});
-  const [reviewedLowConfidence, setReviewedLowConfidence] = useState<Set<string>>(new Set());
-  const [draftSaved, setDraftSaved] = useState(false);
-  const [reviewSent, setReviewSent] = useState(false);
-  const [finalized, setFinalized] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  // Processing state
+  const [ocrProgress, setOcrProgress] = useState(0);
+  const [docaiProgress, setDocaiProgress] = useState(0);
+  const [processingStage, setProcessingStage] = useState<'ocr' | 'docai'>('ocr');
+  const [createdExpId, setCreatedExpId] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -137,24 +130,20 @@ export default function DigitalizationWizard({ employeeId, year, currentUser, on
   }
 
   const fullName = `${employee.firstName} ${employee.lastName1} ${employee.lastName2}`.trim();
-  const currentStep = STEPS[stepIndex];
 
-  const getStepStatus = (idx: number): StepStatus => {
-    if (idx < stepIndex) return 'completed';
-    if (idx === stepIndex) return 'active';
-    return 'pending';
-  };
-
-  const goNext = () => {
-    if (stepIndex < STEPS.length - 1) setStepIndex(stepIndex + 1);
-  };
-  const goPrev = () => {
-    if (stepIndex > 0) setStepIndex(stepIndex - 1);
+  const getStepIndex = () => {
+    switch (phase) {
+      case 'type': return 0;
+      case 'upload': return 1;
+      case 'processing': return 2;
+      case 'review': return 2;
+      case 'done': return 3;
+    }
   };
 
   const handleSelectType = (type: MedicalRecordType) => {
     setSelectedType(type);
-    setStepIndex(1);
+    setPhase('upload');
     toast.success('Tipo de expediente seleccionado', { description: type });
   };
 
@@ -178,73 +167,49 @@ export default function DigitalizationWizard({ employeeId, year, currentUser, on
 
   const removeFile = (id: string) => setUploadedFiles(prev => prev.filter(f => f.id !== id));
 
-  const startOcr = () => {
+  const startProcessing = () => {
+    setPhase('processing');
     setOcrProgress(0);
-    const interval = setInterval(() => {
+    setDocaiProgress(0);
+    setProcessingStage('ocr');
+
+    const ocrInterval = setInterval(() => {
       setOcrProgress(p => {
-        if (p >= 100) { clearInterval(interval); return 100; }
+        if (p >= 100) {
+          clearInterval(ocrInterval);
+          setProcessingStage('docai');
+          const docaiInterval = setInterval(() => {
+            setDocaiProgress(dp => {
+              if (dp >= 100) {
+                clearInterval(docaiInterval);
+                if (selectedType) {
+                  const fields = simulateExtraction(selectedType);
+                  setExtractedFields(fields);
+                  const initial: Record<string, string> = {};
+                  fields.forEach(f => { initial[f.key] = f.value; });
+                  setValidatedFields(initial);
+                }
+                setTimeout(() => {
+                  setPhase('review');
+                  toast.success('Análisis completado', { description: 'Revisa y corrige los campos extraídos antes de guardar.' });
+                }, 500);
+                return 100;
+              }
+              return dp + 4;
+            });
+          }, 100);
+          return 100;
+        }
         return p + 5;
       });
     }, 80);
-    goNext();
   };
 
-  const startDocAI = () => {
-    setDocaiProgress(0);
-    const interval = setInterval(() => {
-      setDocaiProgress(p => {
-        if (p >= 100) {
-          clearInterval(interval);
-          if (selectedType) {
-            const fields = simulateExtraction(selectedType);
-            setExtractedFields(fields);
-            const initial: Record<string, string> = {};
-            fields.forEach(f => { initial[f.key] = f.value; });
-            setValidatedFields(initial);
-          }
-          return 100;
-        }
-        return p + 4;
-      });
-    }, 100);
-    goNext();
-  };
-
-  const lowConfidenceFields = extractedFields.filter(f => f.confidence < HIGH_CONFIDENCE_THRESHOLD);
-  const highConfidenceFields = extractedFields.filter(f => f.confidence >= HIGH_CONFIDENCE_THRESHOLD);
-  const allLowConfidenceReviewed = lowConfidenceFields.length === 0 || lowConfidenceFields.every(f => reviewedLowConfidence.has(f.key));
-
-  const markLowConfidenceReviewed = (key: string) => {
-    setReviewedLowConfidence(prev => new Set([...prev, key]));
-  };
-
-  const handleSaveDraft = () => {
+  const handleSave = () => {
+    if (!selectedType) return;
     setSaving(true);
-    const toastId = toast.loading('Guardando borrador...');
+    const toastId = toast.loading('Guardando expediente...');
     setTimeout(() => {
-      setSaving(false);
-      setDraftSaved(true);
-      toast.success('Borrador guardado', { id: toastId, description: 'Puedes continuar más tarde.' });
-      goNext();
-    }, 800);
-  };
-
-  const handleSendReview = () => {
-    setSaving(true);
-    const toastId = toast.loading('Enviando a revisión...');
-    setTimeout(() => {
-      setSaving(false);
-      setReviewSent(true);
-      toast.success('Expediente enviado a revisión', { id: toastId, description: 'Un auditor validará la información.' });
-      goNext();
-    }, 800);
-  };
-
-  const handleFinalize = () => {
-    setSaving(true);
-    const toastId = toast.loading('Finalizando expediente...');
-    setTimeout(() => {
-      if (!selectedType || !employee) return;
       const newId = `exp-${Date.now()}`;
       const now = new Date().toISOString().slice(0, 10);
       const snapshot: EmployeeSnapshot = {
@@ -265,7 +230,6 @@ export default function DigitalizationWizard({ employeeId, year, currentUser, on
         emergencyContactPhone: employee.emergencyContactPhone,
         photoDataUrl: employee.photoDataUrl,
       };
-      const observations = validatedFields['observations'] ?? '';
       const newExp: Expedient = {
         id: newId,
         employeeId,
@@ -273,12 +237,13 @@ export default function DigitalizationWizard({ employeeId, year, currentUser, on
         year: effectiveYear,
         date: validatedFields['date'] ?? now,
         responsibleDoctor: validatedFields['doctorName'] ?? '',
-        observations,
+        observations: validatedFields['observations'] ?? '',
         diagnosis: validatedFields['diagnosis'] ?? '',
         results: '',
         weight: validatedFields['weight'] ?? '',
         height: validatedFields['height'] ?? '',
-        status: 'Finalizado',
+        bloodPressure: validatedFields['bloodPressure'] ?? '',
+        status: 'Sin revisar',
         employeeSnapshot: snapshot,
         createdAt: now,
         updatedAt: now,
@@ -297,20 +262,27 @@ export default function DigitalizationWizard({ employeeId, year, currentUser, on
       }));
       addDocuments(docs as any);
       logAction(newId, currentUser.username, 'Creación del expediente', 'Expediente creado mediante digitalización');
-      logAction(newId, currentUser.username, 'Finalización', 'Expediente finalizado tras validación médica');
-      logChange(newId, currentUser.username, 'Estado', '', 'Finalizado');
+      logChange(newId, currentUser.username, 'Estado', '', 'Sin revisar');
+      setCreatedExpId(newId);
       setSaving(false);
-      setFinalized(true);
-      toast.success('Expediente finalizado correctamente', {
+      setPhase('done');
+      toast.success('Expediente guardado correctamente', {
         id: toastId,
         description: `${selectedType} · ${effectiveYear}`,
       });
     }, 1000);
   };
 
+  const lowConfidenceCount = extractedFields.filter(f => f.confidence < HIGH_CONFIDENCE_THRESHOLD).length;
+  const avgConfidence = extractedFields.length > 0
+    ? Math.round(extractedFields.reduce((s, f) => s + f.confidence, 0) / extractedFields.length * 100)
+    : 0;
+
   const filteredCategories = categories
     .map(cat => ({ ...cat, types: cat.types.filter(t => t.toLowerCase().includes(typeQuery.toLowerCase())) }))
     .filter(cat => cat.types.length > 0);
+
+  const stepIndex = getStepIndex();
 
   return (
     <div className="max-w-6xl">
@@ -329,51 +301,46 @@ export default function DigitalizationWizard({ employeeId, year, currentUser, on
       <div className="mb-5">
         <h2 className="text-xl font-bold text-gray-900">Digitalización de expediente</h2>
         <p className="text-sm text-slate-400 mt-0.5">
-          Proceso completo de captura, extracción y validación para <span className="font-semibold text-slate-600">{fullName}</span>
+          Proceso de captura, extracción y validación para <span className="font-semibold text-slate-600">{fullName}</span>
         </p>
       </div>
 
-      {/* Stepper */}
-      <div className="mb-6 overflow-x-auto pb-2">
-        <div className="flex items-center gap-0 min-w-max">
-          {STEPS.map((step, idx) => {
-            const status = getStepStatus(idx);
-            const Icon = step.icon;
-            return (
-              <div key={step.id} className="flex items-center">
-                <div className="flex flex-col items-center gap-1.5 w-[88px] flex-shrink-0">
-                  <div
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
-                      status === 'completed'
-                        ? 'bg-green-500 text-white'
-                        : status === 'active'
-                        ? 'bg-[hsl(355,78%,51%)] text-white shadow-md shadow-red-500/20 ring-4 ring-red-500/10'
-                        : 'bg-slate-100 text-slate-400'
-                    }`}
-                  >
-                    {status === 'completed' ? <Check size={16} strokeWidth={3} /> : <Icon size={15} />}
+      {/* Flow Stepper — only show for non-processing phases */}
+      {phase !== 'processing' && (
+        <div className="mb-6 overflow-x-auto pb-2">
+          <div className="flex items-center gap-0 min-w-max">
+            {FLOW_STEPS.map((step, idx) => {
+              const status = idx < stepIndex ? 'completed' : idx === stepIndex ? 'active' : 'pending';
+              const Icon = step.icon;
+              return (
+                <div key={step.label} className="flex items-center">
+                  <div className="flex flex-col items-center gap-1.5 w-[100px] flex-shrink-0">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+                      status === 'completed' ? 'bg-green-500 text-white'
+                      : status === 'active' ? 'bg-[hsl(355,78%,51%)] text-white shadow-md shadow-red-500/20 ring-4 ring-red-500/10'
+                      : 'bg-slate-100 text-slate-400'
+                    }`}>
+                      {status === 'completed' ? <Check size={16} strokeWidth={3} /> : <Icon size={15} />}
+                    </div>
+                    <p className={`text-[10px] font-semibold text-center leading-tight ${
+                      status === 'active' ? 'text-[hsl(355,78%,51%)]' : status === 'completed' ? 'text-slate-600' : 'text-slate-300'
+                    }`}>{step.label}</p>
                   </div>
-                  <p className={`text-[10px] font-semibold text-center leading-tight ${
-                    status === 'active' ? 'text-[hsl(355,78%,51%)]' : status === 'completed' ? 'text-slate-600' : 'text-slate-300'
-                  }`}>
-                    {step.label}
-                  </p>
+                  {idx < FLOW_STEPS.length - 1 && (
+                    <div className={`h-0.5 w-7 mt-[-20px] rounded-full transition-colors ${status === 'completed' ? 'bg-green-500' : 'bg-slate-200'}`} />
+                  )}
                 </div>
-                {idx < STEPS.length - 1 && (
-                  <div className={`h-0.5 w-6 mt-[-20px] rounded-full transition-colors ${
-                    status === 'completed' ? 'bg-green-500' : 'bg-slate-200'
-                  }`} />
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Step content */}
+      {/* Content */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 min-h-[400px]">
-        {/* STEP 0: Select type */}
-        {currentStep.id === 'type' && (
+
+        {/* PHASE: TYPE SELECTION */}
+        {phase === 'type' && (
           <div className="space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
               <div>
@@ -433,8 +400,8 @@ export default function DigitalizationWizard({ employeeId, year, currentUser, on
           </div>
         )}
 
-        {/* STEP 1: Upload */}
-        {currentStep.id === 'upload' && (
+        {/* PHASE: UPLOAD */}
+        {phase === 'upload' && (
           <div className="space-y-5">
             <div>
               <h3 className="text-lg font-bold text-gray-900">Subir documento</h3>
@@ -486,55 +453,62 @@ export default function DigitalizationWizard({ employeeId, year, currentUser, on
           </div>
         )}
 
-        {/* STEP 2: OCR Processing */}
-        {currentStep.id === 'ocr' && (
-          <ProcessingStep
-            title="Procesamiento OCR"
-            subtitle="Reconocimiento óptico de caracteres en el documento"
-            icon={ScanText}
-            progress={ocrProgress}
-            steps={[
-              { label: 'Preprocesamiento de imagen', done: ocrProgress >= 25 },
-              { label: 'Detección de regiones de texto', done: ocrProgress >= 50 },
-              { label: 'Reconocimiento de caracteres', done: ocrProgress >= 75 },
-              { label: 'Estructuración de texto extraído', done: ocrProgress >= 100 },
-            ]}
-            onComplete={startDocAI}
-            autoAdvance
+        {/* PHASE: PROCESSING (transient OCR + Document AI) */}
+        {phase === 'processing' && (
+          <ProcessingOverlay
+            ocrProgress={ocrProgress}
+            docaiProgress={docaiProgress}
+            stage={processingStage}
           />
         )}
 
-        {/* STEP 3: Document AI */}
-        {currentStep.id === 'docai' && (
-          <ProcessingStep
-            title="Procesamiento con Document AI"
-            subtitle="Análisis inteligente y extracción estructurada de campos médicos"
-            icon={Cpu}
-            progress={docaiProgress}
-            steps={[
-              { label: 'Clasificación del documento', done: docaiProgress >= 20 },
-              { label: 'Detección de entidades médicas', done: docaiProgress >= 40 },
-              { label: 'Extracción de campos estructurados', done: docaiProgress >= 60 },
-              { label: 'Cálculo de puntajes de confianza', done: docaiProgress >= 80 },
-              { label: 'Generación de resultados estructurados', done: docaiProgress >= 100 },
-            ]}
-            onComplete={goNext}
-            autoAdvance
-          />
-        )}
-
-        {/* STEP 4: Preview extracted data */}
-        {currentStep.id === 'preview' && (
+        {/* PHASE: REVIEW & CORRECTION */}
+        {phase === 'review' && (
           <div className="space-y-5">
-            <div>
-              <h3 className="text-lg font-bold text-gray-900">Vista previa de datos extraídos</h3>
-              <p className="text-sm text-slate-400 mt-0.5">Revisa los datos que el sistema identificó del documento</p>
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Documento original</p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Revisión del expediente</h3>
+                <p className="text-sm text-slate-400 mt-0.5">Corrige o confirma los valores extraídos antes de guardar</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 rounded-lg border border-green-100">
+                  <CheckCircle2 size={14} className="text-green-500" />
+                  <span className="text-xs font-bold text-green-700">{extractedFields.length - lowConfidenceCount} alta confianza</span>
                 </div>
+                {lowConfidenceCount > 0 && (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 rounded-lg border border-amber-100">
+                    <AlertTriangle size={14} className="text-amber-500" />
+                    <span className="text-xs font-bold text-amber-700">{lowConfidenceCount} baja confianza</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Summary bar */}
+            <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="w-10 h-10 bg-[hsl(355,78%,51%)]/10 rounded-xl flex items-center justify-center">
+                  <ScanText size={18} className="text-[hsl(355,78%,51%)]" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-700">{selectedType}</p>
+                  <p className="text-[11px] text-slate-400">{uploadedFiles.length} documento(s) analizado(s)</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-slate-400">Confianza promedio</p>
+                <p className="text-lg font-bold text-gray-900">{avgConfidence}%</p>
+              </div>
+              <div className="w-32 h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full transition-all duration-700" style={{ width: `${avgConfidence}%` }} />
+              </div>
+            </div>
+
+            {/* Document preview + fields side-by-side */}
+            <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4">
+              {/* Document thumbnail */}
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Documento original</p>
                 <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50 aspect-[3/4] flex items-center justify-center relative">
                   {uploadedFiles[0]?.fileType === 'image' ? (
                     <img src={uploadedFiles[0].dataUrl} alt="Documento" className="w-full h-full object-contain" />
@@ -546,285 +520,107 @@ export default function DigitalizationWizard({ employeeId, year, currentUser, on
                   )}
                   <div className="absolute top-2 left-2 px-2 py-1 bg-black/60 rounded text-[10px] text-white font-semibold">ORIGINAL</div>
                 </div>
+                {uploadedFiles.length > 1 && (
+                  <p className="text-[11px] text-slate-400 text-center">+ {uploadedFiles.length - 1} archivo(s) adicional(es)</p>
+                )}
               </div>
+
+              {/* Editable fields */}
               <div className="space-y-3">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Resumen de extracción</p>
-                <div className="rounded-xl border border-slate-200 p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-500">Campos extraídos</span>
-                    <span className="text-sm font-bold text-gray-900">{extractedFields.length}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-500">Alta confianza</span>
-                    <span className="text-sm font-bold text-green-600">{highConfidenceFields.length}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-500">Baja confianza</span>
-                    <span className="text-sm font-bold text-amber-600">{lowConfidenceFields.length}</span>
-                  </div>
-                  <div className="pt-2 border-t border-slate-100">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs text-slate-400">Confianza promedio</span>
-                      <span className="text-xs font-bold text-gray-700">
-                        {extractedFields.length > 0 ? Math.round(extractedFields.reduce((s, f) => s + f.confidence, 0) / extractedFields.length * 100) : 0}%
-                      </span>
-                    </div>
-                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full transition-all duration-500"
-                        style={{ width: `${extractedFields.length > 0 ? Math.round(extractedFields.reduce((s, f) => s + f.confidence, 0) / extractedFields.length * 100) : 0}%` }}
-                      />
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Campos extraídos — editables</p>
+                  <span className="text-[10px] text-slate-400">Modifica los valores según sea necesario</span>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* STEP 5: Detected fields */}
-        {currentStep.id === 'fields' && (
-          <div className="space-y-5">
-            <div>
-              <h3 className="text-lg font-bold text-gray-900">Campos detectados</h3>
-              <p className="text-sm text-slate-400 mt-0.5">Todos los campos identificados por Document AI con su nivel de confianza</p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {extractedFields.map(field => (
-                <FieldCard key={field.key} field={field} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* STEP 6: Low confidence fields */}
-        {currentStep.id === 'low-confidence' && (
-          <div className="space-y-5">
-            <div>
-              <h3 className="text-lg font-bold text-gray-900">Campos con baja confianza</h3>
-              <p className="text-sm text-slate-400 mt-0.5">
-                Estos campos requieren revisión. Marca cada uno como revisado para continuar.
-              </p>
-            </div>
-            {lowConfidenceFields.length === 0 ? (
-              <div className="text-center py-12">
-                <CheckCircle2 size={40} className="mx-auto text-green-500 mb-3" />
-                <p className="text-sm font-semibold text-slate-600">No hay campos con baja confianza</p>
-                <p className="text-xs text-slate-400 mt-1">Todos los campos superan el umbral de confianza ({Math.round(HIGH_CONFIDENCE_THRESHOLD * 100)}%)</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {lowConfidenceFields.map(field => {
-                  const reviewed = reviewedLowConfidence.has(field.key);
-                  return (
-                    <div key={field.key} className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${reviewed ? 'bg-green-50/50 border-green-200' : 'bg-amber-50/40 border-amber-200'}`}>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="text-sm font-bold text-slate-700">{field.label}</p>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${reviewed ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {extractedFields.map(field => {
+                    const isLow = field.confidence < HIGH_CONFIDENCE_THRESHOLD;
+                    return (
+                      <div key={field.key} className={`p-3.5 rounded-xl border transition-all ${isLow ? 'border-amber-300 bg-amber-50/40' : 'border-slate-200 bg-white'}`}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-xs font-bold text-slate-600">{field.label}</label>
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${isLow ? 'bg-amber-100 text-amber-700' : 'bg-green-50 text-green-600'}`}>
                             {Math.round(field.confidence * 100)}%
                           </span>
                         </div>
-                        <p className="text-sm text-slate-500">{field.value}</p>
+                        <input
+                          type="text"
+                          value={validatedFields[field.key] ?? ''}
+                          onChange={e => setValidatedFields(prev => ({ ...prev, [field.key]: e.target.value }))}
+                          className={`w-full px-3 h-9 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/15 focus:border-red-400 focus:bg-white transition-all ${
+                            isLow ? 'bg-amber-50/50 border-amber-300' : 'bg-slate-50 border-slate-200'
+                          }`}
+                        />
                       </div>
-                      <button
-                        onClick={() => markLowConfidenceReviewed(field.key)}
-                        disabled={reviewed}
-                        className={`flex items-center gap-1.5 px-3 h-8 text-xs font-semibold rounded-lg transition-colors ${reviewed ? 'bg-green-100 text-green-700 cursor-default' : 'bg-white border border-amber-300 text-amber-700 hover:bg-amber-100'}`}
-                      >
-                        {reviewed ? <><Check size={12} /> Revisado</> : <><AlertTriangle size={12} /> Marcar revisado</>}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* STEP 7: Manual validation */}
-        {currentStep.id === 'validation' && (
-          <div className="space-y-5">
-            <div>
-              <h3 className="text-lg font-bold text-gray-900">Validación manual por personal médico</h3>
-              <p className="text-sm text-slate-400 mt-0.5">Corrige o confirma los valores extraídos antes de guardar</p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {extractedFields.map(field => (
-                <div key={field.key} className="p-3.5 rounded-xl border border-slate-200 bg-white">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-bold text-slate-600">{field.label}</label>
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${field.confidence >= HIGH_CONFIDENCE_THRESHOLD ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
-                      {Math.round(field.confidence * 100)}%
-                    </span>
-                  </div>
-                  <input
-                    type="text"
-                    value={validatedFields[field.key] ?? ''}
-                    onChange={e => setValidatedFields(prev => ({ ...prev, [field.key]: e.target.value }))}
-                    className={`w-full px-3 h-9 text-sm bg-slate-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/15 focus:border-red-400 focus:bg-white transition-all ${
-                      field.confidence < HIGH_CONFIDENCE_THRESHOLD ? 'border-amber-300 bg-amber-50/30' : 'border-slate-200'
-                    }`}
-                  />
+                    );
+                  })}
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         )}
 
-        {/* STEP 8: Save draft */}
-        {currentStep.id === 'draft' && (
-          <div className="space-y-5">
-            <div>
-              <h3 className="text-lg font-bold text-gray-900">Guardar borrador</h3>
-              <p className="text-sm text-slate-400 mt-0.5">El expediente se guardará como borrador para revisión posterior</p>
+        {/* PHASE: DONE */}
+        {phase === 'done' && (
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+              <CheckCircle2 size={36} className="text-green-500" strokeWidth={2.5} />
             </div>
-            <div className={`rounded-xl border p-6 text-center transition-all ${draftSaved ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-200'}`}>
-              {draftSaved ? (
-                <>
-                  <CheckCircle2 size={40} className="mx-auto text-green-500 mb-3" />
-                  <p className="text-sm font-bold text-slate-700">Borrador guardado correctamente</p>
-                  <p className="text-xs text-slate-400 mt-1">El expediente está disponible para continuar el proceso</p>
-                </>
-              ) : (
-                <>
-                  <Save size={40} className="mx-auto text-slate-300 mb-3" />
-                  <p className="text-sm font-semibold text-slate-500">El borrador incluirá todos los datos validados</p>
-                  <p className="text-xs text-slate-400 mt-1">{Object.keys(validatedFields).length} campos listos para guardar</p>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* STEP 9: Send to review */}
-        {currentStep.id === 'review' && (
-          <div className="space-y-5">
-            <div>
-              <h3 className="text-lg font-bold text-gray-900">Enviar a revisión</h3>
-              <p className="text-sm text-slate-400 mt-0.5">El expediente será enviado al auditor para su validación final</p>
-            </div>
-            <div className={`rounded-xl border p-6 text-center transition-all ${reviewSent ? 'bg-blue-50 border-blue-200' : 'bg-slate-50 border-slate-200'}`}>
-              {reviewSent ? (
-                <>
-                  <Send size={40} className="mx-auto text-blue-500 mb-3" />
-                  <p className="text-sm font-bold text-slate-700">Expediente enviado a revisión</p>
-                  <p className="text-xs text-slate-400 mt-1">El auditor recibirá una notificación para validar este expediente</p>
-                </>
-              ) : (
-                <>
-                  <Send size={40} className="mx-auto text-slate-300 mb-3" />
-                  <p className="text-sm font-semibold text-slate-500">Confirma el envío a revisión</p>
-                  <p className="text-xs text-slate-400 mt-1">Un auditor validará la información antes de finalizar</p>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* STEP 10: Finalize */}
-        {currentStep.id === 'finalize' && (
-          <div className="space-y-5">
-            <div>
-              <h3 className="text-lg font-bold text-gray-900">Finalizar expediente</h3>
-              <p className="text-sm text-slate-400 mt-0.5">El expediente se guardará como finalizado y quedará bloqueado para edición</p>
-            </div>
-            <div className={`rounded-xl border p-6 text-center transition-all ${finalized ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-200'}`}>
-              {finalized ? (
-                <>
-                  <CheckCircle2 size={48} className="mx-auto text-green-500 mb-3" />
-                  <p className="text-base font-bold text-slate-700">Expediente finalizado correctamente</p>
-                  <p className="text-sm text-slate-500 mt-1">{selectedType} · {effectiveYear}</p>
-                  <div className="mt-4 flex flex-col sm:flex-row gap-2 justify-center">
-                    <button onClick={() => onNavigate('employee-profile', employeeId, undefined, effectiveYear)} className="px-4 h-9 text-sm font-semibold text-white bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] rounded-lg transition-colors">
-                      Ver expediente del empleado
-                    </button>
-                    <button onClick={() => onNavigate('expedients')} className="px-4 h-9 text-sm font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors">
-                      Ir a lista de expedientes
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <Flag size={40} className="mx-auto text-slate-300 mb-3" />
-                  <p className="text-sm font-semibold text-slate-500">Al finalizar, el expediente quedará bloqueado</p>
-                  <p className="text-xs text-slate-400 mt-1">{uploadedFiles.length} documento(s) · {extractedFields.length} campos validados</p>
-                </>
-              )}
+            <p className="text-lg font-bold text-gray-900">Expediente guardado correctamente</p>
+            <p className="text-sm text-slate-400 mt-1">{selectedType} · {effectiveYear}</p>
+            <div className="mt-6 flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={() => onNavigate('expedient-form', employeeId, createdExpId ?? undefined, effectiveYear)}
+                className="flex items-center gap-1.5 px-5 h-10 text-sm font-semibold text-white bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] rounded-lg transition-colors shadow-sm"
+              >
+                <Eye size={15} /> Ver expediente
+              </button>
+              <button
+                onClick={() => onNavigate('employee-profile', employeeId, undefined, effectiveYear)}
+                className="flex items-center gap-1.5 px-5 h-10 text-sm font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors"
+              >
+                <ArrowLeft size={15} /> Volver al empleado
+              </button>
             </div>
           </div>
         )}
       </div>
 
       {/* Footer navigation */}
-      <div className="flex items-center justify-between mt-5">
-        <button
-          onClick={goPrev}
-          disabled={stepIndex === 0 || saving}
-          className="flex items-center gap-1.5 px-4 h-10 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg transition-colors"
-        >
-          <ArrowLeft size={15} /> Anterior
-        </button>
+      {phase !== 'processing' && phase !== 'done' && (
+        <div className="flex items-center justify-between mt-5">
+          <button
+            onClick={() => {
+              if (phase === 'upload') setPhase('type');
+              else if (phase === 'review') setPhase('upload');
+            }}
+            disabled={phase === 'type'}
+            className="flex items-center gap-1.5 px-4 h-10 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg transition-colors"
+          >
+            <ArrowLeft size={15} /> Anterior
+          </button>
 
-        <p className="text-xs text-slate-400 hidden sm:block">Paso {stepIndex + 1} de {STEPS.length}</p>
-
-        <div className="flex items-center gap-2">
-          {currentStep.id === 'upload' && uploadedFiles.length > 0 && (
-            <button onClick={startOcr} className="flex items-center gap-1.5 px-5 h-10 text-sm font-semibold text-white bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] rounded-lg transition-colors shadow-sm">
-              Iniciar OCR <ArrowRight size={15} />
-            </button>
-          )}
-          {currentStep.id === 'preview' && (
-            <button onClick={goNext} className="flex items-center gap-1.5 px-5 h-10 text-sm font-semibold text-white bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] rounded-lg transition-colors shadow-sm">
-              Ver campos detectados <ArrowRight size={15} />
-            </button>
-          )}
-          {currentStep.id === 'fields' && (
-            <button onClick={goNext} className="flex items-center gap-1.5 px-5 h-10 text-sm font-semibold text-white bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] rounded-lg transition-colors shadow-sm">
-              Continuar <ArrowRight size={15} />
-            </button>
-          )}
-          {currentStep.id === 'low-confidence' && (
-            <button
-              onClick={goNext}
-              disabled={!allLowConfidenceReviewed}
-              className="flex items-center gap-1.5 px-5 h-10 text-sm font-semibold text-white bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors shadow-sm"
-            >
-              {allLowConfidenceReviewed ? 'Continuar a validación' : 'Revisa todos los campos'} <ArrowRight size={15} />
-            </button>
-          )}
-          {currentStep.id === 'validation' && (
-            <button onClick={goNext} className="flex items-center gap-1.5 px-5 h-10 text-sm font-semibold text-white bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] rounded-lg transition-colors shadow-sm">
-              Continuar <ArrowRight size={15} />
-            </button>
-          )}
-          {currentStep.id === 'draft' && !draftSaved && (
-            <button onClick={handleSaveDraft} disabled={saving} className="flex items-center gap-1.5 px-5 h-10 text-sm font-semibold text-white bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] disabled:opacity-60 rounded-lg transition-colors shadow-sm">
-              {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} {saving ? 'Guardando...' : 'Guardar borrador'}
-            </button>
-          )}
-          {currentStep.id === 'draft' && draftSaved && (
-            <button onClick={goNext} className="flex items-center gap-1.5 px-5 h-10 text-sm font-semibold text-white bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] rounded-lg transition-colors shadow-sm">
-              Enviar a revisión <ArrowRight size={15} />
-            </button>
-          )}
-          {currentStep.id === 'review' && !reviewSent && (
-            <button onClick={handleSendReview} disabled={saving} className="flex items-center gap-1.5 px-5 h-10 text-sm font-semibold text-white bg-blue-500 hover:bg-blue-600 disabled:opacity-60 rounded-lg transition-colors shadow-sm">
-              {saving ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />} {saving ? 'Enviando...' : 'Enviar a revisión'}
-            </button>
-          )}
-          {currentStep.id === 'review' && reviewSent && (
-            <button onClick={goNext} className="flex items-center gap-1.5 px-5 h-10 text-sm font-semibold text-white bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] rounded-lg transition-colors shadow-sm">
-              Finalizar <ArrowRight size={15} />
-            </button>
-          )}
-          {currentStep.id === 'finalize' && !finalized && (
-            <button onClick={handleFinalize} disabled={saving} className="flex items-center gap-1.5 px-5 h-10 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 disabled:opacity-60 rounded-lg transition-colors shadow-sm">
-              {saving ? <Loader2 size={15} className="animate-spin" /> : <Flag size={15} />} {saving ? 'Finalizando...' : 'Finalizar expediente'}
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {phase === 'upload' && uploadedFiles.length > 0 && (
+              <button
+                onClick={startProcessing}
+                className="flex items-center gap-1.5 px-5 h-10 text-sm font-semibold text-white bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] rounded-lg transition-colors shadow-sm"
+              >
+                <ScanText size={15} /> Analizar documento <ArrowRight size={15} />
+              </button>
+            )}
+            {phase === 'review' && (
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex items-center gap-1.5 px-5 h-10 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 disabled:opacity-60 rounded-lg transition-colors shadow-sm"
+              >
+                {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+                {saving ? 'Guardando...' : 'Guardar expediente'}
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Full-screen preview */}
       {previewUrl && (
@@ -839,80 +635,95 @@ export default function DigitalizationWizard({ employeeId, year, currentUser, on
   );
 }
 
-function FieldCard({ field }: { field: ExtractedField }) {
-  const isHigh = field.confidence >= HIGH_CONFIDENCE_THRESHOLD;
-  return (
-    <div className={`p-4 rounded-xl border transition-all ${isHigh ? 'border-slate-200 bg-white' : 'border-amber-200 bg-amber-50/30'}`}>
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-bold text-slate-600">{field.label}</p>
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isHigh ? 'bg-green-50 text-green-600' : 'bg-amber-100 text-amber-700'}`}>
-          {Math.round(field.confidence * 100)}%
-        </span>
-      </div>
-      <p className="text-sm text-slate-700 font-medium">{field.value}</p>
-      <div className="mt-2 h-1 bg-slate-100 rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-700 ${isHigh ? 'bg-green-500' : 'bg-amber-400'}`}
-          style={{ width: `${Math.round(field.confidence * 100)}%` }}
-        />
-      </div>
-    </div>
-  );
+/* --- Transient processing overlay for OCR + Document AI --- */
+
+interface ProcessingOverlayProps {
+  ocrProgress: number;
+  docaiProgress: number;
+  stage: 'ocr' | 'docai';
 }
 
-interface ProcessingStepProps {
-  title: string;
-  subtitle: string;
-  icon: LucideIcon;
-  progress: number;
-  steps: { label: string; done: boolean }[];
-  onComplete: () => void;
-  autoAdvance?: boolean;
-}
-
-function ProcessingStep({ title, subtitle, icon: _Icon, progress, steps, onComplete, autoAdvance }: ProcessingStepProps) {
-  const calledRef = useRef(false);
-  useEffect(() => {
-    if (progress >= 100 && autoAdvance && !calledRef.current) {
-      calledRef.current = true;
-      const timer = setTimeout(onComplete, 800);
-      return () => clearTimeout(timer);
-    }
-  }, [progress, autoAdvance, onComplete]);
+function ProcessingOverlay({ ocrProgress, docaiProgress, stage }: ProcessingOverlayProps) {
+  const currentProgress = stage === 'ocr' ? ocrProgress : docaiProgress;
+  const ocrSteps = [
+    { label: 'Preprocesamiento de imagen', done: ocrProgress >= 25 },
+    { label: 'Detección de regiones de texto', done: ocrProgress >= 50 },
+    { label: 'Reconocimiento de caracteres', done: ocrProgress >= 75 },
+    { label: 'Estructuración de texto extraído', done: ocrProgress >= 100 },
+  ];
+  const docaiSteps = [
+    { label: 'Clasificación del documento', done: docaiProgress >= 20 },
+    { label: 'Detección de entidades médicas', done: docaiProgress >= 40 },
+    { label: 'Extracción de campos estructurados', done: docaiProgress >= 60 },
+    { label: 'Cálculo de puntajes de confianza', done: docaiProgress >= 80 },
+    { label: 'Generación de resultados estructurados', done: docaiProgress >= 100 },
+  ];
+  const steps = stage === 'ocr' ? ocrSteps : docaiSteps;
+  const title = stage === 'ocr' ? 'Procesamiento OCR' : 'Procesamiento con Document AI';
+  const subtitle = stage === 'ocr'
+    ? 'Reconocimiento óptico de caracteres en el documento'
+    : 'Análisis inteligente y extracción estructurada de campos médicos';
 
   return (
     <div className="space-y-5">
-      <div>
-        <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-        <p className="text-sm text-slate-400 mt-0.5">{subtitle}</p>
+      {/* Stage indicator: OCR → Document AI */}
+      <div className="flex items-center justify-center gap-4 mb-2">
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${stage === 'ocr' ? 'bg-red-50 border border-red-200' : ocrProgress >= 100 ? 'bg-green-50 border border-green-200' : 'bg-slate-50 border border-slate-200'}`}>
+          <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${stage === 'ocr' ? 'bg-[hsl(355,78%,51%)] text-white' : ocrProgress >= 100 ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-400'}`}>
+            {ocrProgress >= 100 ? <Check size={14} strokeWidth={3} /> : <ScanText size={14} />}
+          </div>
+          <div>
+            <p className={`text-xs font-bold ${stage === 'ocr' ? 'text-[hsl(355,78%,51%)]' : ocrProgress >= 100 ? 'text-green-700' : 'text-slate-400'}`}>OCR</p>
+            <p className="text-[10px] text-slate-400">{ocrProgress}%</p>
+          </div>
+        </div>
+
+        <div className={`h-0.5 w-8 rounded-full transition-colors ${ocrProgress >= 100 ? 'bg-green-500' : 'bg-slate-200'}`} />
+
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${stage === 'docai' ? 'bg-blue-50 border border-blue-200' : docaiProgress >= 100 ? 'bg-green-50 border border-green-200' : 'bg-slate-50 border border-slate-200'}`}>
+          <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${stage === 'docai' ? 'bg-blue-500 text-white' : docaiProgress >= 100 ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-400'}`}>
+            {docaiProgress >= 100 ? <Check size={14} strokeWidth={3} /> : <Cpu size={14} />}
+          </div>
+          <div>
+            <p className={`text-xs font-bold ${stage === 'docai' ? 'text-blue-600' : docaiProgress >= 100 ? 'text-green-700' : 'text-slate-400'}`}>Document AI</p>
+            <p className="text-[10px] text-slate-400">{docaiProgress}%</p>
+          </div>
+        </div>
       </div>
-      <div className="flex flex-col items-center py-6">
-        <div className="relative w-24 h-24 mb-5">
+
+      <div>
+        <h3 className="text-lg font-bold text-gray-900 text-center">{title}</h3>
+        <p className="text-sm text-slate-400 mt-0.5 text-center">{subtitle}</p>
+      </div>
+
+      <div className="flex flex-col items-center py-4">
+        <div className="relative w-24 h-24 mb-4">
           <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
             <circle cx="50" cy="50" r="42" fill="none" stroke="#f1f5f9" strokeWidth="8" />
             <circle
-              cx="50" cy="50" r="42" fill="none" stroke="hsl(355,78%,51%)" strokeWidth="8" strokeLinecap="round"
+              cx="50" cy="50" r="42" fill="none" stroke={stage === 'ocr' ? 'hsl(355,78%,51%)' : '#3b82f6'} strokeWidth="8" strokeLinecap="round"
               strokeDasharray={`${2 * Math.PI * 42}`}
-              strokeDashoffset={`${2 * Math.PI * 42 * (1 - progress / 100)}`}
+              strokeDashoffset={`${2 * Math.PI * 42 * (1 - currentProgress / 100)}`}
               className="transition-all duration-200"
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            {progress < 100 ? (
-              <Loader2 size={24} className="animate-spin text-[hsl(355,78%,51%)]" />
+            {currentProgress < 100 ? (
+              <Loader2 size={24} className={`animate-spin ${stage === 'ocr' ? 'text-[hsl(355,78%,51%)]' : 'text-blue-500'}`} />
             ) : (
               <Check size={28} className="text-green-500" strokeWidth={3} />
             )}
           </div>
         </div>
-        <p className="text-2xl font-bold text-gray-900">{progress}%</p>
-        <p className="text-xs text-slate-400 mt-0.5">{progress < 100 ? 'Procesando...' : 'Completado'}</p>
+        <p className="text-2xl font-bold text-gray-900">{currentProgress}%</p>
+        <p className="text-xs text-slate-400 mt-0.5">{currentProgress < 100 ? 'Procesando...' : 'Completado'}</p>
       </div>
+
       <div className="space-y-2.5 max-w-md mx-auto w-full">
         {steps.map((s, i) => (
           <div key={i} className="flex items-center gap-3">
             <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${s.done ? 'bg-green-500 text-white' : 'bg-slate-100 text-slate-300'}`}>
-              {s.done ? <Check size={12} strokeWidth={3} /> : <Loader2 size={11} className={s.done ? '' : 'animate-spin'} />}
+              {s.done ? <Check size={12} strokeWidth={3} /> : <Loader2 size={11} className="animate-spin" />}
             </div>
             <p className={`text-sm transition-colors ${s.done ? 'text-slate-700 font-medium' : 'text-slate-400'}`}>{s.label}</p>
           </div>
