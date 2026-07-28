@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Lock, X, Eye, EyeOff, ShieldAlert, CircleAlert as AlertCircle } from 'lucide-react';
-
-const MASTER_PASSWORD = 'doctora';
+import { getSettings } from '../../lib/store';
 
 interface UnlockModalProps {
   isOpen: boolean;
@@ -18,7 +17,7 @@ export default function UnlockModal({ isOpen, onClose, onUnlock }: UnlockModalPr
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === MASTER_PASSWORD) {
+    if (password === getSettings().masterPassword) {
       onUnlock();
       setPassword('');
       setError('');

@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
-import { employees, expedients } from '../data/mockData';
+import { getEmployees, getExpedients } from '../lib/store';
 import type { Planta } from '../types';
 
 export function usePlantaData(planta: Planta) {
   return useMemo(() => {
+    const employees = getEmployees();
+    const expedients = getExpedients();
     const plantaEmployees = employees.filter(e => e.planta === planta);
     const plantaEmployeeIds = new Set(plantaEmployees.map(e => e.id));
     const plantaExpedients = expedients.filter(e => plantaEmployeeIds.has(e.employeeId));

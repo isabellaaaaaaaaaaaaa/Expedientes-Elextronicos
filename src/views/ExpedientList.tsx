@@ -3,7 +3,8 @@ import {
   FileText, CircleCheck as CheckCircle2, Clock, CircleAlert as AlertCircle,
   Search, Filter, X, Calendar, ChevronLeft, ChevronRight, Plus, ArrowLeft,
 } from 'lucide-react';
-import { employees, expedients, documents } from '../data/mockData';
+import { getExpedients, getEmployees } from '../lib/store';
+import { useExpedients, useEmployees, useDocuments } from '../hooks/useStore';
 import type { NavigationPage, Planta, ExpedientListFilter } from '../types';
 import RecordActionsMenu from '../components/record/RecordActionsMenu';
 import { statusConfig, EXPEDIENT_STATUSES } from '../lib/statusConfig';
@@ -27,14 +28,19 @@ function getInitials(firstName: string, lastName: string) {
   return `${firstName[0]}${lastName[0]}`.toUpperCase();
 }
 
-const RECORD_TYPES = Array.from(new Set(expedients.map(e => e.recordType))).sort();
-const YEARS = Array.from(new Set(expedients.map(e => e.year))).sort((a, b) => b - a);
-const DEPARTMENTS = Array.from(new Set(employees.map(e => e.department))).sort();
-const POSITIONS = Array.from(new Set(employees.map(e => e.position))).sort();
-const DOCTORS = Array.from(new Set(expedients.map(e => e.responsibleDoctor).filter(Boolean))).sort();
+const _allExp = getExpedients();
+const _allEmp = getEmployees();
+const RECORD_TYPES = Array.from(new Set(_allExp.map(e => e.recordType))).sort();
+const YEARS = Array.from(new Set(_allExp.map(e => e.year))).sort((a, b) => b - a);
+const DEPARTMENTS = Array.from(new Set(_allEmp.map(e => e.department))).sort();
+const POSITIONS = Array.from(new Set(_allEmp.map(e => e.position))).sort();
+const DOCTORS = Array.from(new Set(_allExp.map(e => e.responsibleDoctor).filter(Boolean))).sort();
 const PAGE_SIZE = 25;
 
-export default function ExpedientList({ initialFilter, onNavigate }: ExpedientListProps) {
+export default function ExpedientList({ planta, initialFilter, onNavigate }: ExpedientListProps) {
+  const expedients = useExpedients(planta);
+  const employees = useEmployees(planta);
+  const documents = useDocuments(planta);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
@@ -254,7 +260,7 @@ export default function ExpedientList({ initialFilter, onNavigate }: ExpedientLi
                     description={hasFilters || search.trim() ? 'Ajusta los términos de búsqueda o filtros para encontrar expedientes.' : 'Aún no se ha registrado ningún expediente. Crea el primero para comenzar.'}
                     action={hasFilters || search.trim()
                       ? { label: 'Limpiar filtros', icon: X, onClick: clearFilters }
-                      : { label: 'Crear expediente', icon: Plus, onClick: () => onNavigate('record-type-select') }
+                      : { label: 'Crear expediente', icon: Plus, onClick: () => onNavigate('employees') }
                     }
                   />
                 </td></tr>

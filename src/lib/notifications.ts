@@ -1,4 +1,4 @@
-import { employees, expedients, documents } from '../data/mockData';
+import { getEmployees, getExpedients, getDocuments } from './store';
 import type { Planta } from '../types';
 
 export type NotificationGroup = 'expedientes' | 'examenes' | 'novedades';
@@ -39,8 +39,15 @@ function isWithinNextDays(dateStr: string, days: number): boolean {
 }
 
 export function computeNotifications(planta: Planta): NotificationCategory[] {
-  void planta;
-  // planta is UI context only; counts computed over all data until persistence-based filtering exists
+  const allEmployees = getEmployees();
+  const allExpedients = getExpedients();
+  const allDocuments = getDocuments();
+
+  const plantaEmployeeIds = new Set(allEmployees.filter(e => e.planta === planta).map(e => e.id));
+  const expedients = allExpedients.filter(e => plantaEmployeeIds.has(e.employeeId));
+  const documents = allDocuments.filter(d => plantaEmployeeIds.has(d.employeeId));
+  const employees = allEmployees.filter(e => e.planta === planta);
+
   const enRevision = expedients.filter(e => e.status === 'En revisión').length;
   const pendiente = expedients.filter(e => e.status === 'Pendiente de verificación').length;
   const finalizadoHoy = expedients.filter(e => e.status === 'Finalizado' && isToday(e.updatedAt)).length;
@@ -49,7 +56,7 @@ export function computeNotifications(planta: Planta): NotificationCategory[] {
   const venceSemana = expedients.filter(e => isWithinNextDays(e.date, 7) && !isToday(e.date)).length;
 
   const nuevosDocs = documents.filter(d => isWithinNextDays(d.uploadDate, 7)).length;
-  const nuevosEmpleados = [...employees]
+  const nuevosEmpleados = employees
     .filter(e => e.hireDate && isWithinNextDays(e.hireDate, 7))
     .length;
 

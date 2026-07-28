@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ArrowLeft, Save, User, Building2, Phone, CircleCheck as CheckCircle2, ChevronRight, Heart } from 'lucide-react';
-import { employees } from '../data/mockData';
 import type { NavigationPage, Employee } from '../types';
+import { addEmployee } from '../lib/store';
 
 interface NewEmployeeProps {
   onNavigate: (page: NavigationPage, employeeId?: string, expedientId?: string) => void;
@@ -67,7 +67,7 @@ export default function NewEmployee({ onNavigate }: NewEmployeeProps) {
     }
     const newId = `emp-${Date.now()}`;
     const newEmployee: Employee = { id: newId, ...form };
-    employees.push(newEmployee);
+    addEmployee(newEmployee);
     setSaved(true);
     setTimeout(() => {
       onNavigate('expedient-form', newId, 'new');

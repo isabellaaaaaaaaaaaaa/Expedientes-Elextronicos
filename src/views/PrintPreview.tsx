@@ -1,5 +1,5 @@
 import { ArrowLeft, Printer, FileDown, Building2 } from 'lucide-react';
-import { employees, expedients, documents } from '../data/mockData';
+import { useEmployee, useExpedient, useDocuments } from '../hooks/useStore';
 import { exportRegistroToPDF } from '../lib/exportUtils';
 import { StatusBadge } from '../lib/statusConfig';
 import type { AuthUser, NavigationPage } from '../types';
@@ -34,8 +34,9 @@ function PrintSection({ title, children }: { title: string; children: React.Reac
 }
 
 export default function PrintPreview({ employeeId, expedientId, user, onNavigate }: PrintPreviewProps) {
-  const employee = employees.find(e => e.id === employeeId);
-  const expedient = expedients.find(e => e.id === expedientId);
+  const employee = useEmployee(employeeId);
+  const expedient = useExpedient(expedientId);
+  const allDocuments = useDocuments();
 
   if (!employee || !expedient) {
     return (
@@ -47,7 +48,7 @@ export default function PrintPreview({ employeeId, expedientId, user, onNavigate
   }
 
   const fullName = `${employee.firstName} ${employee.lastName1} ${employee.lastName2}`.trim();
-  const docs = documents.filter(d => d.expedientId === expedientId);
+  const docs = allDocuments.filter(d => d.expedientId === expedientId);
   const examDate = new Date(expedient.date + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
 
   const handlePrint = () => window.print();

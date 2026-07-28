@@ -5,7 +5,7 @@ import {
   Activity, FilePlus2, ShieldPlus, ShieldAlert, Pill, FileSignature,
   ListChecks, Baby as BabyIcon, Mail, X, type LucideIcon,
 } from 'lucide-react';
-import { employees } from '../data/mockData';
+import { useEmployee } from '../hooks/useStore';
 import { saveDraft } from '../data/newExpedientDraft';
 import type { NavigationPage, MedicalRecordType, RecordTypeCategory } from '../types';
 import { EmptyState } from '../components/ui/empty-state';
@@ -102,7 +102,7 @@ const categoryStyles: Record<string, { bg: string; fg: string; ring: string }> =
 };
 
 export default function RecordTypeSelect({ employeeId, year, onNavigate }: RecordTypeSelectProps) {
-  const employee = employees.find(e => e.id === employeeId);
+  const employee = useEmployee(employeeId);
   const [query, setQuery] = useState('');
 
   if (!employee) {

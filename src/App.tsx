@@ -12,6 +12,7 @@ import NewEmployee from './views/NewEmployee';
 import EmployeeProfile from './views/EmployeeProfile';
 import PrintPreview from './views/PrintPreview';
 import Configuracion from './views/Configuracion';
+import Usuarios from './views/Usuarios';
 import type { NavigationPage, AuthUser, Planta, ExpedientListFilter } from './types';
 import { computeNotifications } from './lib/notifications';
 
@@ -172,11 +173,7 @@ export default function App() {
       )}
       {currentPage === 'configuracion' && <Configuracion user={user} onNavigate={handleNavigateSimple} />}
       {currentPage === 'usuarios' && (
-        <div className="max-w-5xl">
-          <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-12 text-center">
-            <p className="text-sm font-semibold text-slate-400">Esta sección estará disponible próximamente.</p>
-          </div>
-        </div>
+        <Usuarios user={user} onNavigate={handleNavigateSimple} />
       )}
     </Layout>
   );

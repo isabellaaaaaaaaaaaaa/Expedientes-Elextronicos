@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { ArrowLeft, Plus, Folder, ChevronRight, FolderOpen, Pencil, Check, X, Phone, Mail, Heart, Calendar, Layers, User as UserIcon } from 'lucide-react';
-import { employees, expedients, documents } from '../data/mockData';
 import type { NavigationPage, AuthUser, Employee } from '../types';
+import { useEmployee, useExpedients, useDocuments } from '../hooks/useStore';
+import { updateEmployee } from '../lib/store';
 import { StatusBadge } from '../lib/statusConfig';
 import RecordActionsMenu from '../components/record/RecordActionsMenu';
 import { EmptyState } from '../components/ui/empty-state';
@@ -42,7 +43,9 @@ function EditField({ label, value, onChange }: { label: string; value: string; o
 }
 
 export default function EmployeeProfile({ employeeId, user, initialYear, onNavigate }: EmployeeProfileProps) {
-  const employee = employees.find(e => e.id === employeeId);
+  const employee = useEmployee(employeeId);
+  const allExpedients = useExpedients();
+  const allDocuments = useDocuments();
   const isAuditor = user.role === 'Auditor';
   const [openYear, setOpenYear] = useState<number | null>(initialYear ?? null);
   const [editMode, setEditMode] = useState(false);
@@ -70,7 +73,7 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
   }
 
   const fullName = `${employee.firstName} ${employee.lastName1} ${employee.lastName2}`.trim();
-  const empExpedients = expedients.filter(e => e.employeeId === employeeId);
+  const empExpedients = allExpedients.filter(e => e.employeeId === employeeId);
   const relatedExpedients = [...empExpedients].sort((a, b) => {
     if (a.year !== b.year) return a.year - b.year;
     return a.date.localeCompare(b.date);
@@ -154,9 +157,8 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
               </button>
               <button
                 onClick={() => {
-                  if (editForm) {
-                    Object.assign(employee, editForm);
-                    employee.photoDataUrl = editForm.photoDataUrl;
+                  if (editForm && employee) {
+                    updateEmployee(employee.id, { ...editForm, photoDataUrl: editForm.photoDataUrl });
                   }
                   setEditMode(false);
                   setEditForm(null);
@@ -404,7 +406,7 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
                     </div>
                     <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
                       <StatusBadge status={exp.status} />
-                      <RecordActionsMenu employee={employee} expedient={exp} documents={documents} user={user.username} onPrintPreview={(empId, expId) => onNavigate('print-preview', empId, expId)} />
+                      <RecordActionsMenu employee={employee} expedient={exp} documents={allDocuments} user={user.username} onPrintPreview={(empId, expId) => onNavigate('print-preview', empId, expId)} />
                     </div>
                   </div>
                 );

@@ -1,5 +1,6 @@
-import { FileText, Image, Plus } from 'lucide-react';
-import { documents, employees, expedients } from '../data/mockData';
+import { useMemo, useState } from 'react';
+import { FileText, Image, Search } from 'lucide-react';
+import { useDocuments, useEmployees, useExpedients } from '../hooks/useStore';
 import type { NavigationPage, Planta } from '../types';
 import { EmptyState } from '../components/ui/empty-state';
 
@@ -20,40 +21,72 @@ const docTypeColors: Record<string, string> = {
   'Otro':            'bg-slate-100 text-slate-600',
 };
 
-export default function DocumentsGlobal({ planta: _planta, onNavigate }: DocumentsGlobalProps) {
-  void _planta;
-  // planta is UI context only; all documents shown until persistence-based filtering exists
-  const enriched = documents
-    .map(doc => ({
-      ...doc,
-      employee: employees.find(e => e.id === doc.employeeId),
-      expedient: expedients.find(e => e.id === doc.expedientId),
-    }))
-    .filter(d => d.employee && d.expedient);
+const docTypes = ['Examen médico', 'Audiometría', 'Espirometría', 'Laboratorio', 'Radiografía', 'Consulta médica', 'Incapacidad', 'Fotografía', 'Otro'];
+
+export default function DocumentsGlobal({ planta, onNavigate }: DocumentsGlobalProps) {
+  const documents = useDocuments(planta);
+  const employees = useEmployees(planta);
+  const expedients = useExpedients(planta);
+  const [search, setSearch] = useState('');
+  const [filterType, setFilterType] = useState('');
+
+  const enriched = useMemo(() => {
+    return documents
+      .map(doc => ({
+        ...doc,
+        employee: employees.find(e => e.id === doc.employeeId),
+        expedient: expedients.find(e => e.id === doc.expedientId),
+      }))
+      .filter(d => d.employee && d.expedient)
+      .filter(d => {
+        if (filterType && d.type !== filterType) return false;
+        if (search) {
+          const q = search.toLowerCase();
+          const empName = `${d.employee!.firstName} ${d.employee!.lastName1}`.toLowerCase();
+          return d.name.toLowerCase().includes(q) || empName.includes(q) || d.employee!.employeeNumber.toLowerCase().includes(q);
+        }
+        return true;
+      })
+      .sort((a, b) => b.uploadDate.localeCompare(a.uploadDate));
+  }, [documents, employees, expedients, search, filterType]);
 
   return (
     <div className="max-w-5xl space-y-5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">Documentos</h2>
-          <p className="text-sm text-slate-400 mt-0.5">{enriched.length} documento{enriched.length !== 1 ? 's' : ''} digitalizados</p>
+      <div>
+        <h2 className="text-xl font-bold text-gray-900">Documentos</h2>
+        <p className="text-sm text-slate-400 mt-0.5">
+          {enriched.length} documento{enriched.length !== 1 ? 's' : ''} digitalizados
+          {planta && <span className="text-slate-400"> · Planta {planta}</span>}
+        </p>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar por nombre, empleado o número..."
+            className="w-full pl-10 pr-4 h-10 text-sm bg-white border border-slate-200 rounded-lg text-gray-900 placeholder:text-slate-400 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-500/10 transition-all"
+          />
         </div>
-        <button
-          disabled
-          className="flex items-center gap-2 px-4 h-9 bg-slate-100 text-slate-400 text-sm font-semibold rounded-lg cursor-not-allowed flex-shrink-0"
-          title="Usa el módulo de captura dentro del expediente"
+        <select
+          value={filterType}
+          onChange={e => setFilterType(e.target.value)}
+          className="h-10 px-3 text-sm bg-white border border-slate-200 rounded-lg text-gray-900 focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-500/10 transition-all min-w-[160px]"
         >
-          <Plus size={15} />
-          Subir Documento
-        </button>
+          <option value="">Todos los tipos</option>
+          {docTypes.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
       </div>
 
       {enriched.length === 0 ? (
         <div className="card">
           <EmptyState
             icon={FileText}
-            title="No existen documentos cargados"
-            description="Los documentos se agregan desde el expediente de cada empleado usando el módulo de captura."
+            title={search || filterType ? "No se encontraron documentos" : "No existen documentos cargados"}
+            description={search || filterType ? "Ajusta los filtros de búsqueda." : "Los documentos se agregan desde el expediente de cada empleado usando el módulo de captura."}
           />
         </div>
       ) : (

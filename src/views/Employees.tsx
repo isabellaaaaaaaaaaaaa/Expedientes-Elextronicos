@@ -5,7 +5,7 @@ import {
   ChevronLeft, ChevronRight,
   Filter, X, Factory, ArrowLeft,
 } from 'lucide-react';
-import { employees, expedients } from '../data/mockData';
+import { useEmployees, useExpedients } from '../hooks/useStore';
 import type { NavigationPage, AuthUser, Planta, EmployeeStatus, Turno } from '../types';
 import { getLatestExpedient as tableGetLatestExpedient } from '../components/employee/EmployeeTable';
 import { exportEmployeesToExcel } from '../lib/exportUtils';
@@ -53,7 +53,9 @@ export default function Employees({ planta, examDue, onNavigate }: EmployeesProp
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [page, setPage] = useState(0);
 
-  // planta is UI context only; filtering by planta is deferred until persistence exists
+  const employees = useEmployees(planta);
+  const allExpedients = useExpedients(planta);
+
   const departments = useMemo(
     () => Array.from(new Set(employees.map(e => e.department))).sort(),
     [employees],
@@ -121,7 +123,7 @@ export default function Employees({ planta, examDue, onNavigate }: EmployeesProp
     else { setSortKey(key); setSortDir('asc'); }
   };
 
-  const handleExportExcel = () => exportEmployeesToExcel(filtered, expedients, planta);
+  const handleExportExcel = () => exportEmployeesToExcel(filtered, allExpedients, planta);
 
   const singleResult = filtered.length === 1 ? filtered[0] : null;
 

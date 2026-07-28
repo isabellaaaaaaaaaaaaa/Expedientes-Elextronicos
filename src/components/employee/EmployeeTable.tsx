@@ -4,8 +4,8 @@ import {
   Search, Plus, Eye, Pencil, FileDown, Printer, MoveVertical,
   ChevronUp, ChevronDown,
 } from 'lucide-react';
-import { expedients } from '../../data/mockData';
 import { exportExpedienteToPDF, printExpediente } from '../../lib/exportUtils';
+import { getExpedients } from '../../lib/store';
 import { EmptyState } from '../ui/empty-state';
 import type { NavigationPage, Employee, EmployeeStatus } from '../../types';
 
@@ -37,7 +37,8 @@ export function getInitials(firstName: string, lastName: string) {
 }
 
 export function getLatestExpedient(empId: string) {
-  const empExps = expedients
+  const allExpedients = getExpedients();
+  const empExps = allExpedients
     .filter(e => e.employeeId === empId)
     .sort((a, b) => (b.year - a.year) || b.date.localeCompare(a.date));
   return empExps[0] ?? null;
@@ -116,14 +117,14 @@ function EmployeeRowActions({
               Editar empleado
             </button>
             <button
-              onClick={() => { exportExpedienteToPDF(emp, expedients, []); setOpen(false); }}
+              onClick={() => { const exps = getExpedients(); exportExpedienteToPDF(emp, exps, []); setOpen(false); }}
               className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-700 hover:bg-red-50 hover:text-red-600 transition-colors text-left"
             >
               <FileDown size={15} className="text-slate-400" />
               Descargar PDF
             </button>
             <button
-              onClick={() => { printExpediente(emp, expedients, []); setOpen(false); }}
+              onClick={() => { const exps = getExpedients(); printExpediente(emp, exps, []); setOpen(false); }}
               className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-700 hover:bg-red-50 hover:text-red-600 transition-colors text-left"
             >
               <Printer size={15} className="text-slate-400" />

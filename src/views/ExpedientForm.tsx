@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ArrowLeft, Camera, Save, User, Building2, Phone, FileText, UserCheck, CircleCheck as CheckCircle2, ChevronLeft, ChevronRight, Plus, Trash2, FolderOpen, Stethoscope, FlaskConical, ClipboardList, Flag, Lock, Upload, Pencil, X, FileDown, Printer } from 'lucide-react';
-import { employees, expedients, documents } from '../data/mockData';
+import { useEmployee, useExpedient, useDocuments } from '../hooks/useStore';
+import { getExpedients, getDocuments, addDocument, addExpedient, updateExpedient, updateEmployee, deleteExpedient, addDocuments, deleteDocument } from '../lib/store';
 import { getDraft, clearDraft } from '../data/newExpedientDraft';
 import CaptureModule from '../components/capture/CaptureModule';
 import UnlockModal from '../components/employee/UnlockModal';
@@ -116,9 +117,10 @@ function FichaItem({ label, value }: { label: string; value: string }) {
 
 export default function ExpedientForm({ employeeId, expedientId, currentUser, onNavigate }: ExpedientFormProps) {
   const isAuditor = currentUser.role === 'Auditor';
-  const employee = employees.find(e => e.id === employeeId);
+  const employee = useEmployee(employeeId);
   const isNew = !expedientId || expedientId === 'new';
-  const existingExpedient = isNew ? null : expedients.find(e => e.id === expedientId);
+  const existingExpedient = useExpedient(isNew ? null : expedientId);
+  const allDocs = useDocuments();
 
   const draft = isNew ? getDraft() : null;
 
@@ -164,7 +166,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
   const [confirmFinalize, setConfirmFinalize] = useState(false);
   const [confirmState, setConfirmState] = useState<{ kind: 'status' | 'edit-finalized' | null; next?: ExpedientStatus }>({ kind: null });
   const [localDocs, setLocalDocs] = useState<MedDocument[]>(
-    isNew ? [] : documents.filter(d => d.expedientId === expedientId),
+    isNew ? [] : allDocs.filter(d => d.expedientId === expedientId),
   );
 
   if (!employee) {
@@ -208,7 +210,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
   };
 
   const handleSave = () => {
-    if (isNew) Object.assign(employee, empForm);
+    if (isNew && employee) updateEmployee(employee.id, empForm);
     if (isNew) {
       const newId = `exp-${Date.now()}`;
       const now = new Date().toISOString().slice(0, 10);
@@ -238,8 +240,8 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
         createdAt: now,
         updatedAt: now,
       };
-      expedients.push(newExp);
-      localDocs.forEach(doc => { doc.expedientId = newId; documents.push(doc); });
+      addExpedient(newExp);
+      localDocs.forEach(doc => { doc.expedientId = newId; addDocument(doc); });
       logAction(newId, currentUser.username, 'Creación del expediente', 'Creó el expediente');
       logChange(newId, currentUser.username, 'Estado', '', 'Sin revisar');
       clearDraft();
@@ -247,9 +249,10 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
       setTimeout(() => onNavigate('employee-profile', employeeId, undefined, expForm.year), 1200);
     } else if (existingExpedient) {
       const before = { ...existingExpedient };
-      Object.assign(existingExpedient, { ...expForm, updatedAt: new Date().toISOString().slice(0, 10) });
+      const patch = { ...expForm, updatedAt: new Date().toISOString().slice(0, 10) };
+      updateExpedient(existingExpedient.id, patch);
       (['recordType', 'date', 'responsibleDoctor', 'observations', 'weight', 'height', 'diagnosis', 'results'] as const).forEach(k => {
-        const oldV = String(before[k] ?? ''); const newV = String(existingExpedient[k] ?? '');
+        const oldV = String(before[k] ?? ''); const newV = String(patch[k] ?? '');
         if (oldV !== newV) logChange(existingExpedient.id, currentUser.username, k, oldV, newV);
       });
       logAction(existingExpedient.id, currentUser.username, 'Edición', 'Editó el expediente');
@@ -272,7 +275,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
     }));
     setLocalDocs(prev => [...prev, ...newDocs]);
     if (!isNew) {
-      newDocs.forEach(d => documents.push(d));
+      addDocuments(newDocs);
       if (existingExpedient) logAction(existingExpedient.id, currentUser.username, 'Carga de documentos', 'Agregó un documento');
     }
     setSaved(false);
@@ -280,8 +283,8 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
 
   const removeDoc = (id: string) => {
     setLocalDocs(prev => prev.filter(d => d.id !== id));
-    const idx = documents.findIndex(d => d.id === id);
-    if (idx !== -1) documents.splice(idx, 1);
+    const doc = getDocuments().find(d => d.id === id);
+    if (doc) deleteDocument(id);
   };
 
   const fullName = `${empForm.firstName} ${empForm.lastName1} ${empForm.lastName2}`.trim();
@@ -294,7 +297,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
   const progressColor = pct === 100 ? 'bg-green-500' : pct >= 50 ? 'bg-[hsl(355,78%,51%)]' : 'bg-amber-500';
 
   const yearExpedients = !isNew
-    ? expedients.filter(e => e.employeeId === employeeId && e.year === expForm.year).sort((a, b) => a.date.localeCompare(b.date))
+    ? getExpedients().filter(e => e.employeeId === employeeId && e.year === expForm.year).sort((a, b) => a.date.localeCompare(b.date))
     : [];
   const currentIndex = yearExpedients.findIndex(e => e.id === expedientId);
   const prevExp = currentIndex > 0 ? yearExpedients[currentIndex - 1] : null;
@@ -311,8 +314,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
     const prev = expForm.status;
     setExpForm(f => ({ ...f, status: next }));
     if (existingExpedient) {
-      existingExpedient.status = next;
-      existingExpedient.updatedAt = new Date().toISOString().slice(0, 10);
+      updateExpedient(existingExpedient.id, { status: next as ExpedientStatus, updatedAt: new Date().toISOString().slice(0, 10) });
       logChange(existingExpedient.id, currentUser.username, 'Estado', prev, next);
       logAction(existingExpedient.id, currentUser.username, 'Cambio de estado', `Cambió el estado a ${next}`);
       if (next === 'Finalizado') logAction(existingExpedient.id, currentUser.username, 'Finalización', 'Finalizó el expediente');
@@ -324,7 +326,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
   const handleFinalize = () => {
     setExpForm(f => ({ ...f, status: 'Finalizado' }));
     if (isNew) {
-      Object.assign(employee, empForm);
+      if (employee) updateEmployee(employee.id, empForm);
       const newId = `exp-${Date.now()}`;
       const now = new Date().toISOString().slice(0, 10);
       const snapshot: EmployeeSnapshot = {
@@ -354,17 +356,18 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
         createdAt: now,
         updatedAt: now,
       };
-      expedients.push(newExp);
-      localDocs.forEach(doc => { doc.expedientId = newId; documents.push(doc); });
+      addExpedient(newExp);
+      localDocs.forEach(doc => { doc.expedientId = newId; addDocument(doc); });
       logAction(newId, currentUser.username, 'Creación del expediente', 'Creó el expediente');
       logChange(newId, currentUser.username, 'Estado', '', 'Finalizado');
       logAction(newId, currentUser.username, 'Finalización', 'Finalizó el expediente');
       clearDraft();
     } else if (existingExpedient) {
       const before = { ...existingExpedient };
-      Object.assign(existingExpedient, { ...expForm, status: 'Finalizado', updatedAt: new Date().toISOString().slice(0, 10) });
+      const patch = { ...expForm, status: 'Finalizado' as ExpedientStatus, updatedAt: new Date().toISOString().slice(0, 10) };
+      updateExpedient(existingExpedient.id, patch);
       (['recordType', 'date', 'responsibleDoctor', 'observations', 'weight', 'height', 'diagnosis', 'results'] as const).forEach(k => {
-        const oldV = String(before[k] ?? ''); const newV = String(existingExpedient[k] ?? '');
+        const oldV = String(before[k] ?? ''); const newV = String(patch[k] ?? '');
         if (oldV !== newV) logChange(existingExpedient.id, currentUser.username, k, oldV, newV);
       });
       logChange(existingExpedient.id, currentUser.username, 'Estado', before.status, 'Finalizado');
@@ -1038,8 +1041,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
               <button
                 onClick={() => {
                   if (existingExpedient) {
-                    const idx = expedients.findIndex(e => e.id === existingExpedient.id);
-                    if (idx >= 0) expedients.splice(idx, 1);
+                    deleteExpedient(existingExpedient.id);
                   }
                   onNavigate('employee-profile', employeeId, undefined, expForm.year);
                 }}
@@ -1121,7 +1123,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Estado</label>
                   <select
                     value={expForm.status}
-                    onChange={e => { const next = e.target.value as ExpedientStatus; setExpForm(f => ({ ...f, status: next })); if (existingExpedient) { logChange(existingExpedient.id, currentUser.username, 'Estado', expForm.status, next); logAction(existingExpedient.id, currentUser.username, 'Cambio de estado', `Cambió el estado a ${next}`); existingExpedient.status = next; } }}
+                    onChange={e => { const next = e.target.value as ExpedientStatus; setExpForm(f => ({ ...f, status: next })); if (existingExpedient) { logChange(existingExpedient.id, currentUser.username, 'Estado', expForm.status, next); logAction(existingExpedient.id, currentUser.username, 'Cambio de estado', `Cambió el estado a ${next}`); updateExpedient(existingExpedient.id, { status: next }); } }}
                     className="w-full px-3.5 h-9 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/15 focus:border-red-400 transition-all text-gray-800"
                   >
                     <option>Sin revisar</option>
@@ -1152,11 +1154,13 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
               <button
                 onClick={() => {
                   if (existingExpedient) {
-                    existingExpedient.recordType = expForm.recordType;
-                    existingExpedient.date = expForm.date;
-                    existingExpedient.status = expForm.status;
-                    existingExpedient.responsibleDoctor = expForm.responsibleDoctor;
-                    existingExpedient.updatedAt = new Date().toISOString().slice(0, 10);
+                    updateExpedient(existingExpedient.id, {
+                      recordType: expForm.recordType,
+                      date: expForm.date,
+                      status: expForm.status,
+                      responsibleDoctor: expForm.responsibleDoctor,
+                      updatedAt: new Date().toISOString().slice(0, 10),
+                    });
                     logAction(existingExpedient.id, currentUser.username, 'Edición', 'Editó el expediente');
                   }
                   setEditFichaOpen(false);

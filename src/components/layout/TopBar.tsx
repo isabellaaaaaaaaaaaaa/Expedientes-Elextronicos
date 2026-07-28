@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import type { AuthUser, NavigationPage, Planta, Employee } from '../../types';
 import { PLANTAS } from '../../types';
-import { employees } from '../../data/mockData';
+import { getEmployees } from '../../lib/store';
 import { computeNotifications, NOTIFICATION_GROUP_ORDER, NOTIFICATION_GROUP_LABELS, type NotificationCategory } from '../../lib/notifications';
 
 interface TopBarProps {
@@ -67,8 +67,9 @@ export default function TopBar({
   const notifCount = notifications.length;
 
   const q = search.trim().toLowerCase();
+  const allEmployees = getEmployees();
   const matchedEmployees: Employee[] = q
-    ? employees
+    ? allEmployees
         .filter(e => {
           const full = (e.firstName + ' ' + e.lastName1 + ' ' + e.lastName2).toLowerCase();
           return (

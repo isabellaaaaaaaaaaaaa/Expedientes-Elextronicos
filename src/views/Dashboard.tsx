@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import { FolderOpen, CircleCheck as CheckCircle2, Clock, CircleAlert as AlertCircle, ArrowRight, User, FileText, Activity, ChartBar as BarChart3, Users, Timer, X, Inbox, CalendarPlus, FileClock } from 'lucide-react';
-import { employees, expedients, documents } from '../data/mockData';
-import type { NavigationPage, AuthUser, Planta, ExpedientListFilter, UserRole } from '../types';
+import type { NavigationPage, AuthUser, Planta, ExpedientListFilter, UserRole, Employee } from '../types';
 import { EmployeeTable } from '../components/employee/EmployeeTable';
 import { EmptyState } from '../components/ui/empty-state';
 import { getAllBitacora } from '../lib/auditLog';
+import { useEmployees, useExpedients, useDocuments } from '../hooks/useStore';
+import { getEmployees, getExpedients } from '../lib/store';
 import { toast } from 'sonner';
 
 interface DashboardProps {
@@ -14,8 +15,7 @@ interface DashboardProps {
 }
 
 
-export default function Dashboard({ user, planta: _planta, onNavigate }: DashboardProps) {
-  void _planta;
+export default function Dashboard({ user, planta, onNavigate }: DashboardProps) {
   const [summaryOpen, setSummaryOpen] = useState(false);
 
   useEffect(() => {
@@ -26,15 +26,16 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [summaryOpen]);
-  // planta is UI context only; all data shown until persistence-based filtering exists
-  const plantaEmployees = useMemo(() => employees, [employees]);
-  const allItems = useMemo(() => expedients, [expedients]);
 
-  const totalExpedients = allItems.length;
-  const sinRevisar  = allItems.filter(e => e.status === 'Sin revisar').length;
-  const enRevision  = allItems.filter(e => e.status === 'En revisión').length;
-  const pendiente   = allItems.filter(e => e.status === 'Pendiente de verificación').length;
-  const finalizado  = allItems.filter(e => e.status === 'Finalizado').length;
+  const plantaEmployees = useEmployees(planta);
+  const allExpedients = useExpedients(planta);
+  const allDocuments = useDocuments(planta);
+
+  const totalExpedients = allExpedients.length;
+  const sinRevisar  = allExpedients.filter(e => e.status === 'Sin revisar').length;
+  const enRevision  = allExpedients.filter(e => e.status === 'En revisión').length;
+  const pendiente   = allExpedients.filter(e => e.status === 'Pendiente de verificación').length;
+  const finalizado  = allExpedients.filter(e => e.status === 'Finalizado').length;
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -64,17 +65,17 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
 
   // Resumen Ejecutivo — KPIs for supervisors and coordinators
   const executiveSummary = useMemo(() => {
-    const totalEmpleados = employees.length;
-    const totalExps = expedients.length;
-    const finalizados = expedients.filter(e => e.status === 'Finalizado').length;
-    const enRev = expedients.filter(e => e.status === 'En revisión').length;
-    const sinRev = expedients.filter(e => e.status === 'Sin revisar').length;
-    const pendientesVerif = expedients.filter(e => e.status === 'Pendiente de verificación').length;
+    const totalEmpleados = plantaEmployees.length;
+    const totalExps = allExpedients.length;
+    const finalizados = allExpedients.filter(e => e.status === 'Finalizado').length;
+    const enRev = allExpedients.filter(e => e.status === 'En revisión').length;
+    const sinRev = allExpedients.filter(e => e.status === 'Sin revisar').length;
+    const pendientesVerif = allExpedients.filter(e => e.status === 'Pendiente de verificación').length;
     const hoy = new Date().toISOString().slice(0, 10);
-    const creadosHoy = expedients.filter(e => e.createdAt === hoy).length;
+    const creadosHoy = allExpedients.filter(e => e.createdAt === hoy).length;
 
     // Tiempo promedio de digitalización (días entre createdAt y updatedAt)
-    const tiempos = expedients
+    const tiempos = allExpedients
       .map(e => {
         const c = new Date(e.createdAt + 'T00:00:00').getTime();
         const u = new Date(e.updatedAt + 'T00:00:00').getTime();
@@ -94,12 +95,12 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
       { label: 'Tiempo prom. de digitalización',   value: `${tiempoPromedio} d`,              icon: Timer,        accent: 'slate',  hint: 'Días de ciclo' },
       { label: 'Expedientes creados hoy',          value: creadosHoy.toLocaleString(),         icon: CalendarPlus, accent: 'blue',   hint: 'Nuevos hoy' },
     ];
-  }, []);
+  }, [plantaEmployees, allExpedients]);
 
-  const recentEmployees = [...allItems]
+  const recentEmployees = [...allExpedients]
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .map(item => plantaEmployees.find(e => e.id === item.employeeId))
-    .filter((emp): emp is typeof employees[0] => Boolean(emp))
+    .filter((emp): emp is Employee => Boolean(emp))
     .filter((emp, idx, arr) => arr.findIndex(e => e.id === emp.id) === idx)
     .slice(0, 10);
 
@@ -121,8 +122,8 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
     const live = getAllBitacora();
     for (const e of live) {
       const ts = new Date(`${e.date}T${e.time}`).getTime();
-      const exp = expedients.find(x => x.id === e.expedientId);
-      const emp = exp ? employees.find(em => em.id === exp.employeeId) : undefined;
+      const exp = getExpedients().find(x => x.id === e.expedientId);
+      const emp = exp ? getEmployees().find(em => em.id === exp.employeeId) : undefined;
       let icon = FileText;
       let iconBg = 'bg-red-50';
       let iconText = 'text-[hsl(355,78%,51%)]';
@@ -143,11 +144,11 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
 
     // 2. Derived activity from data (creations, finalizations, document uploads)
     const empName = (id: string) => {
-      const em = employees.find(x => x.id === id);
+      const em = getEmployees().find(x => x.id === id);
       return em ? `${em.firstName} ${em.lastName1}` : undefined;
     };
 
-    for (const e of expedients) {
+    for (const e of allExpedients) {
       const created = new Date(e.createdAt + 'T12:00:00').getTime();
       items.push({
         ts: created,
@@ -174,7 +175,7 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
       }
     }
 
-    for (const d of documents) {
+    for (const d of allDocuments) {
       items.push({
         ts: new Date(d.uploadDate + 'T12:00:00').getTime(),
         icon: FileText,
@@ -197,12 +198,12 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
         return true;
       })
       .slice(0, 10);
-  }, [onNavigate]);
+  }, [onNavigate, allExpedients, allDocuments]);
 
   const bitacoraItems = useMemo(() => {
     return getAllBitacora().slice(0, 12).map(e => {
-      const exp = expedients.find(x => x.id === e.expedientId);
-      const emp = exp ? employees.find(em => em.id === exp.employeeId) : undefined;
+      const exp = getExpedients().find(x => x.id === e.expedientId);
+      const emp = exp ? getEmployees().find(em => em.id === exp.employeeId) : undefined;
       return {
         ...e,
         employeeName: emp ? `${emp.firstName} ${emp.lastName1}` : undefined,

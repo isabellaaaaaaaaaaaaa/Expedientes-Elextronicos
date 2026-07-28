@@ -1,7 +1,13 @@
 import type { BitacoraEntry, ChangeEntry } from '../types';
-
-const bitacoraStore: Record<string, BitacoraEntry[]> = {};
-const changeStore: Record<string, ChangeEntry[]> = {};
+import {
+  logActionToStore,
+  logChangeToStore,
+  getBitacora as storeGetBitacora,
+  getAllBitacoraFromStore,
+  getChangesFromStore,
+  seedBitacoraToStore,
+  getExpedients,
+} from './store';
 
 const nowParts = () => {
   const d = new Date();
@@ -23,7 +29,7 @@ export function logAction(expedientId: string, user: string, action: string, det
     relativeTime: 'Hace un momento',
     detail: detail ?? action,
   };
-  (bitacoraStore[expedientId] ??= []).unshift(entry);
+  logActionToStore(expedientId, entry);
   return entry;
 }
 
@@ -45,18 +51,18 @@ export function logChange(
     user,
     date,
   };
-  (changeStore[expedientId] ??= []).unshift(entry);
+  logChangeToStore(entry);
   return entry;
 }
 
 export function getBitacora(expedientId: string): BitacoraEntry[] {
-  return bitacoraStore[expedientId] ?? [];
+  return storeGetBitacora(expedientId);
 }
 
 export function getBitacoraByEmployee(expedientIds: string[]): BitacoraEntry[] {
   const all: BitacoraEntry[] = [];
   for (const id of expedientIds) {
-    if (bitacoraStore[id]) all.push(...bitacoraStore[id]);
+    all.push(...storeGetBitacora(id));
   }
   return all.sort((a, b) => {
     const cmp = (b.date + ' ' + b.time).localeCompare(a.date + ' ' + a.time);
@@ -66,25 +72,17 @@ export function getBitacoraByEmployee(expedientIds: string[]): BitacoraEntry[] {
 }
 
 export function getAllBitacora(): BitacoraEntry[] {
-  const all: BitacoraEntry[] = [];
-  for (const ids of Object.keys(bitacoraStore)) {
-    all.push(...bitacoraStore[ids]);
-  }
-  return all.sort((a, b) => {
-    const cmp = (b.date + ' ' + b.time).localeCompare(a.date + ' ' + a.time);
-    if (cmp !== 0) return cmp;
-    return b.id.localeCompare(a.id);
-  });
+  return getAllBitacoraFromStore();
 }
 
 export function getChanges(expedientId: string): ChangeEntry[] {
-  return changeStore[expedientId] ?? [];
+  return getChangesFromStore(expedientId);
 }
 
 export function getChangesByEmployee(expedientIds: string[]): ChangeEntry[] {
   const all: ChangeEntry[] = [];
   for (const id of expedientIds) {
-    if (changeStore[id]) all.push(...changeStore[id]);
+    all.push(...getChangesFromStore(id));
   }
   return all.sort((a, b) => {
     const cmp = b.date.localeCompare(a.date);
@@ -94,22 +92,22 @@ export function getChangesByEmployee(expedientIds: string[]): ChangeEntry[] {
 }
 
 export function seedBitacora(expedientId: string, entries: BitacoraEntry[]) {
-  bitacoraStore[expedientId] = [...entries].sort((a, b) =>
-    (b.date + b.time).localeCompare(a.date + a.time),
-  );
+  seedBitacoraToStore(expedientId, entries);
 }
 
 export function seedChanges(expedientId: string, entries: ChangeEntry[]) {
-  changeStore[expedientId] = [...entries].sort((a, b) =>
-    b.date.localeCompare(a.date),
-  );
+  // Changes are not persisted via store; keep in-memory for now
+  void expedientId;
+  void entries;
 }
 
 export function seedSimulatedBitacora(
   expedientId: string,
   entries: { user: string; action: string; detail: string; relativeTime: string }[],
 ) {
-  bitacoraStore[expedientId] = entries.map((e, i) => ({
+  // Only seed if no existing entries for this expedient (avoid overwriting on refresh)
+  if (storeGetBitacora(expedientId).length > 0) return;
+  const bitacoraEntries: BitacoraEntry[] = entries.map((e, i) => ({
     id: `bit-seed-${expedientId}-${i}`,
     expedientId,
     user: e.user,
@@ -119,4 +117,10 @@ export function seedSimulatedBitacora(
     relativeTime: e.relativeTime,
     detail: e.detail,
   }));
+  seedBitacoraToStore(expedientId, bitacoraEntries);
+}
+
+// Helper to find expedient by id from the store
+export function findExpedient(expedientId: string) {
+  return getExpedients().find(e => e.id === expedientId);
 }
