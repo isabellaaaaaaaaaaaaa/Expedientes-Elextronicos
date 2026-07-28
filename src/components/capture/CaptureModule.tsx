@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { X, Upload, Check, Trash2, ZoomIn, FileText, Image as ImageIcon } from 'lucide-react';
+import { X, Upload, Check, Trash2, ZoomIn, FileText, Image as ImageIcon, Loader as Loader2 } from 'lucide-react';
 import type { CapturedItem, DocumentType } from '../../types';
 
 interface CaptureModuleProps {
@@ -22,6 +22,8 @@ export default function CaptureModule({ isOpen, onClose, onSave, uploadedBy: _up
   const [captures, setCaptures] = useState<CapturedItem[]>([]);
   const [docType, setDocType] = useState<DocumentType>('Examen médico');
   const [preview, setPreview] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [reading, setReading] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -29,6 +31,9 @@ export default function CaptureModule({ isOpen, onClose, onSave, uploadedBy: _up
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
+    setReading(true);
+    let loaded = 0;
+    const total = files.length;
     Array.from(files).forEach(file => {
       const reader = new FileReader();
       reader.onload = e => {
@@ -43,6 +48,8 @@ export default function CaptureModule({ isOpen, onClose, onSave, uploadedBy: _up
             name: file.name,
           },
         ]);
+        loaded++;
+        if (loaded === total) setReading(false);
       };
       reader.readAsDataURL(file);
     });
@@ -53,10 +60,14 @@ export default function CaptureModule({ isOpen, onClose, onSave, uploadedBy: _up
   };
 
   const handleSave = () => {
-    onSave(captures, docType);
-    setCaptures([]);
-    setDocType('Examen médico');
-    setPreview(null);
+    setSaving(true);
+    setTimeout(() => {
+      onSave(captures, docType);
+      setCaptures([]);
+      setDocType('Examen médico');
+      setPreview(null);
+      setSaving(false);
+    }, 400);
   };
 
   const handleClose = () => {
@@ -186,9 +197,13 @@ export default function CaptureModule({ isOpen, onClose, onSave, uploadedBy: _up
         {/* Footer */}
         <div className="px-5 py-4 border-t border-slate-100 flex items-center justify-between flex-shrink-0">
           <p className="text-xs text-slate-400">
-            {captures.length > 0
-              ? `${captures.length} archivo${captures.length !== 1 ? 's' : ''} listo${captures.length !== 1 ? 's' : ''}`
-              : 'Importa al menos un archivo'}
+            {reading ? (
+              <span className="flex items-center gap-1.5 text-blue-500"><Loader2 size={12} className="animate-spin" /> Procesando archivos...</span>
+            ) : captures.length > 0 ? (
+              `${captures.length} archivo${captures.length !== 1 ? 's' : ''} listo${captures.length !== 1 ? 's' : ''}`
+            ) : (
+              'Importa al menos un archivo'
+            )}
           </p>
           <div className="flex gap-2">
             <button
@@ -199,11 +214,11 @@ export default function CaptureModule({ isOpen, onClose, onSave, uploadedBy: _up
             </button>
             <button
               onClick={handleSave}
-              disabled={captures.length === 0}
+              disabled={captures.length === 0 || saving}
               className="flex items-center gap-2 px-5 h-9 text-sm font-semibold bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] disabled:bg-slate-100 disabled:text-slate-400 text-white rounded-lg transition-colors shadow-sm"
             >
-              <Check size={15} />
-              Guardar
+              {saving ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
+              {saving ? 'Guardando...' : 'Guardar'}
             </button>
           </div>
         </div>

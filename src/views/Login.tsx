@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Eye, EyeOff, LogIn, Lock } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Lock, Loader as Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import type { AuthUser, UserRole, Planta } from '../types';
 
 interface LoginProps {
@@ -16,6 +17,7 @@ export default function Login({ onLogin }: LoginProps) {
   const [planta, setPlanta]     = useState<Planta>('61');
   const [showPass, setShowPass] = useState(false);
   const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +30,12 @@ export default function Login({ onLogin }: LoginProps) {
       return;
     }
     setError('');
-    onLogin({ username: username.trim(), role, planta });
+    setLoading(true);
+    const toastId = toast.loading('Verificando credenciales...', { description: `Planta ${planta} · ${role}` });
+    setTimeout(() => {
+      toast.success(`Bienvenido, ${username.trim()}`, { id: toastId, description: 'Sesión iniciada correctamente' });
+      onLogin({ username: username.trim(), role, planta });
+    }, 900);
   };
 
   return (
@@ -135,10 +142,11 @@ export default function Login({ onLogin }: LoginProps) {
 
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 h-11 bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] active:bg-[hsl(355,78%,42%)] text-white font-semibold text-sm rounded-lg transition-all shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:ring-offset-1"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 h-11 bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] active:bg-[hsl(355,78%,42%)] disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-lg transition-all shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:ring-offset-1"
             >
-              <LogIn size={16} strokeWidth={2.5} />
-              Iniciar sesión
+              {loading ? <Loader2 size={16} className="animate-spin" /> : <LogIn size={16} strokeWidth={2.5} />}
+              {loading ? 'Verificando...' : 'Iniciar sesión'}
             </button>
           </form>
 

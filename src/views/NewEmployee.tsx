@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ArrowLeft, Save, User, Building2, Phone, CircleCheck as CheckCircle2, ChevronRight, Heart } from 'lucide-react';
+import { ArrowLeft, Save, User, Building2, Phone, CircleCheck as CheckCircle2, ChevronRight, Heart, Loader as Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import type { NavigationPage, Employee } from '../types';
 import { addEmployee } from '../lib/store';
 
@@ -42,6 +43,7 @@ const blankEmployee: Omit<Employee, 'id'> = {
 export default function NewEmployee({ onNavigate }: NewEmployeeProps) {
   const [form, setForm] = useState<Omit<Employee, 'id'>>(blankEmployee);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof Employee, string>>>({});
 
   const set = (key: keyof Omit<Employee, 'id'>) => (value: string) => {
@@ -63,15 +65,29 @@ export default function NewEmployee({ onNavigate }: NewEmployeeProps) {
     const errs = validate();
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
+      toast.error('Completa los campos obligatorios', {
+        description: 'Revisa los campos marcados en rojo.',
+      });
       return;
     }
-    const newId = `emp-${Date.now()}`;
-    const newEmployee: Employee = { id: newId, ...form };
-    addEmployee(newEmployee);
-    setSaved(true);
+    setSaving(true);
+    const toastId = toast.loading('Registrando empleado...', {
+      description: `${form.firstName} ${form.lastName1}`,
+    });
     setTimeout(() => {
-      onNavigate('expedient-form', newId, 'new');
-    }, 800);
+      const newId = `emp-${Date.now()}`;
+      const newEmployee: Employee = { id: newId, ...form };
+      addEmployee(newEmployee);
+      setSaving(false);
+      setSaved(true);
+      toast.success('Empleado registrado correctamente', {
+        id: toastId,
+        description: 'Iniciando primer expediente médico...',
+      });
+      setTimeout(() => {
+        onNavigate('expedient-form', newId, 'new');
+      }, 1000);
+    }, 700);
   };
 
   const inputClass = (key: keyof Employee) =>
@@ -190,11 +206,11 @@ export default function NewEmployee({ onNavigate }: NewEmployeeProps) {
           )}
           <button
             onClick={handleSave}
-            disabled={saved}
+            disabled={saved || saving}
             className="flex items-center gap-2 px-6 h-9 bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] disabled:bg-slate-100 disabled:text-slate-400 text-white font-semibold text-sm rounded-lg transition-colors shadow-sm"
           >
-            <Save size={15} />
-            Guardar y crear registro
+            {saving ? <Loader2 size={15} className="animate-spin" /> : saved ? <CheckCircle2 size={15} /> : <Save size={15} />}
+            {saving ? 'Guardando...' : saved ? 'Registrado' : 'Guardar y crear registro'}
           </button>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ArrowLeft, Camera, Save, User, Building2, Phone, FileText, UserCheck, CircleCheck as CheckCircle2, ChevronLeft, ChevronRight, Plus, Trash2, FolderOpen, Stethoscope, FlaskConical, ClipboardList, Flag, Lock, Upload, Pencil, X, FileDown, Printer } from 'lucide-react';
+import { ArrowLeft, Camera, Save, User, Building2, Phone, FileText, UserCheck, CircleCheck as CheckCircle2, ChevronLeft, ChevronRight, Plus, Trash2, FolderOpen, Stethoscope, FlaskConical, ClipboardList, Flag, Lock, Upload, Pencil, X, FileDown, Printer, Loader as Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useEmployee, useExpedient, useDocuments } from '../hooks/useStore';
 import { getExpedients, getDocuments, addDocument, addExpedient, updateExpedient, updateEmployee, deleteExpedient, addDocuments, deleteDocument } from '../lib/store';
 import { getDraft, clearDraft } from '../data/newExpedientDraft';
@@ -159,6 +160,11 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
     results: existingExpedient?.results ?? '',
   });
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [finalizing, setFinalizing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [printing, setPrinting] = useState(false);
   const [captureOpen, setCaptureOpen] = useState(false);
   const [unlockOpen, setUnlockOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -211,54 +217,70 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
 
   const handleSave = () => {
     if (isNew && employee) updateEmployee(employee.id, empForm);
-    if (isNew) {
-      const newId = `exp-${Date.now()}`;
-      const now = new Date().toISOString().slice(0, 10);
-      const snapshot: EmployeeSnapshot = {
-        employeeNumber: employee.employeeNumber,
-        firstName: employee.firstName,
-        lastName1: employee.lastName1,
-        lastName2: employee.lastName2,
-        curp: employee.curp,
-        rfc: employee.rfc,
-        nss: employee.nss,
-        gender: employee.gender,
-        birthDate: employee.birthDate,
-        position: employee.position,
-        department: employee.department,
-        hireDate: employee.hireDate,
-        emergencyContactName: employee.emergencyContactName,
-        emergencyContactRelationship: employee.emergencyContactRelationship,
-        emergencyContactPhone: employee.emergencyContactPhone,
-        photoDataUrl: employee.photoDataUrl,
-      };
-      const newExp: Expedient = {
-        id: newId,
-        employeeId,
-        ...expForm,
-        employeeSnapshot: snapshot,
-        createdAt: now,
-        updatedAt: now,
-      };
-      addExpedient(newExp);
-      localDocs.forEach(doc => { doc.expedientId = newId; addDocument(doc); });
-      logAction(newId, currentUser.username, 'Creación del expediente', 'Creó el expediente');
-      logChange(newId, currentUser.username, 'Estado', '', 'Sin revisar');
-      clearDraft();
-      setSaved(true);
-      setTimeout(() => onNavigate('employee-profile', employeeId, undefined, expForm.year), 1200);
-    } else if (existingExpedient) {
-      const before = { ...existingExpedient };
-      const patch = { ...expForm, updatedAt: new Date().toISOString().slice(0, 10) };
-      updateExpedient(existingExpedient.id, patch);
-      (['recordType', 'date', 'responsibleDoctor', 'observations', 'weight', 'height', 'diagnosis', 'results'] as const).forEach(k => {
-        const oldV = String(before[k] ?? ''); const newV = String(patch[k] ?? '');
-        if (oldV !== newV) logChange(existingExpedient.id, currentUser.username, k, oldV, newV);
-      });
-      logAction(existingExpedient.id, currentUser.username, 'Edición', 'Editó el expediente');
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    }
+    setSaving(true);
+    const toastId = toast.loading(isNew ? 'Creando expediente...' : 'Guardando cambios...', {
+      description: isNew ? `${fullName} · ${expForm.year}` : existingExpedient?.recordType,
+    });
+    setTimeout(() => {
+      if (isNew && employee) {
+        const newId = `exp-${Date.now()}`;
+        const now = new Date().toISOString().slice(0, 10);
+        const snapshot: EmployeeSnapshot = {
+          employeeNumber: employee.employeeNumber,
+          firstName: employee.firstName,
+          lastName1: employee.lastName1,
+          lastName2: employee.lastName2,
+          curp: employee.curp,
+          rfc: employee.rfc,
+          nss: employee.nss,
+          gender: employee.gender,
+          birthDate: employee.birthDate,
+          position: employee.position,
+          department: employee.department,
+          hireDate: employee.hireDate,
+          emergencyContactName: employee.emergencyContactName,
+          emergencyContactRelationship: employee.emergencyContactRelationship,
+          emergencyContactPhone: employee.emergencyContactPhone,
+          photoDataUrl: employee.photoDataUrl,
+        };
+        const newExp: Expedient = {
+          id: newId,
+          employeeId,
+          ...expForm,
+          employeeSnapshot: snapshot,
+          createdAt: now,
+          updatedAt: now,
+        };
+        addExpedient(newExp);
+        localDocs.forEach(doc => { doc.expedientId = newId; addDocument(doc); });
+        logAction(newId, currentUser.username, 'Creación del expediente', 'Creó el expediente');
+        logChange(newId, currentUser.username, 'Estado', '', 'Sin revisar');
+        clearDraft();
+        setSaving(false);
+        setSaved(true);
+        toast.success('Expediente creado correctamente', {
+          id: toastId,
+          description: `${expForm.recordType} · ${expForm.year}`,
+        });
+        setTimeout(() => onNavigate('employee-profile', employeeId, undefined, expForm.year), 1200);
+      } else if (existingExpedient) {
+        const before = { ...existingExpedient };
+        const patch = { ...expForm, updatedAt: new Date().toISOString().slice(0, 10) };
+        updateExpedient(existingExpedient.id, patch);
+        (['recordType', 'date', 'responsibleDoctor', 'observations', 'weight', 'height', 'diagnosis', 'results'] as const).forEach(k => {
+          const oldV = String(before[k] ?? ''); const newV = String(patch[k] ?? '');
+          if (oldV !== newV) logChange(existingExpedient.id, currentUser.username, k, oldV, newV);
+        });
+        logAction(existingExpedient.id, currentUser.username, 'Edición', 'Editó el expediente');
+        setSaving(false);
+        setSaved(true);
+        toast.success('Cambios guardados', {
+          id: toastId,
+          description: 'El expediente se actualizó correctamente',
+        });
+        setTimeout(() => setSaved(false), 3000);
+      }
+    }, 700);
   };
 
   const handleCapture = (items: CapturedItem[], docType: DocumentType) => {
@@ -279,12 +301,16 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
       if (existingExpedient) logAction(existingExpedient.id, currentUser.username, 'Carga de documentos', 'Agregó un documento');
     }
     setSaved(false);
+    toast.success(`${items.length} documento${items.length !== 1 ? 's' : ''} adjuntado${items.length !== 1 ? 's' : ''}`, {
+      description: docType,
+    });
   };
 
   const removeDoc = (id: string) => {
     setLocalDocs(prev => prev.filter(d => d.id !== id));
     const doc = getDocuments().find(d => d.id === id);
     if (doc) deleteDocument(id);
+    toast.success('Documento eliminado', { description: 'El archivo se removió del expediente.' });
   };
 
   const fullName = `${empForm.firstName} ${empForm.lastName1} ${empForm.lastName2}`.trim();
@@ -320,10 +346,12 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
       if (next === 'Finalizado') logAction(existingExpedient.id, currentUser.username, 'Finalización', 'Finalizó el expediente');
     }
     setSaved(true);
+    toast.success(`Estado actualizado a «${next}»`);
     setTimeout(() => setSaved(false), 3000);
   };
 
   const handleFinalize = () => {
+    setFinalizing(true);
     setExpForm(f => ({ ...f, status: 'Finalizado' }));
     if (isNew) {
       if (employee) updateEmployee(employee.id, empForm);
@@ -375,7 +403,11 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
       logAction(existingExpedient.id, currentUser.username, 'Finalización', 'Finalizó el expediente');
     }
     setConfirmFinalize(false);
-    setTimeout(() => onNavigate('expedients'), 600);
+    setFinalizing(true);
+    toast.success('Expediente finalizado correctamente', {
+      description: 'El registro qued bloqueado para edici.',
+    });
+    setTimeout(() => onNavigate('expedients'), 1000);
   };
 
   const tabs: { id: Tab; label: string }[] = [
@@ -429,18 +461,39 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
             </div>
             <div className="w-px h-6 bg-slate-200" />
             <button
-              onClick={() => { if (existingExpedient && employee) { exportRegistroToPDF(employee, existingExpedient); logAction(existingExpedient.id, currentUser.username, 'Descarga de PDF', 'Descargó el PDF'); } }}
-              className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-lg transition-colors"
+              onClick={() => {
+                if (existingExpedient && employee) {
+                  setDownloading(true);
+                  const toastId = toast.loading('Generando PDF...', { description: existingExpedient.recordType });
+                  setTimeout(() => {
+                    exportRegistroToPDF(employee, existingExpedient);
+                    logAction(existingExpedient.id, currentUser.username, 'Descarga de PDF', 'Descargó el PDF');
+                    setDownloading(false);
+                    toast.success('PDF descargado', { id: toastId, description: 'El archivo se generó correctamente.' });
+                  }, 600);
+                }
+              }}
+              disabled={downloading}
+              className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-semibold rounded-lg transition-colors disabled:opacity-60"
               title="Descargar expediente"
             >
-              <FileDown size={15} className="text-slate-500" /> Descargar
+              {downloading ? <Loader2 size={15} className="animate-spin" /> : <FileDown size={15} className="text-slate-500" />} Descargar
             </button>
             <button
-              onClick={() => onNavigate('print-preview', employeeId, expedientId)}
-              className="flex items-center gap-1.5 px-3.5 h-9 bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
+              onClick={() => {
+                setPrinting(true);
+                const toastId = toast.loading('Preparando vista de impresión...');
+                setTimeout(() => {
+                  setPrinting(false);
+                  toast.dismiss(toastId);
+                  onNavigate('print-preview', employeeId, expedientId);
+                }, 500);
+              }}
+              disabled={printing}
+              className="flex items-center gap-1.5 px-3.5 h-9 bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
               title="Imprimir expediente"
             >
-              <Printer size={15} /> Imprimir
+              {printing ? <Loader2 size={15} className="animate-spin" /> : <Printer size={15} />} Imprimir
             </button>
           </div>
         )}
@@ -913,19 +966,19 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                 </button>
                 <button
                   onClick={handleSave}
-                  disabled={saved || isAuditor}
+                  disabled={saved || isAuditor || saving}
                   className="flex items-center gap-2 px-5 h-9 bg-white border border-slate-200 hover:border-red-300 hover:bg-red-50 text-slate-700 hover:text-red-700 font-semibold text-sm rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  <Save size={15} />
-                  Guardar
+                  {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+                  {saving ? 'Guardando...' : 'Guardar'}
                 </button>
                 <button
                   onClick={() => setConfirmFinalize(true)}
-                  disabled={saved || isAuditor}
+                  disabled={saved || isAuditor || finalizing}
                   className="flex items-center gap-2 px-6 py-2.5 bg-green-500 hover:bg-green-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold text-sm rounded-xl transition-colors shadow-sm"
                 >
-                  <Flag size={15} />
-                  Guardar y finalizar
+                  {finalizing ? <Loader2 size={15} className="animate-spin" /> : <Flag size={15} />}
+                  {finalizing ? 'Finalizando...' : 'Guardar y finalizar'}
                 </button>
               </div>
             </div>
@@ -968,20 +1021,21 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                   {!isAuditor && !isFinalized && (
                     <button
                       onClick={handleSave}
-                      disabled={isAuditor}
+                      disabled={isAuditor || saving}
                       className="flex items-center gap-2 px-4 h-9 bg-white border border-slate-200 hover:border-red-300 hover:bg-red-50 text-slate-700 hover:text-red-700 font-semibold text-sm rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      <Save size={14} />
-                      Guardar
+                      {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                      {saving ? 'Guardando...' : 'Guardar'}
                     </button>
                   )}
                   {!isAuditor && !isFinalized && (
                     <button
                       onClick={() => setConfirmFinalize(true)}
+                      disabled={finalizing}
                       className="flex items-center gap-2 px-4 py-2.5 bg-green-500 hover:bg-green-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold text-sm rounded-xl transition-colors shadow-sm"
                     >
-                      <Flag size={14} />
-                      Guardar y finalizar
+                      {finalizing ? <Loader2 size={14} className="animate-spin" /> : <Flag size={14} />}
+                      {finalizing ? 'Finalizando...' : 'Guardar y finalizar'}
                     </button>
                   )}
                   {!isAuditor && isFinalized && (
@@ -1041,13 +1095,20 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
               <button
                 onClick={() => {
                   if (existingExpedient) {
-                    deleteExpedient(existingExpedient.id);
+                    setDeleting(true);
+                    const toastId = toast.loading('Eliminando expediente...', { description: existingExpedient.recordType });
+                    setTimeout(() => {
+                      deleteExpedient(existingExpedient.id);
+                      toast.success('Expediente eliminado', { id: toastId, description: 'El registro se eliminó permanentemente.' });
+                      onNavigate('employee-profile', employeeId, undefined, expForm.year);
+                    }, 600);
                   }
-                  onNavigate('employee-profile', employeeId, undefined, expForm.year);
                 }}
-                className="px-4 py-2 text-sm font-bold text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors"
+                disabled={deleting}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white bg-red-500 hover:bg-red-600 disabled:opacity-60 rounded-xl transition-colors"
               >
-                Eliminar
+                {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                {deleting ? 'Eliminando...' : 'Eliminar'}
               </button>
             </div>
           </div>
@@ -1162,6 +1223,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                       updatedAt: new Date().toISOString().slice(0, 10),
                     });
                     logAction(existingExpedient.id, currentUser.username, 'Edición', 'Editó el expediente');
+                    toast.success('Ficha del registro actualizada');
                   }
                   setEditFichaOpen(false);
                 }}

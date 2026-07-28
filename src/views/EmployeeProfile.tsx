@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ArrowLeft, Plus, Folder, ChevronRight, FolderOpen, Pencil, Check, X, Phone, Mail, Heart, Calendar, Layers, User as UserIcon } from 'lucide-react';
+import { ArrowLeft, Plus, Folder, ChevronRight, FolderOpen, Pencil, Check, X, Phone, Mail, Heart, Calendar, Layers, User as UserIcon, Loader as Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import type { NavigationPage, AuthUser, Employee } from '../types';
 import { useEmployee, useExpedients, useDocuments } from '../hooks/useStore';
 import { updateEmployee } from '../lib/store';
@@ -50,17 +51,40 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
   const [openYear, setOpenYear] = useState<number | null>(initialYear ?? null);
   const [editMode, setEditMode] = useState(false);
   const [editForm, setEditForm] = useState<Omit<Employee, 'id'> | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
   const [showFolderDialog, setShowFolderDialog] = useState(false);
   const [newFolderYear, setNewFolderYear] = useState<string>('');
+  const [creatingFolder, setCreatingFolder] = useState(false);
   const [activeTab, setActiveTab] = useState<'perfil'>('perfil');
   const [extraYears, setExtraYears] = useState<number[]>([]);
 
   const handleCreateFolder = () => {
     const year = Number(newFolderYear);
-    if (!year || year < 1900 || year > 2100 || years.includes(year)) return;
-    setExtraYears(prev => [...prev, year]);
-    setShowFolderDialog(false);
-    setNewFolderYear('');
+    if (!year || year < 1900 || year > 2100 || years.includes(year)) {
+      toast.error('Año inválido o ya existe', { description: 'Ingresa un año válido que no exista.' });
+      return;
+    }
+    setCreatingFolder(true);
+    setTimeout(() => {
+      setExtraYears(prev => [...prev, year]);
+      setShowFolderDialog(false);
+      setNewFolderYear('');
+      setCreatingFolder(false);
+      toast.success(`Carpeta ${year} creada`, { description: 'Ya puedes agregar registros a esta carpeta.' });
+    }, 500);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editForm || !employee) return;
+    setSavingEdit(true);
+    const toastId = toast.loading('Guardando cambios...', { description: fullName });
+    setTimeout(() => {
+      updateEmployee(employee.id, { ...editForm, photoDataUrl: editForm.photoDataUrl });
+      setEditMode(false);
+      setEditForm(null);
+      setSavingEdit(false);
+      toast.success('Información del empleado actualizada', { id: toastId });
+    }, 600);
   };
 
   if (!employee) {
@@ -151,21 +175,18 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
             <div className="flex items-center gap-2">
               <button
                 onClick={() => { setEditMode(false); setEditForm(null); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors"
+                disabled={savingEdit}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50"
               >
                 <X size={12} /> Cancelar
               </button>
               <button
-                onClick={() => {
-                  if (editForm && employee) {
-                    updateEmployee(employee.id, { ...editForm, photoDataUrl: editForm.photoDataUrl });
-                  }
-                  setEditMode(false);
-                  setEditForm(null);
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] rounded-lg transition-colors"
+                onClick={handleSaveEdit}
+                disabled={savingEdit}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] rounded-lg transition-colors disabled:opacity-60"
               >
-                <Check size={12} /> Guardar
+                {savingEdit ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+                {savingEdit ? 'Guardando...' : 'Guardar'}
               </button>
             </div>
           )}
@@ -494,10 +515,11 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
               </button>
               <button
                 onClick={handleCreateFolder}
-                disabled={!newFolderYear || Number(newFolderYear) < 1900 || Number(newFolderYear) > 2100 || years.includes(Number(newFolderYear))}
-                className="px-4 h-9 text-sm font-semibold text-white bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors shadow-sm"
+                disabled={!newFolderYear || Number(newFolderYear) < 1900 || Number(newFolderYear) > 2100 || years.includes(Number(newFolderYear)) || creatingFolder}
+                className="flex items-center gap-1.5 px-4 h-9 text-sm font-semibold text-white bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors shadow-sm"
               >
-                Crear
+                {creatingFolder ? <Loader2 size={14} className="animate-spin" /> : null}
+                {creatingFolder ? 'Creando...' : 'Crear'}
               </button>
             </div>
           </div>

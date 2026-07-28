@@ -14,6 +14,7 @@ import Configuracion from './views/Configuracion';
 import Usuarios from './views/Usuarios';
 import type { NavigationPage, AuthUser, Planta, ExpedientListFilter } from './types';
 import { computeNotifications } from './lib/notifications';
+import { Toaster } from './components/ui/sonner';
 
 export default function App() {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -171,6 +172,7 @@ export default function App() {
       {currentPage === 'usuarios' && (
         <Usuarios user={user} onNavigate={handleNavigateSimple} />
       )}
+      <Toaster position="top-right" richColors closeButton />
     </Layout>
   );
 }

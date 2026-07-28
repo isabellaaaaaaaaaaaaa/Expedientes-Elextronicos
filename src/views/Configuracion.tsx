@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Settings, Image, ShieldCheck, Users, Lock, ArrowLeft, Save, Check, Eye, EyeOff } from 'lucide-react';
+import { Settings, Image, ShieldCheck, Users, Lock, ArrowLeft, Save, Check, Eye, EyeOff, Loader as Loader2 } from 'lucide-react';
 import { useSettings, useUsers } from '../hooks/useStore';
 import { addUser, updateUser, deleteUser, updateSettings } from '../lib/store';
 import type { SystemUser } from '../lib/store';
 import type { AuthUser, NavigationPage } from '../types';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '../components/ui/confirm-dialog';
 
 interface ConfiguracionProps {
   user: AuthUser;
@@ -55,6 +56,8 @@ export default function Configuracion({ user, onNavigate }: ConfiguracionProps) 
   const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
   const [userForm, setUserForm] = useState({ username: '', fullName: '', role: 'Doctora' as SystemUser['role'], planta: '61' as string });
   const [savingUser, setSavingUser] = useState(false);
+  const [confirmDeleteUser, setConfirmDeleteUser] = useState<SystemUser | null>(null);
+  const [deletingUser, setDeletingUser] = useState(false);
 
   const saveSystem = () => {
     setSavingSystem(true);
@@ -139,8 +142,19 @@ export default function Configuracion({ user, onNavigate }: ConfiguracionProps) 
   };
 
   const removeUser = (u: SystemUser) => {
-    deleteUser(u.id);
-    toast.success(`Usuario "${u.username}" eliminado`);
+    setConfirmDeleteUser(u);
+  };
+
+  const confirmRemoveUser = () => {
+    if (!confirmDeleteUser) return;
+    setDeletingUser(true);
+    const u = confirmDeleteUser;
+    setTimeout(() => {
+      deleteUser(u.id);
+      setDeletingUser(false);
+      setConfirmDeleteUser(null);
+      toast.success(`Usuario "${u.username}" eliminado`);
+    }, 500);
   };
 
   return (
@@ -385,6 +399,22 @@ export default function Configuracion({ user, onNavigate }: ConfiguracionProps) 
           )}
         </SectionCard>
       )}
+
+      <ConfirmDialog
+        open={!!confirmDeleteUser}
+        title="¿Eliminar usuario?"
+        message={`Se eliminará permanentemente el usuario «${confirmDeleteUser?.username}» (${confirmDeleteUser?.fullName}). Esta acción no se puede deshacer.`}
+        confirmLabel={deletingUser ? 'Eliminando...' : 'Eliminar'}
+        variant="danger"
+        onConfirm={confirmRemoveUser}
+        onCancel={() => setConfirmDeleteUser(null)}
+      >
+        {deletingUser && (
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Loader2 size={12} className="animate-spin" /> Eliminando usuario...
+          </div>
+        )}
+      </ConfirmDialog>
     </div>
   );
 }

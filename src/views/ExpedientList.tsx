@@ -9,6 +9,7 @@ import type { NavigationPage, Planta, ExpedientListFilter } from '../types';
 import RecordActionsMenu from '../components/record/RecordActionsMenu';
 import { statusConfig, EXPEDIENT_STATUSES } from '../lib/statusConfig';
 import { EmptyState } from '../components/ui/empty-state';
+import { Skeleton } from '../components/ui/skeleton';
 
 interface ExpedientListProps {
   planta: Planta;
@@ -52,6 +53,13 @@ export default function ExpedientList({ planta, initialFilter, onNavigate }: Exp
   const [toDate, setToDate] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    const t = setTimeout(() => setLoading(false), 400);
+    return () => clearTimeout(t);
+  }, [planta]);
 
   useEffect(() => {
     if (initialFilter?.status) {
@@ -239,6 +247,20 @@ export default function ExpedientList({ planta, initialFilter, onNavigate }: Exp
 
       {/* Table */}
       <div className="card overflow-hidden">
+        {loading ? (
+          <div>
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4 px-5 py-4 border-b border-slate-50">
+                <Skeleton className="w-9 h-9 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-3.5 w-32" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+                <Skeleton className="h-6 w-20 rounded-full" />
+              </div>
+            ))}
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
@@ -311,6 +333,7 @@ export default function ExpedientList({ planta, initialFilter, onNavigate }: Exp
             </tbody>
           </table>
         </div>
+        )}
 
         {filtered.length > PAGE_SIZE && (
           <div className="flex items-center justify-between px-5 py-3.5 border-t border-slate-100 bg-slate-50/30">

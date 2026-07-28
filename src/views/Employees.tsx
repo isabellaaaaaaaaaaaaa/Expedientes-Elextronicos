@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   UserPlus, FileSpreadsheet,
   ChevronLeft, ChevronRight,
   Filter, X, Factory, ArrowLeft,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useEmployees, useExpedients } from '../hooks/useStore';
 import type { NavigationPage, AuthUser, Planta, EmployeeStatus, Turno } from '../types';
 import { getLatestExpedient as tableGetLatestExpedient } from '../components/employee/EmployeeTable';
@@ -15,6 +16,7 @@ import {
   type SortKey, type SortDir,
 } from '../components/employee/EmployeeTable';
 import { EmptyState } from '../components/ui/empty-state';
+import { Skeleton } from '../components/ui/skeleton';
 
 interface EmployeesProps {
   user: AuthUser;
@@ -52,9 +54,16 @@ export default function Employees({ planta, examDue, onNavigate }: EmployeesProp
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [page, setPage] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   const employees = useEmployees(planta);
   const allExpedients = useExpedients(planta);
+
+  useEffect(() => {
+    setLoading(true);
+    const t = setTimeout(() => setLoading(false), 400);
+    return () => clearTimeout(t);
+  }, [planta]);
 
   const departments = useMemo(
     () => Array.from(new Set(employees.map(e => e.department))).sort(),
@@ -123,7 +132,25 @@ export default function Employees({ planta, examDue, onNavigate }: EmployeesProp
     else { setSortKey(key); setSortDir('asc'); }
   };
 
-  const handleExportExcel = () => exportEmployeesToExcel(filtered, allExpedients, planta);
+  const handleExportExcel = () => {
+    const toastId = toast.loading('Generando archivo Excel...', {
+      description: `${filtered.length} empleados · Planta ${planta}`,
+    });
+    setTimeout(() => {
+      try {
+        exportEmployeesToExcel(filtered, allExpedients, planta);
+        toast.success('Exportación completada', {
+          id: toastId,
+          description: `${filtered.length} registros exportados`,
+        });
+      } catch {
+        toast.error('Error al exportar', {
+          id: toastId,
+          description: 'No se pudo generar el archivo. Inténtalo de nuevo.',
+        });
+      }
+    }, 500);
+  };
 
   const singleResult = filtered.length === 1 ? filtered[0] : null;
 
@@ -265,6 +292,21 @@ export default function Employees({ planta, examDue, onNavigate }: EmployeesProp
 
       {/* Table */}
       <div className="card overflow-hidden">
+        {loading ? (
+          <div className="space-y-0">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4 px-5 py-4 border-b border-slate-50">
+                <Skeleton className="w-9 h-9 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-3.5 w-32" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+                <Skeleton className="h-6 w-16 rounded-full" />
+                <Skeleton className="h-6 w-16 rounded-full" />
+              </div>
+            ))}
+          </div>
+        ) : (
         <EmployeeTable
           items={pageItems}
           onNavigate={onNavigate}
@@ -283,6 +325,7 @@ export default function Employees({ planta, examDue, onNavigate }: EmployeesProp
             />
           }
         />
+        )}
 
         {/* Pagination */}
         {filtered.length > PAGE_SIZE && (

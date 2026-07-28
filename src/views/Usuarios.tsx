@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { ArrowLeft, Users, Plus, Search, ShieldCheck, Check, Save, UserPlus, Ban, Trash2, CreditCard as Edit2 } from 'lucide-react';
+import { ArrowLeft, Users, Plus, Search, ShieldCheck, Check, Save, UserPlus, Ban, Trash2, CreditCard as Edit2, Loader as Loader2 } from 'lucide-react';
 import { useUsers } from '../hooks/useStore';
 import { addUser, updateUser, deleteUser } from '../lib/store';
 import type { SystemUser } from '../lib/store';
 import type { AuthUser, NavigationPage, Planta } from '../types';
 import { toast } from 'sonner';
+import { ConfirmDialog } from '../components/ui/confirm-dialog';
 
 interface UsuariosProps {
   user: AuthUser;
@@ -29,6 +30,8 @@ export default function Usuarios({ user, onNavigate }: UsuariosProps) {
   const [editing, setEditing] = useState<SystemUser | null>(null);
   const [form, setForm] = useState({ username: '', fullName: '', role: 'Doctora' as SystemUser['role'], planta: '61' as Planta });
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<SystemUser | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const filtered = users.filter(u => {
     if (!search) return true;
@@ -90,8 +93,19 @@ export default function Usuarios({ user, onNavigate }: UsuariosProps) {
       toast.error('No puedes eliminar tu propio usuario');
       return;
     }
-    deleteUser(u.id);
-    toast.success(`Usuario "${u.username}" eliminado`);
+    setConfirmDelete(u);
+  };
+
+  const confirmRemove = () => {
+    if (!confirmDelete) return;
+    setDeleting(true);
+    const u = confirmDelete;
+    setTimeout(() => {
+      deleteUser(u.id);
+      setDeleting(false);
+      setConfirmDelete(null);
+      toast.success(`Usuario "${u.username}" eliminado`);
+    }, 500);
   };
 
   return (
@@ -255,6 +269,22 @@ export default function Usuarios({ user, onNavigate }: UsuariosProps) {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="¿Eliminar usuario?"
+        message={`Se eliminará permanentemente el usuario «${confirmDelete?.username}» (${confirmDelete?.fullName}). Esta acción no se puede deshacer.`}
+        confirmLabel={deleting ? 'Eliminando...' : 'Eliminar'}
+        variant="danger"
+        onConfirm={confirmRemove}
+        onCancel={() => setConfirmDelete(null)}
+      >
+        {deleting && (
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Loader2 size={12} className="animate-spin" /> Eliminando usuario...
+          </div>
+        )}
+      </ConfirmDialog>
     </div>
   );
 }
