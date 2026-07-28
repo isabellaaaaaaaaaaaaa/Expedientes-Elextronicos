@@ -98,6 +98,7 @@ export interface ChangeEntry {
   newValue: string;
   user: string;
   date: string;
+  time?: string;
 }
 
 export type DocumentType =

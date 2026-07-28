@@ -8,6 +8,8 @@ import CaptureModule from '../components/capture/CaptureModule';
 import UnlockModal from '../components/employee/UnlockModal';
 import { ConfirmDialog } from '../components/ui/confirm-dialog';
 import { BitacoraPanel } from '../components/record/AuditPanels';
+import { ExpedientLifecycle } from '../components/record/ExpedientLifecycle';
+import { StatusHistoryTimeline } from '../components/record/StatusHistoryTimeline';
 import { useExpedientProgress } from '../components/record/ExpedientProgress';
 import { statusConfig } from '../lib/statusConfig';
 import { logAction, logChange } from '../lib/auditLog';
@@ -167,6 +169,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
   const [printing, setPrinting] = useState(false);
   const [captureOpen, setCaptureOpen] = useState(false);
   const [unlockOpen, setUnlockOpen] = useState(false);
+  const [pendingUnlockStatus, setPendingUnlockStatus] = useState<ExpedientStatus | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editFichaOpen, setEditFichaOpen] = useState(false);
   const [confirmFinalize, setConfirmFinalize] = useState(false);
@@ -332,7 +335,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
   const changeStatus = (next: ExpedientStatus) => {
     if (next === expForm.status) return;
     if (next === 'Finalizado') { setConfirmFinalize(true); return; }
-    if (expForm.status === 'Finalizado') { setConfirmState({ kind: 'edit-finalized', next }); return; }
+    if (expForm.status === 'Finalizado') { setPendingUnlockStatus(next); setUnlockOpen(true); return; }
     setConfirmState({ kind: 'status', next });
   };
 
@@ -609,6 +612,11 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
 
         {/* ─── RIGHT COLUMN ─── */}
         <div className="space-y-4">
+          {/* Lifecycle visual — always visible for existing expedients */}
+          {existingExpedient && (
+            <ExpedientLifecycle currentStatus={expForm.status} />
+          )}
+
           {/* Tab bar — always clickable, even in read-only mode */}
           <div className="card overflow-hidden">
             <div className="flex overflow-x-auto">
@@ -939,7 +947,11 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
           )}
 
           {activeTab === 'bitacora' && existingExpedient && (
-            <BitacoraPanel expedientId={existingExpedient.id} />
+            <div className="space-y-4">
+              <ExpedientLifecycle currentStatus={expForm.status} />
+              <StatusHistoryTimeline expedientId={existingExpedient.id} />
+              <BitacoraPanel expedientId={existingExpedient.id} />
+            </div>
           )}
 
           </div>{/* end locked tab content */}
@@ -1074,7 +1086,9 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
         isOpen={unlockOpen}
         onClose={() => setUnlockOpen(false)}
         onUnlock={() => {
-          applyStatusChange('En revisión');
+          if (pendingUnlockStatus) applyStatusChange(pendingUnlockStatus);
+          else applyStatusChange('En revisión');
+          setPendingUnlockStatus(null);
           setUnlockOpen(false);
         }}
       />
@@ -1137,15 +1151,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
         onCancel={() => setConfirmState({ kind: null })}
       />
 
-      <ConfirmDialog
-        open={confirmState.kind === 'edit-finalized'}
-        title="Editar expediente finalizado"
-        message="Este expediente está finalizado. Cambiar su estado lo reabrirá para edición. ¿Deseas continuar?"
-        confirmLabel="Reabrir"
-        variant="warning"
-        onConfirm={() => { if (confirmState.next) applyStatusChange(confirmState.next); setConfirmState({ kind: null }); }}
-        onCancel={() => setConfirmState({ kind: null })}
-      />
+
 
       {/* Editar ficha modal */}
       {editFichaOpen && (

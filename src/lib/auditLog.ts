@@ -41,7 +41,7 @@ export function logChange(
   newValue: string,
 ) {
   if (oldValue === newValue) return null;
-  const { date } = nowParts();
+  const { date, time } = nowParts();
   const entry: ChangeEntry = {
     id: `chg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     expedientId,
@@ -50,6 +50,7 @@ export function logChange(
     newValue,
     user,
     date,
+    time,
   };
   logChangeToStore(entry);
   return entry;
