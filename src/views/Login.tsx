@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Eye, EyeOff, LogIn, Lock, Loader as Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AuthUser, UserRole, Planta } from '../types';
+import { writeAuditLog } from '../lib/auditService';
 
 interface LoginProps {
   onLogin: (user: AuthUser) => void;
@@ -34,6 +35,11 @@ export default function Login({ onLogin }: LoginProps) {
     const toastId = toast.loading('Verificando credenciales...', { description: `Planta ${planta} · ${role}` });
     setTimeout(() => {
       toast.success(`Bienvenido, ${username.trim()}`, { id: toastId, description: 'Sesión iniciada correctamente' });
+      writeAuditLog({
+        user: username.trim(),
+        userRole: role,
+        action: `Inicio de sesión — Planta ${planta}`,
+      });
       onLogin({ username: username.trim(), role, planta });
     }, 900);
   };

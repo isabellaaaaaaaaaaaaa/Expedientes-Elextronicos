@@ -10,6 +10,7 @@ import { ConfirmDialog } from '../components/ui/confirm-dialog';
 import { BitacoraPanel } from '../components/record/AuditPanels';
 import { ExpedientLifecycle } from '../components/record/ExpedientLifecycle';
 import { StatusHistoryTimeline } from '../components/record/StatusHistoryTimeline';
+import { writeAuditLog } from '../lib/auditService';
 import { useExpedientProgress } from '../components/record/ExpedientProgress';
 import { statusConfig } from '../lib/statusConfig';
 import { logAction, logChange } from '../lib/auditLog';
@@ -347,6 +348,17 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
       logChange(existingExpedient.id, currentUser.username, 'Estado', prev, next);
       logAction(existingExpedient.id, currentUser.username, 'Cambio de estado', `Cambió el estado a ${next}`);
       if (next === 'Finalizado') logAction(existingExpedient.id, currentUser.username, 'Finalización', 'Finalizó el expediente');
+      writeAuditLog({
+        user: currentUser.username,
+        userRole: currentUser.role,
+        action: `Cambio de estado del expediente a "${next}"`,
+        expedientId: existingExpedient.id,
+        employeeId,
+        employeeName: fullName,
+        field: 'Estado',
+        oldValue: prev,
+        newValue: next,
+      });
     }
     setSaved(true);
     toast.success(`Estado actualizado a «${next}»`);

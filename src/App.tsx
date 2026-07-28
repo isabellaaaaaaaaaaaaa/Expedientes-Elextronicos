@@ -13,6 +13,7 @@ import EmployeeProfile from './views/EmployeeProfile';
 import PrintPreview from './views/PrintPreview';
 import Configuracion from './views/Configuracion';
 import Usuarios from './views/Usuarios';
+import Bitacora from './views/Bitacora';
 import type { NavigationPage, AuthUser, Planta, ExpedientListFilter } from './types';
 import { computeNotifications } from './lib/notifications';
 import { Toaster } from './components/ui/sonner';
@@ -182,6 +183,7 @@ export default function App() {
       {currentPage === 'usuarios' && (
         <Usuarios user={user} onNavigate={handleNavigateSimple} />
       )}
+      {currentPage === 'bitacora' && <Bitacora user={user} />}
       <Toaster position="top-right" richColors closeButton />
     </Layout>
   );

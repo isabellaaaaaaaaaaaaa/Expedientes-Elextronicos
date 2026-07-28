@@ -11,7 +11,8 @@ export type NavigationPage =
   | 'new-expedient'
   | 'print-preview'
   | 'usuarios'
-  | 'configuracion';
+  | 'configuracion'
+  | 'bitacora';
 
 export type MedicalRecordType =
   // Exámenes médicos
