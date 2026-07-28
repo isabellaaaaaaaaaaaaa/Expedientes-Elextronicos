@@ -125,22 +125,16 @@ export default function TopBar({
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-14 bg-white border-b border-slate-200/70 flex items-center justify-between px-5 z-30">
-      {/* Left: Nexteer SAM brand */}
+    <header className="fixed top-0 left-0 right-0 h-14 bg-[#1E2228] border-b border-white/5 flex items-center justify-between px-5 z-30">
+      {/* Left: spacer (brand lives in sidebar) */}
       <div className="flex items-center gap-3 min-w-0">
-        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-[hsl(355,78%,51%)] flex-shrink-0 shadow-sm">
-          <span className="text-white font-extrabold text-sm tracking-tight">N</span>
-        </div>
-        <div className="hidden sm:block min-w-0 leading-none">
-          <p className="text-gray-900 font-bold text-[15px] leading-tight">SAM</p>
-          <p className="text-slate-400 text-[10px] font-medium leading-tight mt-0.5">Sistema de Administración Médica</p>
-        </div>
+        <div className="hidden lg:block text-[11px] font-semibold text-slate-500 tracking-wide uppercase">Sistema de Administración Médica</div>
       </div>
 
       {/* Center: search (desktop) */}
       <div className="hidden md:block flex-1 max-w-md mx-6">
         <div className="relative" ref={searchRef}>
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" size={16} strokeWidth={2} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none z-10" size={16} strokeWidth={2} />
           <input
             type="text"
             value={search}
@@ -148,7 +142,7 @@ export default function TopBar({
             onFocus={() => setSearchFocused(true)}
             onKeyDown={handleSearchKey}
             placeholder="Buscar empleado, CURP, RFC..."
-            className="w-full pl-9 pr-3 h-9 text-sm bg-slate-100/70 border border-transparent rounded-lg text-gray-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-red-500/15 transition-all"
+            className="w-full pl-9 pr-3 h-9 text-sm bg-white/5 border border-white/10 rounded-lg text-slate-100 placeholder:text-slate-500 focus:outline-none focus:bg-white/10 focus:border-white/20 focus:ring-2 focus:ring-red-500/20 transition-all"
           />
           {searchFocused && q && (
             <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-lg border border-slate-200/70 z-50 overflow-hidden animate-fade-in">
@@ -195,7 +189,7 @@ export default function TopBar({
         <div className="relative" ref={plantaRef}>
           <button
             onClick={() => setPlantaOpen(o => !o)}
-            className="flex items-center gap-1.5 h-9 px-2.5 text-sm font-semibold text-slate-600 hover:text-gray-900 hover:bg-slate-100 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 h-9 px-2.5 text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
           >
             <Factory size={15} className="text-slate-400" strokeWidth={2} />
             <span className="tabular-nums hidden sm:inline">{planta}</span>
@@ -222,11 +216,11 @@ export default function TopBar({
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => setNotifOpen(o => !o)}
-            className="relative w-9 h-9 flex items-center justify-center text-slate-500 hover:text-gray-900 hover:bg-slate-100 rounded-lg transition-colors"
+            className="relative w-9 h-9 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
           >
             <Bell size={18} strokeWidth={2} />
             {notifCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 flex items-center justify-center bg-[hsl(355,78%,51%)] text-white text-[10px] font-bold rounded-full ring-2 ring-white">
+              <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 flex items-center justify-center bg-[hsl(355,78%,51%)] text-white text-[10px] font-bold rounded-full ring-2 ring-[#1E2228]">
                 {notifCount > 9 ? '9+' : notifCount}
               </span>
             )}
@@ -302,19 +296,19 @@ export default function TopBar({
           )}
         </div>
 
-        <div className="w-px h-6 bg-slate-200 mx-1 hidden sm:block" />
+        <div className="w-px h-6 bg-white/10 mx-1 hidden sm:block" />
 
         {/* Profile menu */}
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(o => !o)}
-            className="flex items-center gap-2.5 px-1.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+            className="flex items-center gap-2.5 px-1.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
           >
-            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
-              <span className="text-[11px] font-bold text-slate-600">{getInitials(user.username)}</span>
+            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+              <span className="text-[11px] font-bold text-slate-300">{getInitials(user.username)}</span>
             </div>
             <div className="hidden sm:block text-left">
-              <p className="text-sm font-semibold text-gray-900 leading-tight">{user.username}</p>
+              <p className="text-sm font-semibold text-white leading-tight">{user.username}</p>
               <p className="text-[11px] text-slate-400 leading-tight">{user.role}</p>
             </div>
             <ChevronDown size={14} className="text-slate-400 hidden sm:block" />
