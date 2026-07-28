@@ -7,6 +7,7 @@ import Employees from './views/Employees';
 import ExpedientList from './views/ExpedientList';
 import ExpedientForm from './views/ExpedientForm';
 import RecordTypeSelect from './views/RecordTypeSelect';
+import DigitalizationWizard from './views/DigitalizationWizard';
 import NewEmployee from './views/NewEmployee';
 import EmployeeProfile from './views/EmployeeProfile';
 import PrintPreview from './views/PrintPreview';
@@ -149,6 +150,15 @@ export default function App() {
         <RecordTypeSelect
           employeeId={selectedEmployeeId}
           year={selectedYear ?? undefined}
+          onNavigate={handleNavigate}
+        />
+      )}
+      {currentPage === 'digitalization-wizard' && selectedEmployeeId && (
+        <DigitalizationWizard
+          key={selectedEmployeeId + '-' + (selectedYear ?? 'default')}
+          employeeId={selectedEmployeeId}
+          year={selectedYear ?? undefined}
+          currentUser={user}
           onNavigate={handleNavigate}
         />
       )}

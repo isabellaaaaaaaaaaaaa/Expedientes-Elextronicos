@@ -5,6 +5,7 @@ export type NavigationPage =
   | 'capture-expedient'
   | 'expedient-form'
   | 'record-type-select'
+  | 'digitalization-wizard'
   | 'expedients'
   | 'new-employee'
   | 'new-expedient'

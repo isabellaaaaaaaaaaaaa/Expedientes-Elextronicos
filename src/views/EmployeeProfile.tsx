@@ -383,7 +383,7 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
             {!isAuditor && (
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => onNavigate('record-type-select', employeeId, undefined, openYear ?? undefined)}
+                  onClick={() => onNavigate('digitalization-wizard', employeeId, undefined, openYear ?? undefined)}
                   className="flex items-center gap-1.5 px-4 h-9 bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] text-white text-xs font-semibold rounded-lg transition-colors shadow-sm"
                 >
                   <Plus size={13} /> Nuevo registro
@@ -397,7 +397,7 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
               icon={FolderOpen}
               title={`Sin registros en ${openYear}`}
               description="Aún no se han creado registros médicos para esta carpeta."
-              action={!isAuditor ? { label: 'Nuevo registro', icon: Plus, onClick: () => onNavigate('record-type-select', employeeId, undefined, openYear ?? undefined) } : undefined}
+              action={!isAuditor ? { label: 'Nuevo registro', icon: Plus, onClick: () => onNavigate('digitalization-wizard', employeeId, undefined, openYear ?? undefined) } : undefined}
               compact
             />
           ) : (
@@ -452,7 +452,7 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
             icon={Layers}
             title="Este empleado aún no tiene expedientes"
             description="Crea el primer registro médico para este empleado."
-            action={!isAuditor ? { label: 'Crear expediente', icon: Plus, onClick: () => onNavigate('record-type-select', employeeId) } : undefined}
+            action={!isAuditor ? { label: 'Crear expediente', icon: Plus, onClick: () => onNavigate('digitalization-wizard', employeeId) } : undefined}
             compact
           />
         ) : (
