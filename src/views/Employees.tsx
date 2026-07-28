@@ -2,21 +2,21 @@ import { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   UserPlus, FileSpreadsheet,
-  ChevronLeft, ChevronRight,
   Filter, X, Factory, ArrowLeft,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEmployees, useExpedients } from '../hooks/useStore';
+import { useTableSelection } from '../hooks/useTable';
 import type { NavigationPage, AuthUser, Planta, EmployeeStatus, Turno } from '../types';
-import { getLatestExpedient as tableGetLatestExpedient } from '../components/employee/EmployeeTable';
+import { getLatestExpedient as tableGetLatestExpedient, getInitials, statusDot } from '../components/employee/EmployeeTable';
 import { exportEmployeesToExcel } from '../lib/exportUtils';
 import {
   EmployeeTable, getLatestExpedient, sortEmployees,
-  getInitials, statusDot,
   type SortKey, type SortDir,
 } from '../components/employee/EmployeeTable';
 import { EmptyState } from '../components/ui/empty-state';
 import { Skeleton } from '../components/ui/skeleton';
+import { BulkActionBar, PaginationFooter } from '../components/ui/table-enhanced';
 
 interface EmployeesProps {
   user: AuthUser;
@@ -55,6 +55,8 @@ export default function Employees({ planta, examDue, onNavigate }: EmployeesProp
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  const selection = useTableSelection();
 
   const employees = useEmployees(planta);
   const allExpedients = useExpedients(planta);
@@ -130,6 +132,28 @@ export default function Employees({ planta, examDue, onNavigate }: EmployeesProp
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortKey(key); setSortDir('asc'); }
+  };
+
+  const pageIds = pageItems.map(e => e.id);
+  const handleToggleAllPage = () => selection.toggleAll(pageIds);
+
+  const handleBulkExport = () => {
+    const selectedEmployees = filtered.filter(e => selection.selectedIds.has(e.id));
+    const toastId = toast.loading('Generando archivo Excel...', {
+      description: `${selectedEmployees.length} empleados seleccionados`,
+    });
+    setTimeout(() => {
+      try {
+        exportEmployeesToExcel(selectedEmployees, allExpedients, planta);
+        toast.success('Exportación completada', {
+          id: toastId,
+          description: `${selectedEmployees.length} registros exportados`,
+        });
+        selection.clearSelection();
+      } catch {
+        toast.error('Error al exportar', { id: toastId });
+      }
+    }, 500);
   };
 
   const handleExportExcel = () => {
@@ -290,7 +314,15 @@ export default function Employees({ planta, examDue, onNavigate }: EmployeesProp
         );
       })()}
 
-      {/* Table */}
+      {/* Bulk action bar + Table */}
+      <BulkActionBar
+        selectedCount={selection.count}
+        totalCount={filtered.length}
+        onClear={selection.clearSelection}
+        actions={[
+          { label: 'Exportar selección', icon: <FileSpreadsheet size={13} className="text-green-600" />, onClick: handleBulkExport },
+        ]}
+      />
       <div className="card overflow-hidden">
         {loading ? (
           <div className="space-y-0">
@@ -313,6 +345,9 @@ export default function Employees({ planta, examDue, onNavigate }: EmployeesProp
           sortKey={sortKey}
           sortDir={sortDir}
           onSortChange={toggleSort}
+          selectedIds={selection.selectedIds}
+          onToggleOne={selection.toggleOne}
+          onToggleAll={handleToggleAllPage}
           emptyState={
             <EmptyState
               icon={Search}
@@ -328,33 +363,14 @@ export default function Employees({ planta, examDue, onNavigate }: EmployeesProp
         )}
 
         {/* Pagination */}
-        {filtered.length > PAGE_SIZE && (
-          <div className="flex items-center justify-between px-5 py-3.5 border-t border-slate-100 bg-slate-50/30">
-            <p className="text-xs text-slate-400">
-              Página <span className="font-bold text-gray-700">{currentPage + 1}</span> de <span className="font-bold text-gray-700">{totalPages}</span>
-            </p>
-            <div className="flex items-center gap-1">
-              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={currentPage === 0} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-                <ChevronLeft size={16} />
-              </button>
-              {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
-                let pageNum: number;
-                if (totalPages <= 7) pageNum = i;
-                else if (currentPage < 4) pageNum = i;
-                else if (currentPage >= totalPages - 4) pageNum = totalPages - 7 + i;
-                else pageNum = currentPage - 3 + i;
-                return (
-                  <button key={pageNum} onClick={() => setPage(pageNum)} className={`w-7 h-7 text-xs font-bold rounded-lg transition-colors ${pageNum === currentPage ? 'bg-[hsl(355,78%,51%)] text-white' : 'text-slate-500 hover:bg-slate-100'}`}>
-                    {pageNum + 1}
-                  </button>
-                );
-              })}
-              <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={currentPage >= totalPages - 1} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-        )}
+        <PaginationFooter
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filtered.length}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+          selectedCount={selection.count}
+        />
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ArrowLeft, Users, Plus, Search, ShieldCheck, Check, Save, UserPlus, Ban, Trash2, CreditCard as Edit2, Loader as Loader2 } from 'lucide-react';
 import { useUsers } from '../hooks/useStore';
 import { addUser, updateUser, deleteUser } from '../lib/store';
@@ -6,6 +6,8 @@ import type { SystemUser } from '../lib/store';
 import type { AuthUser, NavigationPage, Planta } from '../types';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '../components/ui/confirm-dialog';
+import { useTableSelection, useTableSort, useTablePagination } from '../hooks/useTable';
+import { TableCheckbox, SortableHeader, BulkActionBar, PaginationFooter } from '../components/ui/table-enhanced';
 
 interface UsuariosProps {
   user: AuthUser;
@@ -32,12 +34,36 @@ export default function Usuarios({ user, onNavigate }: UsuariosProps) {
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<SystemUser | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
-  const filtered = users.filter(u => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return u.fullName.toLowerCase().includes(q) || u.username.toLowerCase().includes(q) || u.role.toLowerCase().includes(q);
-  });
+  const sort = useTableSort<'fullName' | 'username' | 'role' | 'planta' | 'lastLogin'>('fullName');
+  type UserSortKey = 'fullName' | 'username' | 'role' | 'planta' | 'lastLogin';
+  const selection = useTableSelection();
+  const PAGE_SIZE = 10;
+
+  const filtered = useMemo(() => {
+    let result = users.filter(u => {
+      if (!search) return true;
+      const q = search.toLowerCase();
+      return u.fullName.toLowerCase().includes(q) || u.username.toLowerCase().includes(q) || u.role.toLowerCase().includes(q);
+    });
+    const dir = sort.sortDir === 'asc' ? 1 : -1;
+    result = [...result].sort((a, b) => {
+      switch (sort.sortKey) {
+        case 'username': return dir * a.username.localeCompare(b.username);
+        case 'role': return dir * a.role.localeCompare(b.role);
+        case 'planta': return dir * a.planta.localeCompare(b.planta);
+        case 'lastLogin': return dir * (a.lastLogin ?? '').localeCompare(b.lastLogin ?? '');
+        case 'fullName': default: return dir * a.fullName.localeCompare(b.fullName);
+      }
+    });
+    return result;
+  }, [users, search, sort.sortKey, sort.sortDir]);
+
+  const pagination = useTablePagination(filtered.length, PAGE_SIZE);
+  const pageItems = filtered.slice(pagination.pageItems.start, pagination.pageItems.end);
+  const pageIds = pageItems.map(u => u.id);
 
   const openNew = () => {
     setEditing(null);
@@ -108,6 +134,41 @@ export default function Usuarios({ user, onNavigate }: UsuariosProps) {
     }, 500);
   };
 
+  const handleBulkActivate = () => {
+    const ids = Array.from(selection.selectedIds);
+    ids.forEach(id => updateUser(id, { active: true }));
+    toast.success(`${ids.length} usuario(s) activado(s)`);
+    selection.clearSelection();
+  };
+
+  const handleBulkDeactivate = () => {
+    const ids = Array.from(selection.selectedIds);
+    ids.forEach(id => updateUser(id, { active: false }));
+    toast.success(`${ids.length} usuario(s) desactivado(s)`);
+    selection.clearSelection();
+  };
+
+  const handleBulkDelete = () => {
+    const ids = Array.from(selection.selectedIds);
+    if (ids.some(id => users.find(u => u.id === id)?.username === user.username)) {
+      toast.error('No puedes eliminar tu propio usuario');
+      return;
+    }
+    setConfirmBulkDelete(true);
+  };
+
+  const confirmBulkDeleteAction = () => {
+    setBulkDeleting(true);
+    const ids = Array.from(selection.selectedIds);
+    setTimeout(() => {
+      ids.forEach(id => deleteUser(id));
+      selection.clearSelection();
+      setBulkDeleting(false);
+      setConfirmBulkDelete(false);
+      toast.success(`${ids.length} usuario(s) eliminado(s)`);
+    }, 600);
+  };
+
   return (
     <div className="max-w-5xl space-y-5">
       <button
@@ -154,23 +215,52 @@ export default function Usuarios({ user, onNavigate }: UsuariosProps) {
         </div>
       )}
 
+      {/* Bulk actions + Table */}
+      {isAdmin && (
+        <BulkActionBar
+          selectedCount={selection.count}
+          totalCount={filtered.length}
+          onClear={selection.clearSelection}
+          actions={[
+            { label: 'Activar', icon: <Check size={13} className="text-green-600" />, onClick: handleBulkActivate },
+            { label: 'Desactivar', icon: <Ban size={13} className="text-amber-600" />, onClick: handleBulkDeactivate },
+            { label: 'Eliminar', icon: <Trash2 size={13} className="text-red-600" />, onClick: handleBulkDelete, variant: 'danger' },
+          ]}
+        />
+      )}
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/50">
-                <th>Usuario</th>
-                <th className="hidden md:table-cell">Rol</th>
-                <th className="hidden lg:table-cell">Planta</th>
-                <th className="hidden sm:table-cell">Último acceso</th>
+                {isAdmin && (
+                  <th className="w-10">
+                    <TableCheckbox
+                      checked={pageItems.length > 0 && pageItems.every(u => selection.isSelected(u.id))}
+                      indeterminate={pageItems.some(u => selection.isSelected(u.id)) && !pageItems.every(u => selection.isSelected(u.id))}
+                      onChange={() => selection.toggleAll(pageIds)}
+                    />
+                  </th>
+                )}
+                <SortableHeader<UserSortKey> label="Usuario" sortKey="fullName" currentSortKey={sort.sortKey} currentSortDir={sort.sortDir} onSort={sort.toggleSort} />
+                <SortableHeader<UserSortKey> label="Rol" sortKey="role" currentSortKey={sort.sortKey} currentSortDir={sort.sortDir} onSort={sort.toggleSort} className="hidden md:table-cell" />
+                <SortableHeader<UserSortKey> label="Planta" sortKey="planta" currentSortKey={sort.sortKey} currentSortDir={sort.sortDir} onSort={sort.toggleSort} className="hidden lg:table-cell" />
+                <SortableHeader<UserSortKey> label="Último acceso" sortKey="lastLogin" currentSortKey={sort.sortKey} currentSortDir={sort.sortDir} onSort={sort.toggleSort} className="hidden sm:table-cell" />
                 <th>Estado</th>
                 {isAdmin && <th className="text-right">Acciones</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {filtered.map(u => (
-                <tr key={u.id} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="px-5 py-3.5">
+              {pageItems.map(u => {
+                const isSel = selection.isSelected(u.id);
+                return (
+                  <tr key={u.id} className={`hover:bg-slate-50/60 transition-colors ${isSel ? 'bg-red-50/40' : ''}`}>
+                    {isAdmin && (
+                      <td className="w-10" onClick={e => e.stopPropagation()}>
+                        <TableCheckbox checked={isSel} onChange={() => selection.toggleOne(u.id)} />
+                      </td>
+                    )}
+                    <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
                       <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${u.active ? 'bg-blue-50' : 'bg-slate-100'}`}>
                         <Users size={16} className={u.active ? 'text-blue-600' : 'text-slate-400'} />
@@ -214,7 +304,8 @@ export default function Usuarios({ user, onNavigate }: UsuariosProps) {
                     </td>
                   )}
                 </tr>
-              ))}
+              );
+            })}
             </tbody>
           </table>
         </div>
@@ -224,6 +315,15 @@ export default function Usuarios({ user, onNavigate }: UsuariosProps) {
             <p className="text-sm font-semibold text-slate-400">{search ? 'No se encontraron usuarios' : 'No hay usuarios registrados'}</p>
           </div>
         )}
+
+        <PaginationFooter
+          currentPage={pagination.page}
+          totalPages={pagination.totalPages}
+          totalItems={filtered.length}
+          pageSize={PAGE_SIZE}
+          onPageChange={pagination.setPage}
+          selectedCount={selection.count}
+        />
       </div>
 
       {showForm && (
@@ -282,6 +382,22 @@ export default function Usuarios({ user, onNavigate }: UsuariosProps) {
         {deleting && (
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <Loader2 size={12} className="animate-spin" /> Eliminando usuario...
+          </div>
+        )}
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={confirmBulkDelete}
+        title="¿Eliminar usuarios seleccionados?"
+        message={`Se eliminarán permanentemente ${selection.count} usuario(s). Esta acción no se puede deshacer.`}
+        confirmLabel={bulkDeleting ? 'Eliminando...' : 'Eliminar'}
+        variant="danger"
+        onConfirm={confirmBulkDeleteAction}
+        onCancel={() => setConfirmBulkDelete(false)}
+      >
+        {bulkDeleting && (
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Loader2 size={12} className="animate-spin" /> Eliminando usuarios...
           </div>
         )}
       </ConfirmDialog>

@@ -2,11 +2,11 @@ import { useState, useRef, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import {
   Search, Plus, Eye, Pencil, FileDown, Printer, MoveVertical,
-  ChevronUp, ChevronDown,
 } from 'lucide-react';
 import { exportExpedienteToPDF, printExpediente } from '../../lib/exportUtils';
 import { getExpedients } from '../../lib/store';
 import { EmptyState } from '../ui/empty-state';
+import { TableCheckbox, SortableHeader } from '../ui/table-enhanced';
 import type { NavigationPage, Employee, EmployeeStatus } from '../../types';
 
 export type SortKey = 'name' | 'employeeNumber' | 'department' | 'lastRecord';
@@ -145,49 +145,42 @@ interface EmployeeTableProps {
   onSortChange?: (key: SortKey) => void;
   emptyState?: ReactNode;
   canCreateExpedient?: boolean;
+  selectedIds?: Set<string>;
+  onToggleOne?: (id: string) => void;
+  onToggleAll?: () => void;
 }
 
 export function EmployeeTable({
   items, onNavigate, sortKey, sortDir, onSortChange, emptyState, canCreateExpedient = true,
+  selectedIds, onToggleOne, onToggleAll,
 }: EmployeeTableProps) {
-  const sortable = !!onSortChange;
-  const sortCls = 'cursor-pointer select-none hover:text-slate-600 transition-colors';
-
-  const SortIcon = ({ col }: { col: SortKey }) => {
-    if (sortKey !== col) return <ChevronUp size={11} className="text-slate-300 opacity-40" />;
-    return sortDir === 'asc'
-      ? <ChevronUp size={11} className="text-[hsl(355,78%,51%)]" />
-      : <ChevronDown size={11} className="text-[hsl(355,78%,51%)]" />;
-  };
-
-  const onHeaderClick = (key: SortKey) => sortable ? () => onSortChange!(key) : undefined;
+  const hasSelection = !!onToggleOne && !!selectedIds;
+  const allSelected = hasSelection && items.length > 0 && items.every(e => selectedIds.has(e.id));
+  const someSelected = hasSelection && items.some(e => selectedIds.has(e.id)) && !allSelected;
 
   return (
     <div className="overflow-x-auto">
       <table className="data-table">
         <thead>
           <tr>
-            <th className={sortable ? sortCls : ''} onClick={onHeaderClick('name')}>
-              <span className="inline-flex items-center gap-1">Empleado {sortable && <SortIcon col="name" />}</span>
-            </th>
-            <th className={`hidden md:table-cell ${sortable ? sortCls : ''}`} onClick={onHeaderClick('employeeNumber')}>
-              <span className="inline-flex items-center gap-1">No. Empleado {sortable && <SortIcon col="employeeNumber" />}</span>
-            </th>
-            <th className={`hidden lg:table-cell ${sortable ? sortCls : ''}`} onClick={onHeaderClick('department')}>
-              <span className="inline-flex items-center gap-1">Departamento {sortable && <SortIcon col="department" />}</span>
-            </th>
+            {hasSelection && (
+              <th className="w-10">
+                <TableCheckbox checked={allSelected} indeterminate={someSelected} onChange={() => onToggleAll!()} />
+              </th>
+            )}
+            <SortableHeader<SortKey> label="Empleado" sortKey="name" currentSortKey={sortKey} currentSortDir={sortDir} onSort={onSortChange} />
+            <SortableHeader<SortKey> label="No. Empleado" sortKey="employeeNumber" currentSortKey={sortKey} currentSortDir={sortDir} onSort={onSortChange} className="hidden md:table-cell" />
+            <SortableHeader<SortKey> label="Departamento" sortKey="department" currentSortKey={sortKey} currentSortDir={sortDir} onSort={onSortChange} className="hidden lg:table-cell" />
             <th className="hidden xl:table-cell">Puesto</th>
             <th className="hidden lg:table-cell">Estatus</th>
-            <th className={`hidden lg:table-cell ${sortable ? sortCls : ''}`} onClick={onHeaderClick('lastRecord')}>
-              <span className="inline-flex items-center gap-1">Último registro {sortable && <SortIcon col="lastRecord" />}</span>
-            </th>
+            <SortableHeader<SortKey> label="Último registro" sortKey="lastRecord" currentSortKey={sortKey} currentSortDir={sortDir} onSort={onSortChange} className="hidden lg:table-cell" />
             <th className="text-right">Acciones</th>
           </tr>
         </thead>
         <tbody>
           {items.length === 0 ? (
             <tr>
-              <td colSpan={7} className="px-6 py-16 text-center">
+              <td colSpan={hasSelection ? 8 : 7} className="px-6 py-16 text-center">
                 {emptyState ?? (
                   <EmptyState
                     icon={Search}
@@ -204,8 +197,14 @@ export function EmployeeTable({
               const recStatus = latestExp?.status ?? null;
               const colorClass = avatarColors[idx % avatarColors.length];
               const empStatus = emp.status as EmployeeStatus;
+              const isSel = hasSelection && selectedIds.has(emp.id);
               return (
-                <tr key={emp.id} className="group">
+                <tr key={emp.id} className={`group ${isSel ? 'bg-red-50/40' : ''}`}>
+                  {hasSelection && (
+                    <td className="w-10" onClick={e => e.stopPropagation()}>
+                      <TableCheckbox checked={isSel} onChange={() => onToggleOne!(emp.id)} />
+                    </td>
+                  )}
                   <td>
                     <div className="flex items-center gap-3">
                       <div className={`w-9 h-9 rounded-full ${colorClass} flex items-center justify-center flex-shrink-0 text-xs font-bold`}>

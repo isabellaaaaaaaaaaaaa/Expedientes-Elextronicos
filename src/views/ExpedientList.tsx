@@ -1,15 +1,19 @@
 import { useState, useMemo, useEffect } from 'react';
 import {
   FileText, CircleCheck as CheckCircle2, Clock, CircleAlert as AlertCircle,
-  Search, Filter, X, Calendar, ChevronLeft, ChevronRight, Plus, ArrowLeft,
+  Search, Filter, X, Calendar, Plus, ArrowLeft, Trash2,
 } from 'lucide-react';
-import { getExpedients, getEmployees } from '../lib/store';
+import { toast } from 'sonner';
+import { getExpedients, getEmployees, deleteExpedient } from '../lib/store';
 import { useExpedients, useEmployees, useDocuments } from '../hooks/useStore';
+import { useTableSelection, useTableSort } from '../hooks/useTable';
 import type { NavigationPage, Planta, ExpedientListFilter } from '../types';
 import RecordActionsMenu from '../components/record/RecordActionsMenu';
 import { statusConfig, EXPEDIENT_STATUSES } from '../lib/statusConfig';
 import { EmptyState } from '../components/ui/empty-state';
 import { Skeleton } from '../components/ui/skeleton';
+import { TableCheckbox, SortableHeader, BulkActionBar, PaginationFooter } from '../components/ui/table-enhanced';
+import { ConfirmDialog } from '../components/ui/confirm-dialog';
 
 interface ExpedientListProps {
   planta: Planta;
@@ -55,6 +59,10 @@ export default function ExpedientList({ planta, initialFilter, onNavigate }: Exp
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  const sort = useTableSort<'empleado' | 'tipo' | 'year' | 'fecha' | 'estado'>('fecha', 'desc');
+  const selection = useTableSelection();
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+
   useEffect(() => {
     setLoading(true);
     const t = setTimeout(() => setLoading(false), 400);
@@ -99,9 +107,18 @@ export default function ExpedientList({ planta, initialFilter, onNavigate }: Exp
       if (toDate && exp.date > toDate) return false;
       return true;
     });
-    result = result.sort((a, b) => (b.year - a.year) || b.date.localeCompare(a.date));
+    const dir = sort.sortDir === 'asc' ? 1 : -1;
+    result = result.sort((a, b) => {
+      switch (sort.sortKey) {
+        case 'empleado': return dir * (a.employee.firstName + ' ' + a.employee.lastName1).localeCompare(b.employee.firstName + ' ' + b.employee.lastName1);
+        case 'tipo': return dir * a.recordType.localeCompare(b.recordType);
+        case 'year': return dir * (a.year - b.year);
+        case 'estado': return dir * a.status.localeCompare(b.status);
+        case 'fecha': default: return dir * (a.updatedAt.localeCompare(b.updatedAt));
+      }
+    });
     return result;
-  }, [enriched, search, statusFilter, typeFilter, yearFilter, deptFilter, puestoFilter, doctorFilter, fromDate, toDate]);
+  }, [enriched, search, statusFilter, typeFilter, yearFilter, deptFilter, puestoFilter, doctorFilter, fromDate, toDate, sort.sortKey, sort.sortDir]);
 
   const total = enriched.length;
   const finalizado = enriched.filter(e => e.status === 'Finalizado').length;
@@ -118,6 +135,24 @@ export default function ExpedientList({ planta, initialFilter, onNavigate }: Exp
     setStatusFilter(''); setTypeFilter(''); setYearFilter('');
     setDeptFilter(''); setPuestoFilter(''); setDoctorFilter(''); setFromDate(''); setToDate('');
     setSearch(''); setPage(0);
+  };
+
+  const pageIds = pageItems.map(e => e.id);
+  const handleToggleAllPage = () => selection.toggleAll(pageIds);
+
+  const handleBulkDelete = () => {
+    setConfirmBulkDelete(true);
+  };
+
+  const confirmBulkDeleteAction = () => {
+    const ids = Array.from(selection.selectedIds);
+    const toastId = toast.loading('Eliminando expedientes...', { description: `${ids.length} seleccionados` });
+    setTimeout(() => {
+      ids.forEach(id => deleteExpedient(id));
+      selection.clearSelection();
+      setConfirmBulkDelete(false);
+      toast.success('Expedientes eliminados', { id: toastId, description: `${ids.length} registro(s) eliminado(s).` });
+    }, 800);
   };
 
   return (
@@ -245,7 +280,15 @@ export default function ExpedientList({ planta, initialFilter, onNavigate }: Exp
         )}
       </div>
 
-      {/* Table */}
+      {/* Bulk actions + Table */}
+      <BulkActionBar
+        selectedCount={selection.count}
+        totalCount={filtered.length}
+        onClear={selection.clearSelection}
+        actions={[
+          { label: 'Eliminar', icon: <Trash2 size={13} className="text-red-600" />, onClick: handleBulkDelete, variant: 'danger' },
+        ]}
+      />
       <div className="card overflow-hidden">
         {loading ? (
           <div>
@@ -265,17 +308,24 @@ export default function ExpedientList({ planta, initialFilter, onNavigate }: Exp
           <table className="data-table">
             <thead>
               <tr>
-                <th>Empleado</th>
-                <th className="hidden md:table-cell">Tipo de registro</th>
-                <th className="hidden lg:table-cell">Año</th>
-                <th className="hidden sm:table-cell">Actualizado</th>
-                <th>Estado</th>
+                <th className="w-10">
+                  <TableCheckbox
+                    checked={pageItems.length > 0 && pageItems.every(e => selection.isSelected(e.id))}
+                    indeterminate={pageItems.some(e => selection.isSelected(e.id)) && !pageItems.every(e => selection.isSelected(e.id))}
+                    onChange={handleToggleAllPage}
+                  />
+                </th>
+                <SortableHeader<'empleado' | 'tipo' | 'year' | 'fecha' | 'estado'> label="Empleado" sortKey="empleado" currentSortKey={sort.sortKey} currentSortDir={sort.sortDir} onSort={sort.toggleSort} />
+                <SortableHeader<'empleado' | 'tipo' | 'year' | 'fecha' | 'estado'> label="Tipo de registro" sortKey="tipo" currentSortKey={sort.sortKey} currentSortDir={sort.sortDir} onSort={sort.toggleSort} className="hidden md:table-cell" />
+                <SortableHeader<'empleado' | 'tipo' | 'year' | 'fecha' | 'estado'> label="Año" sortKey="year" currentSortKey={sort.sortKey} currentSortDir={sort.sortDir} onSort={sort.toggleSort} className="hidden lg:table-cell" />
+                <SortableHeader<'empleado' | 'tipo' | 'year' | 'fecha' | 'estado'> label="Actualizado" sortKey="fecha" currentSortKey={sort.sortKey} currentSortDir={sort.sortDir} onSort={sort.toggleSort} className="hidden sm:table-cell" />
+                <SortableHeader<'empleado' | 'tipo' | 'year' | 'fecha' | 'estado'> label="Estado" sortKey="estado" currentSortKey={sort.sortKey} currentSortDir={sort.sortDir} onSort={sort.toggleSort} />
                 <th className="text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {pageItems.length === 0 ? (
-                <tr><td colSpan={6} className="px-6">
+                <tr><td colSpan={7} className="px-6">
                   <EmptyState
                     icon={FileText}
                     title={hasFilters || search.trim() ? 'Sin resultados' : 'No hay expedientes para mostrar'}
@@ -289,8 +339,12 @@ export default function ExpedientList({ planta, initialFilter, onNavigate }: Exp
               ) : (
                 pageItems.map(exp => {
                   const cfg = statusConfig[exp.status];
+                  const isSel = selection.isSelected(exp.id);
                   return (
-                    <tr key={exp.id} className="group cursor-pointer" onClick={() => onNavigate('expedient-form', exp.employee.id, exp.id)}>
+                    <tr key={exp.id} className={`group cursor-pointer ${isSel ? 'bg-red-50/40' : ''}`} onClick={() => onNavigate('expedient-form', exp.employee.id, exp.id)}>
+                      <td className="w-10" onClick={e => e.stopPropagation()}>
+                        <TableCheckbox checked={isSel} onChange={() => selection.toggleOne(exp.id)} />
+                      </td>
                       <td>
                         <div className="flex items-center gap-3">
                           <div className={`w-9 h-9 rounded-full ${exp.avatarColor} flex items-center justify-center flex-shrink-0 text-xs font-bold`}>
@@ -335,34 +389,25 @@ export default function ExpedientList({ planta, initialFilter, onNavigate }: Exp
         </div>
         )}
 
-        {filtered.length > PAGE_SIZE && (
-          <div className="flex items-center justify-between px-5 py-3.5 border-t border-slate-100 bg-slate-50/30">
-            <p className="text-xs text-slate-400">
-              Página <span className="font-bold text-gray-700">{currentPage + 1}</span> de <span className="font-bold text-gray-700">{totalPages}</span>
-            </p>
-            <div className="flex items-center gap-1">
-              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={currentPage === 0} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-                <ChevronLeft size={16} />
-              </button>
-              {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
-                let pageNum: number;
-                if (totalPages <= 7) pageNum = i;
-                else if (currentPage < 4) pageNum = i;
-                else if (currentPage >= totalPages - 4) pageNum = totalPages - 7 + i;
-                else pageNum = currentPage - 3 + i;
-                return (
-                  <button key={pageNum} onClick={() => setPage(pageNum)} className={`w-7 h-7 text-xs font-bold rounded-lg transition-colors ${pageNum === currentPage ? 'bg-[hsl(355,78%,51%)] text-white' : 'text-slate-500 hover:bg-slate-100'}`}>
-                    {pageNum + 1}
-                  </button>
-                );
-              })}
-              <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={currentPage >= totalPages - 1} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-        )}
+        <PaginationFooter
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filtered.length}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+          selectedCount={selection.count}
+        />
       </div>
+
+      <ConfirmDialog
+        open={confirmBulkDelete}
+        title="¿Eliminar expedientes seleccionados?"
+        message={`Se eliminarán permanentemente ${selection.count} expediente(s). Esta acción no se puede deshacer.`}
+        confirmLabel="Eliminar"
+        variant="danger"
+        onConfirm={confirmBulkDeleteAction}
+        onCancel={() => setConfirmBulkDelete(false)}
+      />
     </div>
   );
 }
