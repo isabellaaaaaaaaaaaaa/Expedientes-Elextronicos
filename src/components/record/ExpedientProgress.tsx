@@ -28,7 +28,7 @@ export function useExpedientProgress(exp: Partial<Expedient>): ProgressData {
 export function ExpedientProgress({ exp }: { exp: Partial<Expedient> }) {
   const { pct, pending } = useExpedientProgress(exp);
   const complete = pct === 100;
-  const color = complete ? 'bg-green-500' : pct >= 50 ? 'bg-blue-500' : 'bg-amber-500';
+  const color = complete ? 'bg-green-500' : pct >= 50 ? 'bg-[hsl(355,78%,51%)]' : 'bg-amber-500';
   return (
     <div className="card p-5">
       <div className="flex items-center justify-between mb-3">

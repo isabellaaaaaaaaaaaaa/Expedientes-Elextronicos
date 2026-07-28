@@ -85,7 +85,7 @@ function EmployeeRowActions({
       {canCreateExpedient && (
         <button
           onClick={() => onNavigate('record-type-select', emp.id)}
-          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
           title="Nuevo expediente"
         >
           <Plus size={15} />
@@ -101,7 +101,7 @@ function EmployeeRowActions({
       <div className="relative">
         <button
           onClick={() => setOpen(o => !o)}
-          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
           title="Más acciones"
         >
           <MoveVertical size={15} />
@@ -110,21 +110,21 @@ function EmployeeRowActions({
           <div className="absolute right-0 top-full mt-1 z-50 w-56 bg-white rounded-xl shadow-lg border border-slate-100 py-1.5 animate-in fade-in-0 zoom-in-95 duration-100">
             <button
               onClick={() => { onNavigate('new-employee', emp.id); setOpen(false); }}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors text-left"
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-700 hover:bg-red-50 hover:text-red-600 transition-colors text-left"
             >
               <Pencil size={15} className="text-slate-400" />
               Editar empleado
             </button>
             <button
               onClick={() => { exportExpedienteToPDF(emp, expedients, []); setOpen(false); }}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors text-left"
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-700 hover:bg-red-50 hover:text-red-600 transition-colors text-left"
             >
               <FileDown size={15} className="text-slate-400" />
               Descargar PDF
             </button>
             <button
               onClick={() => { printExpediente(emp, expedients, []); setOpen(false); }}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors text-left"
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-700 hover:bg-red-50 hover:text-red-600 transition-colors text-left"
             >
               <Printer size={15} className="text-slate-400" />
               Imprimir
@@ -155,8 +155,8 @@ export function EmployeeTable({
   const SortIcon = ({ col }: { col: SortKey }) => {
     if (sortKey !== col) return <ChevronUp size={11} className="text-slate-300 opacity-40" />;
     return sortDir === 'asc'
-      ? <ChevronUp size={11} className="text-blue-500" />
-      : <ChevronDown size={11} className="text-blue-500" />;
+      ? <ChevronUp size={11} className="text-[hsl(355,78%,51%)]" />
+      : <ChevronDown size={11} className="text-[hsl(355,78%,51%)]" />;
   };
 
   const onHeaderClick = (key: SortKey) => sortable ? () => onSortChange!(key) : undefined;
@@ -213,7 +213,7 @@ export function EmployeeTable({
                       <div className="min-w-0">
                         <button
                           onClick={() => onNavigate('employee-profile', emp.id)}
-                          className="text-sm font-semibold text-gray-800 truncate group-hover:text-blue-600 hover:underline transition-colors text-left"
+                          className="text-sm font-semibold text-gray-800 truncate group-hover:text-red-600 hover:underline transition-colors text-left"
                         >
                           {emp.firstName} {emp.lastName1} {emp.lastName2}
                         </button>

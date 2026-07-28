@@ -7,8 +7,8 @@ export function BitacoraPanel({ expedientId }: { expedientId: string }) {
   return (
     <div className="card overflow-hidden">
       <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2.5">
-        <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center">
-          <FileClock size={14} className="text-blue-600" />
+        <div className="w-7 h-7 bg-red-50 rounded-lg flex items-center justify-center">
+          <FileClock size={14} className="text-[hsl(355,78%,51%)]" />
         </div>
         <p className="text-sm font-bold text-gray-800">Bitácora del expediente</p>
         {entries.length > 0 && (
@@ -22,7 +22,7 @@ export function BitacoraPanel({ expedientId }: { expedientId: string }) {
           <ol className="relative space-y-5 before:content-[''] before:absolute before:left-[7px] before:top-1 before:bottom-1 before:w-px before:bg-slate-100">
             {entries.map(e => (
               <li key={e.id} className="relative pl-7">
-                <span className="absolute left-0 top-1 w-3.5 h-3.5 rounded-full bg-white border-2 border-blue-400" />
+                <span className="absolute left-0 top-1 w-3.5 h-3.5 rounded-full bg-white border-2 border-red-400" />
                 <p className="text-[11px] font-bold text-slate-400 mb-1">{e.relativeTime ?? `${e.date} · ${e.time}`}</p>
                 <div className="flex items-center gap-1.5">
                   <UserIcon size={12} className="text-slate-400 flex-shrink-0" />

@@ -14,9 +14,9 @@ interface ConfirmDialogProps {
 }
 
 const variantStyles: Record<string, { btn: string; iconBg: string; icon: string }> = {
-  danger:  { btn: 'bg-red-500 hover:bg-red-600',      iconBg: 'bg-red-50',  icon: 'text-red-500' },
+  danger:  { btn: 'bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)]', iconBg: 'bg-red-50',  icon: 'text-red-500' },
   warning: { btn: 'bg-amber-500 hover:bg-amber-600',  iconBg: 'bg-amber-50', icon: 'text-amber-500' },
-  primary: { btn: 'bg-blue-500 hover:bg-blue-600',    iconBg: 'bg-blue-50', icon: 'text-blue-500' },
+  primary: { btn: 'bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)]', iconBg: 'bg-red-50', icon: 'text-red-500' },
 };
 
 export function ConfirmDialog({
@@ -27,7 +27,7 @@ export function ConfirmDialog({
   const s = variantStyles[variant];
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={onCancel}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 animate-in fade-in-0 zoom-in-95 duration-150" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 animate-in fade-in-0 zoom-in-95 duration-150" onClick={e => e.stopPropagation()}>
         <div className="flex items-start gap-3.5">
           <div className={`w-10 h-10 ${s.iconBg} rounded-xl flex items-center justify-center flex-shrink-0`}>
             <AlertTriangle size={18} className={s.icon} />
@@ -44,13 +44,13 @@ export function ConfirmDialog({
         <div className="flex justify-end gap-2 mt-6">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors"
+            className="h-9 px-4 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors"
           >
             {cancelLabel}
           </button>
           <button
             onClick={onConfirm}
-            className={`px-4 py-2 text-sm font-bold text-white rounded-xl transition-colors ${s.btn}`}
+            className={`h-9 px-4 text-sm font-semibold text-white rounded-lg transition-colors shadow-sm ${s.btn}`}
           >
             {confirmLabel}
           </button>

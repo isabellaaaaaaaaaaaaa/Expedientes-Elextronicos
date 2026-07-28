@@ -173,7 +173,7 @@ export default function App() {
       {currentPage === 'configuracion' && <Configuracion user={user} onNavigate={handleNavigateSimple} />}
       {currentPage === 'usuarios' && (
         <div className="max-w-5xl">
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-12 text-center">
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-12 text-center">
             <p className="text-sm font-semibold text-slate-400">Esta sección estará disponible próximamente.</p>
           </div>
         </div>

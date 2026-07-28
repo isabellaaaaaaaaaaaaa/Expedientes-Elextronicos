@@ -29,7 +29,7 @@ const statusColor: Record<string, string> = {
 };
 
 const docTypeColors: Record<string, string> = {
-  'Examen médico':   'bg-blue-50 text-blue-700',
+  'Examen médico':   'bg-red-50 text-red-700',
   'Audiometría':     'bg-teal-50 text-teal-700',
   'Espirometría':    'bg-cyan-50 text-cyan-700',
   'Laboratorio':     'bg-violet-50 text-violet-700',
@@ -56,7 +56,7 @@ function TextInput({ value, onChange, placeholder }: { value: string; onChange: 
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-gray-800"
+      className="w-full px-3.5 h-9 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/15 focus:border-red-400 transition-all text-gray-800"
     />
   );
 }
@@ -68,7 +68,7 @@ function TextArea({ value, onChange, placeholder, rows = 3 }: { value: string; o
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       rows={rows}
-      className="w-full px-3.5 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 resize-none transition-all text-gray-800 leading-relaxed"
+      className="w-full px-3.5 py-3 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/15 focus:border-red-400 resize-none transition-all text-gray-800 leading-relaxed"
     />
   );
 }
@@ -171,7 +171,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
     return (
       <div className="py-20 text-center">
         <p className="text-slate-400 text-sm">Empleado no encontrado.</p>
-        <button onClick={() => onNavigate('employees')} className="mt-3 text-blue-500 text-sm font-medium hover:underline">Volver</button>
+        <button onClick={() => onNavigate('employees')} className="mt-3 text-red-500 text-sm font-medium hover:underline">Volver</button>
       </div>
     );
   }
@@ -291,7 +291,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
   const hasSnapshot = !isNew && !!existingExpedient?.employeeSnapshot;
   const idReadOnly = isReadOnly || hasSnapshot;
   const { pct, pending: pendingSections } = useExpedientProgress(expForm);
-  const progressColor = pct === 100 ? 'bg-green-500' : pct >= 50 ? 'bg-blue-500' : 'bg-amber-500';
+  const progressColor = pct === 100 ? 'bg-green-500' : pct >= 50 ? 'bg-[hsl(355,78%,51%)]' : 'bg-amber-500';
 
   const yearExpedients = !isNew
     ? expedients.filter(e => e.employeeId === employeeId && e.year === expForm.year).sort((a, b) => a.date.localeCompare(b.date))
@@ -391,7 +391,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
       {/* Breadcrumb + acciones superiores */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <nav className="flex items-center gap-1.5 text-sm text-slate-400">
-          <button onClick={() => onNavigate('employee-profile', employeeId, undefined, expForm.year)} className="flex items-center gap-1.5 hover:text-blue-500 font-medium transition-colors">
+          <button onClick={() => onNavigate('employee-profile', employeeId, undefined, expForm.year)} className="flex items-center gap-1.5 hover:text-red-500 font-medium transition-colors">
             <ArrowLeft size={13} />
             Regresar
           </button>
@@ -410,7 +410,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
               <button
                 onClick={() => prevExp && onNavigate('expedient-form', employeeId, prevExp.id, expForm.year)}
                 disabled={!prevExp}
-                className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400"
+                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400"
                 title="Expediente anterior"
               >
                 <ChevronLeft size={16} />
@@ -418,7 +418,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
               <button
                 onClick={() => nextExp && onNavigate('expedient-form', employeeId, nextExp.id, expForm.year)}
                 disabled={!nextExp}
-                className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400"
+                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-400"
                 title="Expediente siguiente"
               >
                 <ChevronRight size={16} />
@@ -434,7 +434,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
             </button>
             <button
               onClick={() => onNavigate('print-preview', employeeId, expedientId)}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm shadow-blue-200"
+              className="flex items-center gap-1.5 px-3.5 h-9 bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
               title="Imprimir expediente"
             >
               <Printer size={15} /> Imprimir
@@ -476,15 +476,15 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
         <div className="card overflow-hidden">
           <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center">
-                <FileText size={14} className="text-blue-600" />
+              <div className="w-7 h-7 bg-red-50 rounded-lg flex items-center justify-center">
+                <FileText size={14} className="text-[hsl(355,78%,51%)]" />
               </div>
               <p className="text-sm font-semibold text-gray-900">Ficha del registro</p>
             </div>
             {!idReadOnly && (
               <button
                 onClick={() => setEditFichaOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
               >
                 <Pencil size={12} />
                 Editar ficha
@@ -507,9 +507,9 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
         <div className="space-y-4 lg:sticky lg:top-20">
           {/* Photo card */}
           <div className="card overflow-hidden">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 h-16" />
+            <div className="bg-gradient-to-br from-[hsl(355,78%,51%)] to-[hsl(355,78%,46%)] h-16" />
             <div className="px-5 pb-5 -mt-8 flex flex-col items-center text-center">
-              <div className="w-20 h-20 rounded-2xl bg-white border-4 border-white shadow-md flex items-center justify-center overflow-hidden">
+              <div className="w-20 h-20 rounded-xl bg-white border-4 border-white shadow-md flex items-center justify-center overflow-hidden">
                 {empForm.photoDataUrl ? (
                   <img src={empForm.photoDataUrl} alt={fullName} className="w-full h-full object-cover rounded-[14px]" />
                 ) : (
@@ -522,7 +522,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
               <button
                 onClick={() => !isAuditor && setCaptureOpen(true)}
                 disabled={isAuditor}
-                className="mt-3 flex items-center gap-1.5 px-3.5 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold text-slate-500 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                className="mt-3 flex items-center gap-1.5 px-3.5 h-8 border border-slate-200 rounded-lg text-xs font-semibold text-slate-500 hover:border-red-300 hover:text-red-600 hover:bg-red-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Upload size={13} />
                 Importar archivo
@@ -562,7 +562,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex-shrink-0 px-4 py-3.5 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
                     activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600 bg-blue-50/50'
+                      ? 'border-[hsl(355,78%,51%)] text-[hsl(355,78%,51%)] bg-red-50/50'
                       : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                   }`}
                 >
@@ -588,21 +588,21 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
               {/* Datos del Expediente */}
               <div className="card overflow-hidden">
                 <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2.5">
-                  <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center">
-                    <FolderOpen size={14} className="text-blue-600" />
+                  <div className="w-7 h-7 bg-red-50 rounded-lg flex items-center justify-center">
+                    <FolderOpen size={14} className="text-[hsl(355,78%,51%)]" />
                   </div>
                   <p className="text-sm font-semibold text-gray-900">Datos del Registro</p>
                 </div>
                 <div className="px-5 py-4 grid grid-cols-2 gap-x-4 gap-y-3">
                   <FieldGroup label="Tipo de registro" className="col-span-2">
                     <div className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl text-gray-800 font-medium flex items-center gap-2">
-                      <Stethoscope size={14} className="text-blue-500 flex-shrink-0" />
+                      <Stethoscope size={14} className="text-[hsl(355,78%,51%)] flex-shrink-0" />
                       {expForm.recordType}
                     </div>
                   </FieldGroup>
                   <FieldGroup label="Fecha">
                     <input type="date" value={expForm.date ?? ''} onChange={e => setExpStr('date')(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-gray-800" />
+                      className="w-full px-3.5 h-9 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/15 focus:border-red-400 transition-all text-gray-800" />
                   </FieldGroup>
                   <FieldGroup label="Médico responsable">
                     <TextInput value={expForm.responsibleDoctor ?? ''} onChange={setExpStr('responsibleDoctor')} placeholder="Nombre del médico" />
@@ -610,7 +610,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                   <FieldGroup label="Año">
                     <input type="number" value={expForm.year}
                       onChange={e => { setExpForm(f => ({ ...f, year: parseInt(e.target.value) || f.year })); setSaved(false); }}
-                      className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-gray-800" />
+                      className="w-full px-3.5 h-9 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/15 focus:border-red-400 transition-all text-gray-800" />
                   </FieldGroup>
                   <FieldGroup label="Estado">
                     <div className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border ${statusColor[expForm.status] ?? 'bg-slate-100 text-slate-600 border-slate-200'}`}>
@@ -624,7 +624,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
               </div>
 
               {/* Datos Personales */}
-              <SectionCard title="Datos Personales" icon={User} iconColor="text-blue-600" iconBg="bg-blue-50">
+              <SectionCard title="Datos Personales" icon={User} iconColor="text-[hsl(355,78%,51%)]" iconBg="bg-red-50">
                 <FieldGroup label="Nombre">
                   <TextInput value={empForm.firstName} onChange={setEmp('firstName')} placeholder="Nombre(s)" />
                 </FieldGroup>
@@ -635,14 +635,14 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                   <TextInput value={empForm.lastName2} onChange={setEmp('lastName2')} placeholder="Apellido materno" />
                 </FieldGroup>
                 <FieldGroup label="Sexo">
-                  <select value={empForm.gender} onChange={e => setEmp('gender')(e.target.value)} className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-gray-800">
+                  <select value={empForm.gender} onChange={e => setEmp('gender')(e.target.value)} className="w-full px-3.5 h-9 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/15 focus:border-red-400 transition-all text-gray-800">
                     <option value="Masculino">Masculino</option>
                     <option value="Femenino">Femenino</option>
                     <option value="Otro">Otro</option>
                   </select>
                 </FieldGroup>
                 <FieldGroup label="Fecha de nacimiento">
-                  <input type="date" value={empForm.birthDate} onChange={e => setEmp('birthDate')(e.target.value)} className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-gray-800" />
+                  <input type="date" value={empForm.birthDate} onChange={e => setEmp('birthDate')(e.target.value)} className="w-full px-3.5 h-9 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/15 focus:border-red-400 transition-all text-gray-800" />
                 </FieldGroup>
                 <FieldGroup label="CURP">
                   <TextInput value={empForm.curp} onChange={setEmp('curp')} placeholder="CURP" />
@@ -671,7 +671,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                   <TextInput value={empForm.position} onChange={setEmp('position')} placeholder="Puesto" />
                 </FieldGroup>
                 <FieldGroup label="Fecha de ingreso">
-                  <input type="date" value={empForm.hireDate} onChange={e => setEmp('hireDate')(e.target.value)} className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-gray-800" />
+                  <input type="date" value={empForm.hireDate} onChange={e => setEmp('hireDate')(e.target.value)} className="w-full px-3.5 h-9 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/15 focus:border-red-400 transition-all text-gray-800" />
                 </FieldGroup>
                 <FieldGroup label="No. Empleado">
                   <TextInput value={empForm.employeeNumber} onChange={setEmp('employeeNumber')} placeholder="EMP-0000" />
@@ -832,7 +832,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                 <button
                   onClick={() => !isAuditor && setCaptureOpen(true)}
                   disabled={isAuditor}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-100 disabled:text-slate-400 text-white text-xs font-bold rounded-xl transition-colors shadow-sm"
+                  className="flex items-center gap-1.5 px-3.5 h-8 bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] disabled:bg-slate-100 disabled:text-slate-400 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm"
                 >
                   <Plus size={13} />
                   Importar documentos
@@ -911,7 +911,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                 <button
                   onClick={handleSave}
                   disabled={saved || isAuditor}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 hover:text-blue-700 font-bold text-sm rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-5 h-9 bg-white border border-slate-200 hover:border-red-300 hover:bg-red-50 text-slate-700 hover:text-red-700 font-semibold text-sm rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Save size={15} />
                   Guardar
@@ -928,7 +928,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
             </div>
           ) : (
             /* Barra de estado unificada para los 4 estados */
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
               <div className={`px-5 py-3 border-b flex items-center gap-2.5 ${statusConfig[expForm.status].bar}`}>
                 <span className={`w-2 h-2 rounded-full ${statusConfig[expForm.status].solid}`} />
                 <p className="text-xs font-bold">{expForm.status}</p>
@@ -953,7 +953,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                       <select
                         value={expForm.status}
                         onChange={e => changeStatus(e.target.value as ExpedientStatus)}
-                        className="px-2.5 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-gray-800"
+                        className="px-2.5 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/15 text-gray-800"
                       >
                         <option value="Sin revisar">Sin revisar</option>
                         <option value="En revisión">En revisión</option>
@@ -966,7 +966,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                     <button
                       onClick={handleSave}
                       disabled={isAuditor}
-                      className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-700 hover:text-blue-700 font-bold text-sm rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="flex items-center gap-2 px-4 h-9 bg-white border border-slate-200 hover:border-red-300 hover:bg-red-50 text-slate-700 hover:text-red-700 font-semibold text-sm rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       <Save size={14} />
                       Guardar
@@ -1025,7 +1025,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
       {/* Delete confirmation */}
       {deleteOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setDeleteOpen(false)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-6" onClick={e => e.stopPropagation()}>
             <p className="text-base font-bold text-gray-900">¿Deseas eliminar este registro?</p>
             <p className="text-sm text-slate-500 mt-1.5">Esta acción no se puede deshacer.</p>
             <div className="flex justify-end gap-2 mt-6">
@@ -1087,11 +1087,11 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
       {/* Editar ficha modal */}
       {editFichaOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setEditFichaOpen(false)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center">
-                  <Pencil size={14} className="text-blue-600" />
+                <div className="w-7 h-7 bg-red-50 rounded-lg flex items-center justify-center">
+                  <Pencil size={14} className="text-[hsl(355,78%,51%)]" />
                 </div>
                 <p className="text-sm font-bold text-gray-800">Editar ficha del registro</p>
               </div>
@@ -1103,7 +1103,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
               <div>
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Tipo de registro</label>
                 <div className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl text-gray-800 font-medium flex items-center gap-2">
-                  <Stethoscope size={14} className="text-blue-500 flex-shrink-0" />
+                  <Stethoscope size={14} className="text-[hsl(355,78%,51%)] flex-shrink-0" />
                   {expForm.recordType}
                 </div>
               </div>
@@ -1114,7 +1114,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                     type="date"
                     value={expForm.date}
                     onChange={e => setExpForm(f => ({ ...f, date: e.target.value }))}
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-gray-800"
+                    className="w-full px-3.5 h-9 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/15 focus:border-red-400 transition-all text-gray-800"
                   />
                 </div>
                 <div>
@@ -1122,7 +1122,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                   <select
                     value={expForm.status}
                     onChange={e => { const next = e.target.value as ExpedientStatus; setExpForm(f => ({ ...f, status: next })); if (existingExpedient) { logChange(existingExpedient.id, currentUser.username, 'Estado', expForm.status, next); logAction(existingExpedient.id, currentUser.username, 'Cambio de estado', `Cambió el estado a ${next}`); existingExpedient.status = next; } }}
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-gray-800"
+                    className="w-full px-3.5 h-9 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/15 focus:border-red-400 transition-all text-gray-800"
                   >
                     <option>Sin revisar</option>
                     <option>En revisión</option>
@@ -1138,7 +1138,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                   value={expForm.responsibleDoctor}
                   onChange={e => setExpForm(f => ({ ...f, responsibleDoctor: e.target.value }))}
                   placeholder="Nombre del médico"
-                  className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-gray-800"
+                  className="w-full px-3.5 h-9 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/15 focus:border-red-400 transition-all text-gray-800"
                 />
               </div>
             </div>
@@ -1161,7 +1161,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                   }
                   setEditFichaOpen(false);
                 }}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white bg-blue-500 hover:bg-blue-600 rounded-xl transition-colors"
+                className="flex items-center gap-1.5 px-4 h-9 text-sm font-semibold text-white bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] rounded-lg transition-colors"
               >
                 <Save size={14} />
                 Guardar cambios

@@ -69,12 +69,12 @@ export default function CaptureModule({ isOpen, onClose, onSave, uploadedBy: _up
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" onClick={handleClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 flex-shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-              <Upload size={16} className="text-blue-600" />
+            <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
+              <Upload size={16} className="text-[hsl(355,78%,51%)]" />
             </div>
             <div>
               <p className="text-sm font-bold text-gray-900">Importar archivos</p>
@@ -101,10 +101,10 @@ export default function CaptureModule({ isOpen, onClose, onSave, uploadedBy: _up
               onClick={() => fileInputRef.current?.click()}
               onDragOver={e => e.preventDefault()}
               onDrop={e => { e.preventDefault(); handleFiles(e.dataTransfer.files); }}
-              className="w-full border-2 border-dashed border-slate-200 hover:border-blue-300 hover:bg-blue-50/30 rounded-2xl p-10 text-center transition-all group"
+              className="w-full border-2 border-dashed border-slate-200 hover:border-red-300 hover:bg-red-50/30 rounded-xl p-10 text-center transition-all group"
             >
-              <Upload size={28} className="mx-auto text-slate-300 group-hover:text-blue-400 mb-3 transition-colors" />
-              <p className="text-sm font-semibold text-slate-500 group-hover:text-blue-600 transition-colors">
+              <Upload size={28} className="mx-auto text-slate-300 group-hover:text-red-400 mb-3 transition-colors" />
+              <p className="text-sm font-semibold text-slate-500 group-hover:text-[hsl(355,78%,51%)] transition-colors">
                 Toca para seleccionar archivos
               </p>
               <p className="text-xs text-slate-400 mt-1">Formatos permitidos: PDF, JPG, PNG</p>
@@ -115,7 +115,7 @@ export default function CaptureModule({ isOpen, onClose, onSave, uploadedBy: _up
           <div className="grid grid-cols-3 gap-2">
             {[
               { icon: FileText, label: 'PDF', color: 'bg-red-50 text-red-500' },
-              { icon: ImageIcon, label: 'JPG', color: 'bg-blue-50 text-blue-500' },
+              { icon: ImageIcon, label: 'JPG', color: 'bg-red-50 text-red-500' },
               { icon: ImageIcon, label: 'PNG', color: 'bg-green-50 text-green-500' },
             ].map(({ icon: Icon, label, color }) => (
               <div key={label} className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-xl border border-slate-100">
@@ -135,7 +135,7 @@ export default function CaptureModule({ isOpen, onClose, onSave, uploadedBy: _up
             <select
               value={docType}
               onChange={e => setDocType(e.target.value as DocumentType)}
-              className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+              className="w-full px-3.5 h-9 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/15 focus:border-red-400 transition-all"
             >
               {docTypes.map(t => (
                 <option key={t} value={t}>{t}</option>
@@ -164,7 +164,7 @@ export default function CaptureModule({ isOpen, onClose, onSave, uploadedBy: _up
                       {item.fileType === 'image' && (
                         <button
                           onClick={() => setPreview(item.dataUrl)}
-                          className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/90 text-slate-600 hover:text-blue-500 transition-colors"
+                          className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/90 text-slate-600 hover:text-red-500 transition-colors"
                         >
                           <ZoomIn size={13} />
                         </button>
@@ -193,14 +193,14 @@ export default function CaptureModule({ isOpen, onClose, onSave, uploadedBy: _up
           <div className="flex gap-2">
             <button
               onClick={handleClose}
-              className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200"
+              className="px-4 h-9 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
             >
               Cancelar
             </button>
             <button
               onClick={handleSave}
               disabled={captures.length === 0}
-              className="flex items-center gap-2 px-5 py-2 text-sm font-bold bg-blue-500 hover:bg-blue-600 disabled:bg-slate-100 disabled:text-slate-400 text-white rounded-xl transition-colors shadow-sm"
+              className="flex items-center gap-2 px-5 h-9 text-sm font-semibold bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] disabled:bg-slate-100 disabled:text-slate-400 text-white rounded-lg transition-colors shadow-sm"
             >
               <Check size={15} />
               Guardar

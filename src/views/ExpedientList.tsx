@@ -110,7 +110,7 @@ export default function ExpedientList({ initialFilter, onNavigate }: ExpedientLi
     <div className="max-w-5xl space-y-6">
       <button
         onClick={() => onNavigate('dashboard')}
-        className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-colors"
+        className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-red-600 transition-colors"
       >
         <ArrowLeft size={16} />
         Volver al Dashboard
@@ -132,7 +132,7 @@ export default function ExpedientList({ initialFilter, onNavigate }: ExpedientLi
           { label: 'Pendiente', count: pendiente,    icon: AlertCircle,  bg: 'bg-orange-50', iconColor: 'text-orange-600' },
           { label: 'Sin revisar', count: sinRevisar, icon: AlertCircle,  bg: 'bg-slate-100',   iconColor: 'text-slate-500' },
         ].map(({ label, count, icon: Icon, bg, iconColor }) => (
-          <div key={label} className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5 flex items-center gap-3.5">
+          <div key={label} className="bg-white rounded-xl border border-slate-200/60 shadow-sm p-5 flex items-center gap-3.5">
             <div className={`w-10 h-10 ${bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
               <Icon size={18} className={iconColor} />
             </div>
@@ -160,11 +160,11 @@ export default function ExpedientList({ initialFilter, onNavigate }: ExpedientLi
           <button
             onClick={() => setShowFilters(s => !s)}
             className={`flex items-center gap-2 px-3.5 py-2.5 text-sm font-semibold rounded-xl transition-colors border flex-shrink-0 ${
-              showFilters || hasFilters ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+              showFilters || hasFilters ? 'bg-red-50 text-red-600 border-red-200' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
             }`}
           >
             <Filter size={15} /> Filtros
-            {hasFilters && <span className="inline-flex items-center justify-center w-5 h-5 bg-blue-500 text-white text-[10px] rounded-full font-bold">{[statusFilter, typeFilter, yearFilter, deptFilter, puestoFilter, doctorFilter, fromDate, toDate].filter(Boolean).length}</span>}
+            {hasFilters && <span className="inline-flex items-center justify-center w-5 h-5 bg-[hsl(355,78%,51%)] text-white text-[10px] rounded-full font-bold">{[statusFilter, typeFilter, yearFilter, deptFilter, puestoFilter, doctorFilter, fromDate, toDate].filter(Boolean).length}</span>}
           </button>
         </div>
 
@@ -269,7 +269,7 @@ export default function ExpedientList({ initialFilter, onNavigate }: ExpedientLi
                             {getInitials(exp.employee.firstName, exp.employee.lastName1)}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-gray-800 truncate group-hover:text-blue-600 transition-colors">
+                            <p className="text-sm font-semibold text-gray-800 truncate group-hover:text-red-600 transition-colors">
                               {exp.employee.firstName} {exp.employee.lastName1}
                             </p>
                             <p className="text-xs text-slate-400">{exp.employee.employeeNumber} · {exp.employee.department}</p>
@@ -312,7 +312,7 @@ export default function ExpedientList({ initialFilter, onNavigate }: ExpedientLi
               Página <span className="font-bold text-gray-700">{currentPage + 1}</span> de <span className="font-bold text-gray-700">{totalPages}</span>
             </p>
             <div className="flex items-center gap-1">
-              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={currentPage === 0} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={currentPage === 0} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
                 <ChevronLeft size={16} />
               </button>
               {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
@@ -322,12 +322,12 @@ export default function ExpedientList({ initialFilter, onNavigate }: ExpedientLi
                 else if (currentPage >= totalPages - 4) pageNum = totalPages - 7 + i;
                 else pageNum = currentPage - 3 + i;
                 return (
-                  <button key={pageNum} onClick={() => setPage(pageNum)} className={`w-7 h-7 text-xs font-bold rounded-lg transition-colors ${pageNum === currentPage ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-100'}`}>
+                  <button key={pageNum} onClick={() => setPage(pageNum)} className={`w-7 h-7 text-xs font-bold rounded-lg transition-colors ${pageNum === currentPage ? 'bg-[hsl(355,78%,51%)] text-white' : 'text-slate-500 hover:bg-slate-100'}`}>
                     {pageNum + 1}
                   </button>
                 );
               })}
-              <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={currentPage >= totalPages - 1} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+              <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={currentPage >= totalPages - 1} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
                 <ChevronRight size={16} />
               </button>
             </div>

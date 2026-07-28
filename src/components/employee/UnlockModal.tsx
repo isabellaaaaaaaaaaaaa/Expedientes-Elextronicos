@@ -36,7 +36,7 @@ export default function UnlockModal({ isOpen, onClose, onUnlock }: UnlockModalPr
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" onClick={handleClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-6 pt-6 pb-5 text-white">
           <div className="flex items-start justify-between">
@@ -74,10 +74,10 @@ export default function UnlockModal({ isOpen, onClose, onUnlock }: UnlockModalPr
                 placeholder="Contraseña de autorización"
                 autoFocus
                 autoComplete="current-password"
-                className={`w-full pl-3.5 pr-10 py-2.5 text-sm bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 transition-all text-gray-800 ${
+                className={`w-full pl-3.5 pr-10 h-9 text-sm bg-white border rounded-lg focus:outline-none focus:ring-2 transition-all text-gray-800 ${
                   error
                     ? 'border-red-300 focus:ring-red-500/20 focus:border-red-400'
-                    : 'border-slate-200 focus:ring-amber-500/20 focus:border-amber-400'
+                    : 'border-slate-200 focus:ring-red-500/15 focus:border-red-400'
                 }`}
               />
               <button
@@ -100,13 +100,13 @@ export default function UnlockModal({ isOpen, onClose, onUnlock }: UnlockModalPr
             <button
               type="button"
               onClick={handleClose}
-              className="flex-1 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200"
+              className="flex-1 h-9 text-sm font-semibold text-slate-600 hover:bg-slate-50 rounded-lg transition-colors border border-slate-200"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-xl transition-colors shadow-sm"
+              className="flex-1 inline-flex items-center justify-center gap-2 h-9 text-sm font-semibold bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] text-white rounded-lg transition-colors shadow-sm"
             >
               <Lock size={14} />
               Desbloquear

@@ -35,7 +35,7 @@ function EditField({ label, value, onChange }: { label: string; value: string; o
         type="text"
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-gray-800"
+        className="w-full px-3.5 h-9 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/15 focus:border-red-400 transition-all text-gray-800"
       />
     </div>
   );
@@ -64,7 +64,7 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
     return (
       <div className="py-20 text-center">
         <p className="text-slate-400 text-sm">Empleado no encontrado.</p>
-        <button onClick={() => onNavigate('employees')} className="mt-3 text-blue-500 text-sm font-medium hover:underline">Volver</button>
+        <button onClick={() => onNavigate('employees')} className="mt-3 text-red-500 text-sm font-medium hover:underline">Volver</button>
       </div>
     );
   }
@@ -111,7 +111,7 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
       {/* Back button */}
       <button
         onClick={() => onNavigate('employees')}
-        className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-blue-500 font-medium transition-colors"
+        className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-red-500 font-medium transition-colors"
       >
         <ArrowLeft size={14} /> Empleados
       </button>
@@ -120,7 +120,7 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
       <div className="flex items-center gap-1.5 bg-white border border-slate-200/60 rounded-xl p-1 shadow-sm">
         <button
           onClick={() => setActiveTab('perfil')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold rounded-lg transition-colors ${activeTab === 'perfil' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold rounded-lg transition-colors ${activeTab === 'perfil' ? 'bg-[hsl(355,78%,51%)] text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
         >
           <UserIcon size={14} /> Perfil
         </button>
@@ -139,7 +139,7 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
                 setEditForm(rest);
                 setEditMode(true);
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-red-600 bg-slate-50 hover:bg-red-50 rounded-lg transition-colors"
             >
               <Pencil size={12} /> Editar identificación
             </button>
@@ -161,7 +161,7 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
                   setEditMode(false);
                   setEditForm(null);
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] rounded-lg transition-colors"
               >
                 <Check size={12} /> Guardar
               </button>
@@ -173,10 +173,10 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
           <div className="px-6 py-6 space-y-6">
             <div className="flex flex-col sm:flex-row gap-6">
               <div className="flex-shrink-0">
-                <div className="w-24 h-24 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden">
+                <div className="w-24 h-24 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden">
                   {editForm.photoDataUrl
                     ? <img src={editForm.photoDataUrl} alt={fullName} className="w-full h-full object-cover" />
-                    : <span className="text-2xl font-bold text-blue-600">{getInitials(editForm.firstName, editForm.lastName1)}</span>
+                    : <span className="text-2xl font-bold text-[hsl(355,78%,51%)]">{getInitials(editForm.firstName, editForm.lastName1)}</span>
                   }
                 </div>
               </div>
@@ -190,7 +190,7 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
                 <EditField label="NSS" value={editForm.nss} onChange={v => setEditForm(f => f ? { ...f, nss: v } : f)} />
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Sexo</label>
-                  <select value={editForm.gender} onChange={e => setEditForm(f => f ? { ...f, gender: e.target.value as Employee['gender'] } : f)} className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-gray-800">
+                  <select value={editForm.gender} onChange={e => setEditForm(f => f ? { ...f, gender: e.target.value as Employee['gender'] } : f)} className="w-full px-3.5 h-9 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/15 focus:border-red-400 text-gray-800">
                     <option value="Masculino">Masculino</option>
                     <option value="Femenino">Femenino</option>
                     <option value="Otro">Otro</option>
@@ -198,13 +198,13 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Fecha de nacimiento</label>
-                  <input type="date" value={editForm.birthDate} onChange={e => setEditForm(f => f ? { ...f, birthDate: e.target.value } : f)} className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-gray-800" />
+                  <input type="date" value={editForm.birthDate} onChange={e => setEditForm(f => f ? { ...f, birthDate: e.target.value } : f)} className="w-full px-3.5 h-9 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/15 focus:border-red-400 text-gray-800" />
                 </div>
                 <EditField label="Puesto" value={editForm.position} onChange={v => setEditForm(f => f ? { ...f, position: v } : f)} />
                 <EditField label="Departamento" value={editForm.department} onChange={v => setEditForm(f => f ? { ...f, department: v } : f)} />
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">Fecha de ingreso</label>
-                  <input type="date" value={editForm.hireDate} onChange={e => setEditForm(f => f ? { ...f, hireDate: e.target.value } : f)} className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-gray-800" />
+                  <input type="date" value={editForm.hireDate} onChange={e => setEditForm(f => f ? { ...f, hireDate: e.target.value } : f)} className="w-full px-3.5 h-9 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/15 focus:border-red-400 text-gray-800" />
                 </div>
               </div>
             </div>
@@ -223,10 +223,10 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
           <div className="px-6 py-6 space-y-6">
             <div className="flex flex-col sm:flex-row gap-6">
               <div className="flex-shrink-0">
-                <div className="w-24 h-24 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden">
+                <div className="w-24 h-24 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden">
                   {employee.photoDataUrl
                     ? <img src={employee.photoDataUrl} alt={fullName} className="w-full h-full object-cover" />
-                    : <span className="text-2xl font-bold text-blue-600">{getInitials(employee.firstName, employee.lastName1)}</span>
+                    : <span className="text-2xl font-bold text-[hsl(355,78%,51%)]">{getInitials(employee.firstName, employee.lastName1)}</span>
                   }
                 </div>
               </div>
@@ -313,16 +313,16 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
                     <button
                       key={year}
                       onClick={() => setOpenYear(year)}
-                      className="group bg-white border border-slate-200 hover:border-blue-300 hover:shadow-md rounded-2xl p-5 text-left transition-all"
+                      className="group bg-white border border-slate-200 hover:border-red-300 hover:shadow-md rounded-xl p-5 text-left transition-all"
                     >
                       <div className="flex items-center justify-between mb-3">
-                        <div className="w-11 h-11 bg-blue-50 group-hover:bg-blue-100 rounded-xl flex items-center justify-center transition-colors flex-shrink-0">
-                          <Folder size={20} className="text-blue-600" />
+                        <div className="w-11 h-11 bg-red-50 group-hover:bg-red-100 rounded-lg flex items-center justify-center transition-colors flex-shrink-0">
+                          <Folder size={20} className="text-[hsl(355,78%,51%)]" />
                         </div>
                       </div>
-                      <p className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{year}</p>
+                      <p className="text-lg font-bold text-gray-900 group-hover:text-[hsl(355,78%,51%)] transition-colors">{year}</p>
                       <p className="text-xs text-slate-400 mt-0.5">{yearExps.length} registro{yearExps.length !== 1 ? 's' : ''}</p>
-                      <div className="flex items-center gap-1 mt-3 text-xs text-blue-500 font-semibold">
+                      <div className="flex items-center gap-1 mt-3 text-xs text-[hsl(355,78%,51%)] font-semibold">
                         Ver registros
                         <ChevronRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
                       </div>
@@ -335,7 +335,7 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
               {!isAuditor && (
                 <button
                   onClick={() => { setNewFolderYear(''); setShowFolderDialog(true); }}
-                  className="mt-3 w-full flex items-center justify-center gap-2 py-3.5 border-2 border-dashed border-slate-200 hover:border-blue-300 hover:bg-blue-50/30 rounded-2xl text-slate-400 hover:text-blue-500 text-sm font-bold transition-all"
+                  className="mt-3 w-full flex items-center justify-center gap-2 py-3.5 border-2 border-dashed border-slate-200 hover:border-red-300 hover:bg-red-50/30 rounded-xl text-slate-400 hover:text-[hsl(355,78%,51%)] text-sm font-bold transition-all"
                 >
                   <Plus size={16} /> Nueva carpeta
                 </button>
@@ -350,7 +350,7 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setOpenYear(null)}
-                className="flex items-center gap-1.5 hover:text-blue-500 font-medium transition-colors text-sm text-slate-400"
+                className="flex items-center gap-1.5 hover:text-red-500 font-medium transition-colors text-sm text-slate-400"
               >
                 <ArrowLeft size={13} /> Carpetas
               </button>
@@ -361,7 +361,7 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => onNavigate('record-type-select', employeeId, undefined, openYear ?? undefined)}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold rounded-xl transition-colors shadow-sm"
+                  className="flex items-center gap-1.5 px-4 h-9 bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] text-white text-xs font-semibold rounded-lg transition-colors shadow-sm"
                 >
                   <Plus size={13} /> Nuevo registro
                 </button>
@@ -387,14 +387,14 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
                   <div
                     key={exp.id}
                     onClick={() => onNavigate('expedient-form', employeeId, exp.id)}
-                    className="w-full flex items-center justify-between px-5 py-4 hover:bg-blue-50/20 transition-colors group cursor-pointer text-left"
+                    className="w-full flex items-center justify-between px-5 py-4 hover:bg-red-50/20 transition-colors group cursor-pointer text-left"
                   >
                     <div className="flex items-center gap-3.5">
-                      <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-blue-50 transition-colors">
-                        <FolderOpen size={18} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
+                      <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-red-50 transition-colors">
+                        <FolderOpen size={18} className="text-slate-400 group-hover:text-red-500 transition-colors" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
+                        <p className="text-sm font-bold text-gray-800 group-hover:text-red-600 transition-colors">
                           {exp.recordType}
                         </p>
                         <p className="text-xs text-slate-400">
@@ -415,9 +415,9 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
       )}
 
       {/* ── 3. EXPEDIENTES RELACIONADOS ── */}
-      <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm p-6 mt-6">
+      <div className="bg-white rounded-xl border border-slate-200/60 shadow-sm p-6 mt-6">
         <div className="flex items-center gap-2 mb-1">
-          <Layers size={18} className="text-blue-600" />
+          <Layers size={18} className="text-[hsl(355,78%,51%)]" />
           <p className="section-title">Expedientes relacionados</p>
         </div>
         <p className="text-sm text-slate-400 mb-4 ml-7">
@@ -442,7 +442,7 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
                   idx !== relatedExpedients.length - 1 ? 'border-b border-slate-100' : ''
                 }`}
               >
-                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                <div className="w-9 h-9 rounded-lg bg-red-50 text-[hsl(355,78%,51%)] flex items-center justify-center shrink-0">
                   <FolderOpen size={16} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -451,7 +451,7 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
                 </div>
                 <div className="hidden sm:block text-sm font-bold text-slate-500 tabular-nums">{exp.year}</div>
                 <StatusBadge status={exp.status} />
-                <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+                <ChevronRight size={16} className="text-slate-300 group-hover:text-red-500 group-hover:translate-x-0.5 transition-all shrink-0" />
               </button>
             ))}
           </div>
@@ -463,7 +463,7 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
       {/* Dialog: Crear carpeta del expediente */}
       {showFolderDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setShowFolderDialog(false)}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-6" onClick={e => e.stopPropagation()}>
             <p className="text-base font-bold text-gray-900">Crear carpeta del expediente</p>
             <p className="text-xs text-slate-400 mt-1">Ingresa el año para la nueva carpeta.</p>
             <div className="mt-5">
@@ -477,7 +477,7 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
                 placeholder="2027"
                 min="1900"
                 max="2100"
-                className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-gray-800"
+                className="w-full px-3.5 h-9 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/15 focus:border-red-400 transition-all text-gray-800"
               />
               {showFolderDialog && newFolderYear && years.includes(Number(newFolderYear)) && (
                 <p className="text-xs text-red-500 mt-1.5">Ya existe una carpeta para este año.</p>
@@ -486,14 +486,14 @@ export default function EmployeeProfile({ employeeId, user, initialYear, onNavig
             <div className="flex justify-end gap-2 mt-6">
               <button
                 onClick={() => setShowFolderDialog(false)}
-                className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors"
+                className="px-4 h-9 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleCreateFolder}
                 disabled={!newFolderYear || Number(newFolderYear) < 1900 || Number(newFolderYear) > 2100 || years.includes(Number(newFolderYear))}
-                className="px-4 py-2 text-sm font-bold text-white bg-blue-500 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl transition-colors"
+                className="px-4 h-9 text-sm font-semibold text-white bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors shadow-sm"
               >
                 Crear
               </button>

@@ -54,7 +54,7 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
   };
 
   const accentMap: Record<string, { iconBg: string; iconText: string }> = {
-    blue:   { iconBg: 'bg-blue-50',   iconText: 'text-blue-600' },
+    blue:   { iconBg: 'bg-red-50',   iconText: 'text-[hsl(355,78%,51%)]' },
     slate:  { iconBg: 'bg-slate-100', iconText: 'text-slate-500' },
     amber:  { iconBg: 'bg-amber-50',  iconText: 'text-amber-600' },
     orange: { iconBg: 'bg-orange-50', iconText: 'text-orange-600' },
@@ -124,8 +124,8 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
       const exp = expedients.find(x => x.id === e.expedientId);
       const emp = exp ? employees.find(em => em.id === exp.employeeId) : undefined;
       let icon = FileText;
-      let iconBg = 'bg-blue-50';
-      let iconText = 'text-blue-600';
+      let iconBg = 'bg-red-50';
+      let iconText = 'text-[hsl(355,78%,51%)]';
       if (e.action.includes('Finali')) { icon = CheckCircle2; iconBg = 'bg-green-50'; iconText = 'text-green-600'; }
       else if (e.action.includes('document') || e.action.includes('Carga')) { icon = FileText; iconBg = 'bg-amber-50'; iconText = 'text-amber-600'; }
       else if (e.action.includes('estado')) { icon = Clock; iconBg = 'bg-amber-50'; iconText = 'text-amber-600'; }
@@ -152,8 +152,8 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
       items.push({
         ts: created,
         icon: FolderOpen,
-        iconBg: 'bg-blue-50',
-        iconText: 'text-blue-600',
+        iconBg: 'bg-red-50',
+        iconText: 'text-[hsl(355,78%,51%)]',
         text: 'Se creó un expediente',
         sub: empName(e.employeeId),
         onClick: () => onNavigate('employee-profile', e.employeeId, undefined, e.year),
@@ -241,7 +241,7 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
         </div>
         <button
           onClick={() => setSummaryOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:border-blue-200 hover:text-blue-600 hover:shadow-sm transition-all flex-shrink-0"
+          className="flex items-center gap-2 px-4 h-9 rounded-lg border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm transition-all flex-shrink-0"
         >
           <BarChart3 size={16} />
           Resumen
@@ -258,8 +258,8 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
           <aside className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl flex flex-col animate-[slideInRight_0.3s_ease-out]">
             <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
-                  <BarChart3 size={18} className="text-blue-600" />
+                <div className="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center">
+                  <BarChart3 size={18} className="text-[hsl(355,78%,51%)]" />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-gray-900">Resumen</h3>
@@ -361,7 +361,7 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
       <div className="card overflow-hidden">
         <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Activity size={18} className="text-blue-600" />
+            <Activity size={18} className="text-[hsl(355,78%,51%)]" />
             <div>
               <p className="section-title">Actividad reciente</p>
               <p className="section-subtitle">Últimas acciones del sistema</p>
@@ -394,7 +394,7 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
                     {act.onClick && (
                       <button
                         onClick={act.onClick}
-                        className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors pt-1 flex-shrink-0"
+                        className="flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-red-600 transition-colors pt-1 flex-shrink-0"
                       >
                         Ver <ArrowRight size={12} />
                       </button>
@@ -425,7 +425,7 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
           </div>
           <button
             onClick={() => onNavigate('employees')}
-            className="text-sm text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1.5 transition-colors"
+            className="text-sm text-slate-500 hover:text-red-600 font-semibold flex items-center gap-1.5 transition-colors"
           >
             Ver todos <ArrowRight size={14} />
           </button>
@@ -444,8 +444,8 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
       {/* Bitácora */}
       <div className="card overflow-hidden">
         <div className="px-6 py-5 border-b border-slate-100 flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-            <FileClock size={16} className="text-blue-600" />
+          <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
+            <FileClock size={16} className="text-[hsl(355,78%,51%)]" />
           </div>
           <div>
             <p className="section-title">Bitácora</p>
@@ -462,8 +462,8 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
               return (
                 <div key={e.id} className="flex gap-3.5 py-3.5">
                   <div className="relative flex flex-col items-center flex-shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-white border-2 border-blue-400 flex items-center justify-center z-10">
-                      <FileClock size={14} className="text-blue-500" />
+                    <div className="w-8 h-8 rounded-full bg-white border-2 border-red-400 flex items-center justify-center z-10">
+                      <FileClock size={14} className="text-[hsl(355,78%,51%)]" />
                     </div>
                     {!isLast && <div className="absolute top-8 bottom-0 w-px bg-slate-100" />}
                   </div>
@@ -482,7 +482,7 @@ export default function Dashboard({ user, planta: _planta, onNavigate }: Dashboa
                   {e.onClick && (
                     <button
                       onClick={e.onClick}
-                      className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors pt-1 flex-shrink-0"
+                      className="flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-red-600 transition-colors pt-1 flex-shrink-0"
                     >
                       Ver <ArrowRight size={12} />
                     </button>

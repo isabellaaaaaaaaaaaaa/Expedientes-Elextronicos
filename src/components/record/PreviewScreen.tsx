@@ -60,24 +60,24 @@ export function PreviewScreen({ employee, expedient: exp, docs, onBack, onFinali
 
       {/* Action bar — hidden when printing */}
       <div className="flex items-center justify-between gap-3 flex-wrap print:hidden">
-        <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-blue-500 font-medium transition-colors">
+        <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-red-500 font-medium transition-colors">
           <ArrowLeft size={14} /> Seguir editando
         </button>
         <div className="flex items-center gap-2.5">
-          <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 font-bold text-sm rounded-xl transition-colors">
+          <button onClick={() => window.print()} className="flex items-center gap-2 px-4 h-9 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 font-semibold text-sm rounded-lg transition-colors">
             <Printer size={14} /> Imprimir
           </button>
-          <button onClick={onBack} className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 font-bold text-sm rounded-xl transition-colors">
+          <button onClick={onBack} className="flex items-center gap-2 px-4 h-9 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 font-semibold text-sm rounded-lg transition-colors">
             <Pencil size={14} /> Editar expediente
           </button>
-          <button onClick={onFinalize} className="flex items-center gap-2 px-5 py-2.5 bg-green-500 hover:bg-green-600 text-white font-bold text-sm rounded-xl transition-colors shadow-sm">
+          <button onClick={onFinalize} className="flex items-center gap-2 px-5 h-9 bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] text-white font-semibold text-sm rounded-lg transition-colors shadow-sm">
             <CheckCircle2 size={16} /> Finalizar expediente
           </button>
         </div>
       </div>
 
       {/* Document */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden print:shadow-none print:border-0 print:rounded-none">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200/60 overflow-hidden print:shadow-none print:border-0 print:rounded-none">
 
         {/* Document header */}
         <div className="px-8 py-6 border-b-2 border-slate-800 print:border-slate-400">
@@ -225,10 +225,10 @@ export function PreviewScreen({ employee, expedient: exp, docs, onBack, onFinali
       <div className="flex items-center justify-between gap-3 flex-wrap print:hidden">
         <p className="text-xs text-slate-500">Al finalizar, el expediente quedará en modo solo lectura y cualquier edición posterior requerirá desbloqueo.</p>
         <div className="flex items-center gap-2.5">
-          <button onClick={onBack} className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 font-bold text-sm rounded-xl transition-colors">
+          <button onClick={onBack} className="flex items-center gap-2 px-5 h-9 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-600 font-semibold text-sm rounded-lg transition-colors">
             <Pencil size={14} /> Editar expediente
           </button>
-          <button onClick={onFinalize} className="flex items-center gap-2 px-5 py-2.5 bg-green-500 hover:bg-green-600 text-white font-bold text-sm rounded-xl transition-colors shadow-sm">
+          <button onClick={onFinalize} className="flex items-center gap-2 px-5 h-9 bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] text-white font-semibold text-sm rounded-lg transition-colors shadow-sm">
             <CheckCircle2 size={16} /> Finalizar expediente
           </button>
         </div>

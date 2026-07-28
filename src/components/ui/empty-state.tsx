@@ -54,7 +54,7 @@ export function EmptyState({
         <button
           onClick={action.onClick}
           className={cn(
-            'mt-5 inline-flex items-center gap-1.5 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold rounded-xl transition-colors shadow-sm',
+            'mt-5 inline-flex items-center gap-1.5 h-9 px-4 bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] text-white text-xs font-semibold rounded-lg transition-colors shadow-sm',
           )}
         >
           {action.icon && <action.icon size={14} />}

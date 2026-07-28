@@ -75,7 +75,7 @@ export default function PrintPreview({ employeeId, expedientId, user, onNavigate
           </button>
           <button
             onClick={handlePrint}
-            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm shadow-blue-200"
+            className="flex items-center gap-1.5 px-4 h-9 bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
           >
             <Printer size={15} /> Imprimir
           </button>
@@ -83,7 +83,7 @@ export default function PrintPreview({ employeeId, expedientId, user, onNavigate
       </div>
 
       {/* A4 document sheet */}
-      <div className="print-sheet bg-white rounded-2xl border border-slate-200 shadow-sm mx-auto">
+      <div className="print-sheet bg-white rounded-xl border border-slate-200 shadow-sm mx-auto">
         {/* Official letterhead */}
         <header className="print-header">
           <div className="flex items-center justify-between gap-4 pb-4 border-b-2 border-slate-800">

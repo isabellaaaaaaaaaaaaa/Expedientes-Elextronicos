@@ -94,7 +94,7 @@ const typeIcons: Record<MedicalRecordType, LucideIcon> = {
 };
 
 const categoryStyles: Record<string, { bg: string; fg: string; ring: string }> = {
-  'Exámenes médicos':       { bg: 'bg-blue-50',    fg: 'text-blue-600',    ring: 'hover:border-blue-300 hover:bg-blue-50' },
+  'Exámenes médicos':       { bg: 'bg-red-50',     fg: 'text-[hsl(355,78%,51%)]', ring: 'hover:border-red-300 hover:bg-red-50' },
   'Consultas y seguimiento':{ bg: 'bg-teal-50',    fg: 'text-teal-600',    ring: 'hover:border-teal-300 hover:bg-teal-50' },
   'Primeros auxilios':      { bg: 'bg-red-50',     fg: 'text-red-500',     ring: 'hover:border-red-300 hover:bg-red-50' },
   'Pruebas y formatos':     { bg: 'bg-violet-50',  fg: 'text-violet-600',  ring: 'hover:border-violet-300 hover:bg-violet-50' },
@@ -109,7 +109,7 @@ export default function RecordTypeSelect({ employeeId, year, onNavigate }: Recor
     return (
       <div className="py-20 text-center">
         <p className="text-slate-400 text-sm">Empleado no encontrado.</p>
-        <button onClick={() => onNavigate('employees')} className="mt-3 text-blue-500 text-sm font-medium hover:underline">Volver</button>
+        <button onClick={() => onNavigate('employees')} className="mt-3 text-red-500 text-sm font-medium hover:underline">Volver</button>
       </div>
     );
   }
@@ -141,7 +141,7 @@ export default function RecordTypeSelect({ employeeId, year, onNavigate }: Recor
       <nav className="flex items-center gap-1.5 text-sm text-slate-400 flex-wrap">
         <button
           onClick={() => onNavigate('employee-profile', employeeId, undefined, effectiveYear)}
-          className="flex items-center gap-1.5 hover:text-blue-500 font-medium transition-colors"
+          className="flex items-center gap-1.5 hover:text-red-500 font-medium transition-colors"
         >
           <ArrowLeft size={13} />
           {fullName}
@@ -165,7 +165,7 @@ export default function RecordTypeSelect({ employeeId, year, onNavigate }: Recor
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="Buscar tipo de registro..."
-          className="px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all text-gray-800 w-full sm:w-64"
+          className="px-3.5 h-9 text-sm bg-slate-100/70 border border-transparent rounded-lg focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-red-500/15 transition-all text-gray-800 w-full sm:w-64"
         />
       </div>
 
@@ -187,7 +187,7 @@ export default function RecordTypeSelect({ employeeId, year, onNavigate }: Recor
                     <button
                       key={type}
                       onClick={() => handleSelect(type)}
-                      className={`group flex items-start gap-3 p-4 bg-white border border-slate-200 rounded-2xl transition-all text-left ${style.ring}`}
+                      className={`group flex items-start gap-3 p-4 bg-white border border-slate-200 rounded-xl transition-all text-left ${style.ring}`}
                     >
                       <div className={`w-10 h-10 ${style.bg} rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105`}>
                         <Icon size={18} className={style.fg} />

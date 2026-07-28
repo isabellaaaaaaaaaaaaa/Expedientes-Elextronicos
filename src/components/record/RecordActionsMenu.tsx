@@ -57,7 +57,7 @@ export default function RecordActionsMenu({ employee, expedient, documents, user
     <div className="relative" ref={ref}>
       <button
         onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
-        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
         title="Más opciones"
       >
         <MoreVertical size={16} />
@@ -70,7 +70,7 @@ export default function RecordActionsMenu({ employee, expedient, documents, user
         >
           <button
             onClick={handleDownloadPDF}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors text-left"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-700 hover:bg-red-50 hover:text-red-600 transition-colors text-left"
           >
             <FileDown size={15} className="text-slate-400" />
             Descargar registro en PDF
@@ -78,7 +78,7 @@ export default function RecordActionsMenu({ employee, expedient, documents, user
 
           <button
             onClick={handlePrint}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors text-left"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-700 hover:bg-red-50 hover:text-red-600 transition-colors text-left"
           >
             <Printer size={15} className="text-slate-400" />
             Imprimir registro

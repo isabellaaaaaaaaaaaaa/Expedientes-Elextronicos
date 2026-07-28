@@ -70,7 +70,7 @@ export default function TopBar({
   const matchedEmployees: Employee[] = q
     ? employees
         .filter(e => {
-          const full = `${e.firstName} ${e.lastName1} ${e.lastName2}`.toLowerCase();
+          const full = (e.firstName + ' ' + e.lastName1 + ' ' + e.lastName2).toLowerCase();
           return (
             full.includes(q) ||
             e.employeeNumber.toLowerCase().includes(q) ||
@@ -125,22 +125,22 @@ export default function TopBar({
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-14 bg-[hsl(355,78%,46%)] flex items-center justify-between px-5 z-30 shadow-sm">
+    <header className="fixed top-0 left-0 right-0 h-14 bg-white border-b border-slate-200/70 flex items-center justify-between px-5 z-30">
       {/* Left: Nexteer SAM brand */}
       <div className="flex items-center gap-3 min-w-0">
-        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/15 backdrop-blur-sm flex-shrink-0 ring-1 ring-white/20">
-          <span className="text-white font-extrabold text-sm tracking-tight">SAM</span>
+        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-[hsl(355,78%,51%)] flex-shrink-0 shadow-sm">
+          <span className="text-white font-extrabold text-sm tracking-tight">N</span>
         </div>
         <div className="hidden sm:block min-w-0 leading-none">
-          <p className="text-white font-bold text-[15px] leading-tight">SAM</p>
-          <p className="text-white/70 text-[10px] font-medium leading-tight mt-0.5">Sistema de Administración Médica</p>
+          <p className="text-gray-900 font-bold text-[15px] leading-tight">SAM</p>
+          <p className="text-slate-400 text-[10px] font-medium leading-tight mt-0.5">Sistema de Administración Médica</p>
         </div>
       </div>
 
       {/* Center: search (desktop) */}
       <div className="hidden md:block flex-1 max-w-md mx-6">
         <div className="relative" ref={searchRef}>
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 pointer-events-none z-10" size={16} strokeWidth={2} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10" size={16} strokeWidth={2} />
           <input
             type="text"
             value={search}
@@ -148,13 +148,13 @@ export default function TopBar({
             onFocus={() => setSearchFocused(true)}
             onKeyDown={handleSearchKey}
             placeholder="Buscar empleado, CURP, RFC..."
-            className="w-full pl-9 pr-3 h-9 text-sm bg-white/10 border border-white/15 rounded-lg text-white placeholder:text-white/50 focus:outline-none focus:bg-white focus:text-slate-800 focus:border-transparent focus:ring-2 focus:ring-white/30 transition-all"
+            className="w-full pl-9 pr-3 h-9 text-sm bg-slate-100/70 border border-transparent rounded-lg text-gray-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-red-500/15 transition-all"
           />
           {searchFocused && q && (
             <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-lg border border-slate-200/70 z-50 overflow-hidden animate-fade-in">
               {matchedEmployees.length === 0 ? (
                 <div className="py-6 text-center">
-                  <p className="text-sm text-slate-400 font-medium">Sin resultados para "{search}"</p>
+                  <p className="text-sm text-slate-400 font-medium">Sin resultados</p>
                 </div>
               ) : (
                 <>
@@ -162,13 +162,14 @@ export default function TopBar({
                     {matchedEmployees.length} {matchedEmployees.length === 1 ? 'coincidencia' : 'coincidencias'}
                   </p>
                   {matchedEmployees.map((emp, idx) => {
-                    const full = `${emp.firstName} ${emp.lastName1} ${emp.lastName2}`;
+                    const full = emp.firstName + ' ' + emp.lastName1 + ' ' + emp.lastName2;
+                    const active = idx === activeIdx;
                     return (
                       <button
                         key={emp.id}
                         onMouseEnter={() => setActiveIdx(idx)}
                         onClick={() => selectEmployee(emp)}
-                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-left transition-colors ${idx === activeIdx ? 'bg-red-50' : 'hover:bg-slate-50'}`}
+                        className={'w-full flex items-center gap-3 px-3.5 py-2.5 text-left transition-colors ' + (active ? 'bg-red-50' : 'hover:bg-slate-50')}
                       >
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center flex-shrink-0">
                           <span className="text-[10px] font-bold text-white">{emp.firstName.slice(0,1)}{emp.lastName1.slice(0,1)}</span>
@@ -177,7 +178,7 @@ export default function TopBar({
                           <p className="text-sm font-semibold text-gray-800 truncate">{full}</p>
                           <p className="text-[11px] text-slate-400 truncate">No. {emp.employeeNumber} · Planta {emp.planta} · {emp.curp}</p>
                         </div>
-                        <ChevronRight size={15} className={`flex-shrink-0 ${idx === activeIdx ? 'text-red-500' : 'text-slate-300'}`} />
+                        <ChevronRight size={15} className={'flex-shrink-0 ' + (active ? 'text-red-500' : 'text-slate-300')} />
                       </button>
                     );
                   })}
@@ -194,11 +195,11 @@ export default function TopBar({
         <div className="relative" ref={plantaRef}>
           <button
             onClick={() => setPlantaOpen(o => !o)}
-            className="flex items-center gap-1.5 h-9 px-2.5 text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 h-9 px-2.5 text-sm font-semibold text-slate-600 hover:text-gray-900 hover:bg-slate-100 rounded-lg transition-colors"
           >
-            <Factory size={15} className="text-white/70" strokeWidth={2} />
+            <Factory size={15} className="text-slate-400" strokeWidth={2} />
             <span className="tabular-nums hidden sm:inline">{planta}</span>
-            <ChevronDown size={14} className={`text-white/60 transition-transform ${plantaOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown size={14} className={'text-slate-400 transition-transform ' + (plantaOpen ? 'rotate-180' : '')} />
           </button>
           {plantaOpen && (
             <div className="absolute right-0 top-full mt-1.5 w-44 bg-white rounded-xl shadow-lg border border-slate-200/70 py-1.5 z-50 origin-top-right animate-fade-in">
@@ -207,9 +208,7 @@ export default function TopBar({
                 <button
                   key={p}
                   onClick={() => { onPlantaChange(p); setPlantaOpen(false); }}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 text-sm transition-colors text-left ${
-                    p === planta ? 'bg-red-50 text-red-700 font-bold' : 'text-slate-600 hover:bg-slate-50'
-                  }`}
+                  className={'w-full flex items-center justify-between px-3.5 py-2.5 text-sm transition-colors text-left ' + (p === planta ? 'bg-red-50 text-red-700 font-bold' : 'text-slate-600 hover:bg-slate-50')}
                 >
                   <span className="flex items-center gap-2"><Factory size={14} className="text-slate-400" strokeWidth={2} /> Planta {p}</span>
                   {p === planta && <CheckCircle2 size={15} className="text-red-600" />}
@@ -223,11 +222,11 @@ export default function TopBar({
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => setNotifOpen(o => !o)}
-            className="relative w-9 h-9 flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            className="relative w-9 h-9 flex items-center justify-center text-slate-500 hover:text-gray-900 hover:bg-slate-100 rounded-lg transition-colors"
           >
             <Bell size={18} strokeWidth={2} />
             {notifCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 flex items-center justify-center bg-white text-[hsl(355,78%,46%)] text-[10px] font-bold rounded-full ring-2 ring-[hsl(355,78%,46%)]">
+              <span className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 flex items-center justify-center bg-[hsl(355,78%,51%)] text-white text-[10px] font-bold rounded-full ring-2 ring-white">
                 {notifCount > 9 ? '9+' : notifCount}
               </span>
             )}
@@ -245,7 +244,7 @@ export default function TopBar({
                 </div>
                 <div className="flex items-center gap-1">
                   {notifCount > 0 && (
-                    <button onClick={onMarkAllRead} className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition-colors px-1.5 py-1 rounded-md hover:bg-blue-50">
+                    <button onClick={onMarkAllRead} className="text-[11px] font-semibold text-slate-500 hover:text-gray-900 transition-colors px-1.5 py-1 rounded-md hover:bg-slate-100">
                       Marcar todas
                     </button>
                   )}
@@ -282,7 +281,7 @@ export default function TopBar({
                               onClick={() => handleNotifClick(n)}
                               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left border-b border-slate-50 last:border-0 group"
                             >
-                              <div className={`w-8 h-8 ${a.bg} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                              <div className={'w-8 h-8 ' + a.bg + ' rounded-lg flex items-center justify-center flex-shrink-0'}>
                                 <Icon size={15} className={a.text} strokeWidth={2} />
                               </div>
                               <div className="flex-1 min-w-0">
@@ -303,22 +302,22 @@ export default function TopBar({
           )}
         </div>
 
-        <div className="w-px h-6 bg-white/20 mx-1 hidden sm:block" />
+        <div className="w-px h-6 bg-slate-200 mx-1 hidden sm:block" />
 
         {/* Profile menu */}
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(o => !o)}
-            className="flex items-center gap-2.5 px-1.5 py-1.5 rounded-lg hover:bg-white/10 transition-colors"
+            className="flex items-center gap-2.5 px-1.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
           >
-            <div className="w-8 h-8 rounded-full bg-white/20 ring-1 ring-white/30 flex items-center justify-center flex-shrink-0">
-              <span className="text-[11px] font-bold text-white">{getInitials(user.username)}</span>
+            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
+              <span className="text-[11px] font-bold text-slate-600">{getInitials(user.username)}</span>
             </div>
             <div className="hidden sm:block text-left">
-              <p className="text-sm font-semibold text-white leading-tight">{user.username}</p>
-              <p className="text-[11px] text-white/60 leading-tight">{user.role}</p>
+              <p className="text-sm font-semibold text-gray-900 leading-tight">{user.username}</p>
+              <p className="text-[11px] text-slate-400 leading-tight">{user.role}</p>
             </div>
-            <ChevronDown size={14} className="text-white/60 hidden sm:block" />
+            <ChevronDown size={14} className="text-slate-400 hidden sm:block" />
           </button>
 
           {menuOpen && (

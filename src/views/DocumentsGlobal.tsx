@@ -9,7 +9,7 @@ interface DocumentsGlobalProps {
 }
 
 const docTypeColors: Record<string, string> = {
-  'Examen médico':   'bg-blue-50 text-blue-700',
+  'Examen médico':   'bg-red-50 text-red-700',
   'Audiometría':     'bg-teal-50 text-teal-700',
   'Espirometría':    'bg-cyan-50 text-cyan-700',
   'Laboratorio':     'bg-violet-50 text-violet-700',
@@ -40,7 +40,7 @@ export default function DocumentsGlobal({ planta: _planta, onNavigate }: Documen
         </div>
         <button
           disabled
-          className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-400 text-sm font-bold rounded-xl cursor-not-allowed flex-shrink-0"
+          className="flex items-center gap-2 px-4 h-9 bg-slate-100 text-slate-400 text-sm font-semibold rounded-lg cursor-not-allowed flex-shrink-0"
           title="Usa el módulo de captura dentro del expediente"
         >
           <Plus size={15} />
@@ -77,7 +77,7 @@ export default function DocumentsGlobal({ planta: _planta, onNavigate }: Documen
                     <tr key={doc.id} className="hover:bg-slate-50/60 transition-colors">
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${doc.fileType === 'image' ? 'bg-blue-50' : 'bg-red-50'} overflow-hidden`}>
+                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${doc.fileType === 'image' ? 'bg-red-50' : 'bg-red-50'} overflow-hidden`}>
                             {doc.fileType === 'image' && doc.dataUrl ? (
                               <img src={doc.dataUrl} alt={doc.name} className="w-full h-full object-cover" />
                             ) : doc.fileType === 'image' ? (
@@ -101,7 +101,7 @@ export default function DocumentsGlobal({ planta: _planta, onNavigate }: Documen
                         {doc.employee && (
                           <button
                             onClick={() => onNavigate('employee-profile', doc.employeeId)}
-                            className="text-sm text-slate-700 hover:text-blue-600 font-medium transition-colors"
+                            className="text-sm text-slate-700 hover:text-red-600 font-medium transition-colors"
                           >
                             {doc.employee.firstName} {doc.employee.lastName1}
                           </button>
@@ -111,7 +111,7 @@ export default function DocumentsGlobal({ planta: _planta, onNavigate }: Documen
                         {doc.expedient && (
                           <button
                             onClick={() => onNavigate('expedient-form', doc.employeeId, doc.expedientId)}
-                            className="text-sm text-slate-500 hover:text-blue-600 transition-colors"
+                            className="text-sm text-slate-500 hover:text-red-600 transition-colors"
                           >
                             Expediente {doc.expedient.year}
                           </button>
@@ -123,7 +123,7 @@ export default function DocumentsGlobal({ planta: _planta, onNavigate }: Documen
                       <td className="text-right">
                         <button
                           onClick={() => onNavigate('expedient-form', doc.employeeId, doc.expedientId)}
-                          className="text-xs text-blue-600 hover:text-blue-700 font-semibold transition-colors"
+                          className="text-xs text-red-600 hover:text-red-700 font-semibold transition-colors"
                         >
                           Ver expediente
                         </button>

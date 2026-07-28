@@ -56,7 +56,7 @@ export default function Configuracion({ user, onNavigate }: ConfiguracionProps) 
     <div className="max-w-3xl space-y-6">
       <button
         onClick={() => onNavigate('dashboard')}
-        className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-colors"
+        className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-red-600 transition-colors"
       >
         <ArrowLeft size={16} />
         Volver al Dashboard
@@ -67,7 +67,7 @@ export default function Configuracion({ user, onNavigate }: ConfiguracionProps) 
       </div>
 
       {/* Sistema */}
-      <SectionCard title="Nombre del sistema" icon={Settings} iconBg="bg-blue-50" iconColor="text-blue-600">
+      <SectionCard title="Nombre del sistema" icon={Settings} iconBg="bg-red-50" iconColor="text-[hsl(355,78%,51%)]">
         <div className="space-y-3">
           <FieldGroup label="Nombre del sistema">
             <PlaceholderInput value="SAM — Sistema de Administración Médica" isAdmin={isAdmin} />
@@ -85,15 +85,14 @@ export default function Configuracion({ user, onNavigate }: ConfiguracionProps) 
       {/* Logo */}
       <SectionCard title="Logotipo" icon={Image} iconBg="bg-slate-50" iconColor="text-slate-500">
         <div className="flex items-center gap-5">
-          <div className="w-20 h-20 rounded-2xl bg-slate-100 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center flex-shrink-0">
+          <div className="w-20 h-20 rounded-xl bg-slate-100 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center flex-shrink-0">
             <Image size={22} className="text-slate-300" />
             <p className="text-[9px] text-slate-300 mt-1 font-medium">Sin logo</p>
           </div>
           <div className="space-y-2 flex-1">
             <p className="text-sm font-semibold text-gray-700">Subir logotipo de la empresa</p>
             <p className="text-xs text-slate-400 leading-relaxed">Formatos aceptados: PNG, SVG. Tamaño recomendado: 200×200 px. Esta función estará disponible en la versión final.</p>
-            <button disabled={!isAdmin} className={`flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-400 bg-slate-100 rounded-xl ${!isAdmin ? 'cursor-not-allowed' : ''}`}>
-              <Image size={13} />
+            <button disabled={!isAdmin} className={`flex items-center gap-2 px-4 h-8 text-xs font-semibold text-slate-400 bg-slate-100 rounded-lg ${!isAdmin ? 'cursor-not-allowed' : ''}`}>              <Image size={13} />
               Cargar imagen (proximamente)
             </button>
           </div>
