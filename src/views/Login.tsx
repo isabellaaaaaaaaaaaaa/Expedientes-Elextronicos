@@ -80,12 +80,12 @@ export default function Login({ onLogin }: LoginProps) {
           <p className="text-xs text-slate-400 mt-10 pl-4">© 2026 Nexteer — Área Médica</p>
         </div>
 
-        {/* Login card — discreet, minimalist */}
-        <div className="bg-white rounded-2xl shadow-md border border-slate-200/60 p-8 sm:p-9 flex flex-col justify-center lg:col-span-2">
-          <h2 className="text-xl font-bold text-gray-900">Iniciar sesión</h2>
+        {/* Login card — discreet, minimalist, corporate-aligned */}
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200/70 p-8 sm:p-10 flex flex-col justify-center lg:col-span-2">
+          <h2 className="text-xl font-bold text-gray-900 tracking-tight">Iniciar sesión</h2>
           <p className="text-slate-400 text-sm mt-1.5">Ingresa tus credenciales para continuar</p>
 
-          <form onSubmit={handleSubmit} className="mt-7 space-y-5">
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
             <div>
               <label className="input-label">Usuario</label>
               <input
@@ -157,7 +157,7 @@ export default function Login({ onLogin }: LoginProps) {
             </button>
           </form>
 
-          <p className="flex items-center justify-center gap-1.5 text-center text-xs text-slate-400 mt-7">
+          <p className="flex items-center justify-center gap-1.5 text-center text-xs text-slate-400 mt-8">
             <Lock size={12} />
             Usa cualquier usuario y contraseña (mín. 4 caracteres)
           </p>
