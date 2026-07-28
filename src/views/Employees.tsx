@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { useEmployees, useExpedients } from '../hooks/useStore';
 import { useTableSelection } from '../hooks/useTable';
 import type { NavigationPage, AuthUser, Planta, EmployeeStatus, Turno } from '../types';
+import { can } from '../lib/permissions';
 import { getLatestExpedient as tableGetLatestExpedient, getInitials, statusDot } from '../components/employee/EmployeeTable';
 import { exportEmployeesToExcel } from '../lib/exportUtils';
 import {
@@ -40,7 +41,7 @@ function isWithinNextDays(dateStr: string, days: number): boolean {
   return diff >= 0 && diff <= days;
 }
 
-export default function Employees({ planta, examDue, onNavigate }: EmployeesProps) {
+export default function Employees({ user, planta, examDue, onNavigate }: EmployeesProps) {
   const [search, setSearch] = useState('');
   const [filterDept, setFilterDept] = useState('');
   const [filterPosition, setFilterPosition] = useState('');
@@ -214,6 +215,7 @@ export default function Employees({ planta, examDue, onNavigate }: EmployeesProp
             <FileSpreadsheet size={15} className="text-green-600" />
             Exportar
           </button>
+          {can(user.role, 'create_employee') && (
           <button
             onClick={() => onNavigate('new-employee')}
             className="flex items-center gap-2 px-4 h-9 bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
@@ -221,6 +223,7 @@ export default function Employees({ planta, examDue, onNavigate }: EmployeesProp
             <UserPlus size={15} />
             Nuevo Empleado
           </button>
+          )}
         </div>
       </div>
 
@@ -355,7 +358,9 @@ export default function Employees({ planta, examDue, onNavigate }: EmployeesProp
               description={hasFilters || search.trim() ? 'Ajusta los términos de búsqueda o filtros para encontrar empleados.' : 'Comienza registrando al primer empleado de la planta.'}
               action={hasFilters || search.trim()
                 ? { label: 'Limpiar filtros', icon: X, onClick: clearFilters }
-                : { label: 'Nuevo Empleado', icon: UserPlus, onClick: () => onNavigate('new-employee') }
+                : can(user.role, 'create_employee')
+                  ? { label: 'Nuevo Empleado', icon: UserPlus, onClick: () => onNavigate('new-employee') }
+                  : undefined
               }
             />
           }

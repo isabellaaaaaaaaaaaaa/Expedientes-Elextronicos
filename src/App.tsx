@@ -15,6 +15,7 @@ import Configuracion from './views/Configuracion';
 import Usuarios from './views/Usuarios';
 import Bitacora from './views/Bitacora';
 import type { NavigationPage, AuthUser, Planta, ExpedientListFilter } from './types';
+import { canNavigate } from './lib/permissions';
 import { computeNotifications } from './lib/notifications';
 import { Toaster } from './components/ui/sonner';
 
@@ -51,6 +52,10 @@ export default function App() {
       year?: number,
       filter?: ExpedientListFilter,
     ) => {
+      if (user && !canNavigate(user.role, page)) {
+        setCurrentPage('dashboard');
+        return;
+      }
       setCurrentPage(page);
       setSelectedEmployeeId(employeeId ?? null);
       setSelectedExpedientId(expedientId ?? null);

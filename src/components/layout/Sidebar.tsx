@@ -1,19 +1,21 @@
-import { LayoutDashboard, Users, Settings, PanelLeftClose, PanelLeftOpen, FileText, ScrollText } from 'lucide-react';
-import type { NavigationPage } from '../../types';
+import { LayoutDashboard, Users, Settings, PanelLeftClose, PanelLeftOpen, FileText, ScrollText, ShieldCheck } from 'lucide-react';
+import type { NavigationPage, UserRole } from '../../types';
+import { canNavigate, getRoleLabel } from '../../lib/permissions';
 
 interface SidebarProps {
   currentPage: NavigationPage;
   onNavigate: (page: NavigationPage) => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
+  role: UserRole;
 }
 
-const navItems: { id: NavigationPage; label: string; icon: React.ElementType; adminOnly?: boolean }[] = [
+const navItems: { id: NavigationPage; label: string; icon: React.ElementType }[] = [
   { id: 'dashboard',     label: 'Dashboard',     icon: LayoutDashboard },
   { id: 'employees',     label: 'Empleados',     icon: Users },
   { id: 'expedients',    label: 'Expedientes',   icon: FileText },
   { id: 'bitacora',      label: 'Bitácora',      icon: ScrollText },
-  { id: 'usuarios',      label: 'Usuarios',      icon: Users, adminOnly: false },
+  { id: 'usuarios',      label: 'Usuarios',      icon: ShieldCheck },
   { id: 'configuracion', label: 'Configuración', icon: Settings },
 ];
 
@@ -22,7 +24,8 @@ const employeePages: NavigationPage[] = [
   'new-employee', 'new-expedient', 'expedient-form',
 ];
 
-export default function Sidebar({ currentPage, onNavigate, collapsed, onToggleCollapse }: SidebarProps) {
+export default function Sidebar({ currentPage, onNavigate, collapsed, onToggleCollapse, role }: SidebarProps) {
+  const visibleItems = navItems.filter(item => canNavigate(role, item.id));
   const isActive = (id: NavigationPage) =>
     currentPage === id ||
     (id === 'employees' && employeePages.includes(currentPage));
@@ -58,7 +61,7 @@ export default function Sidebar({ currentPage, onNavigate, collapsed, onToggleCo
 
       {/* Navigation */}
       <nav className="flex-1 px-2.5 py-2 space-y-1 overflow-y-auto">
-        {navItems.map(({ id, label, icon: Icon }) => {
+        {visibleItems.map(({ id, label, icon: Icon }) => {
           const active = isActive(id);
           return (
             <button
@@ -83,6 +86,15 @@ export default function Sidebar({ currentPage, onNavigate, collapsed, onToggleCo
           );
         })}
       </nav>
+
+      {!collapsed && (
+        <div className="px-4 pb-1">
+          <div className="rounded-lg bg-white/5 px-3 py-2 flex items-center gap-2">
+            <ShieldCheck size={12} className="text-slate-500 flex-shrink-0" />
+            <span className="text-[10px] font-semibold text-slate-400 truncate">{getRoleLabel(role)}</span>
+          </div>
+        </div>
+      )}
 
       {/* Collapse toggle */}
       <div className="p-2.5 flex-shrink-0">

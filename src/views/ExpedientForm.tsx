@@ -11,6 +11,8 @@ import { BitacoraPanel } from '../components/record/AuditPanels';
 import { ExpedientLifecycle } from '../components/record/ExpedientLifecycle';
 import { StatusHistoryTimeline } from '../components/record/StatusHistoryTimeline';
 import { writeAuditLog } from '../lib/auditService';
+import { can } from '../lib/permissions';
+import type { UserRole } from '../types';
 import { useExpedientProgress } from '../components/record/ExpedientProgress';
 import { statusConfig } from '../lib/statusConfig';
 import { logAction, logChange } from '../lib/auditLog';
@@ -21,7 +23,7 @@ import type { NavigationPage, Employee, Expedient, EmployeeSnapshot, CapturedIte
 interface ExpedientFormProps {
   employeeId: string;
   expedientId: string | null;
-  currentUser: { username: string; role: string };
+  currentUser: { username: string; role: UserRole };
   onNavigate: (page: NavigationPage, employeeId?: string, expedientId?: string, year?: number) => void;
 }
 
@@ -121,6 +123,10 @@ function FichaItem({ label, value }: { label: string; value: string }) {
 
 export default function ExpedientForm({ employeeId, expedientId, currentUser, onNavigate }: ExpedientFormProps) {
   const isAuditor = currentUser.role === 'Auditor';
+  const canFinalize = can(currentUser.role, 'finalize_expedients');
+  const canEdit = can(currentUser.role, 'review_expedients') || can(currentUser.role, 'save_drafts');
+  const canDigitalize = can(currentUser.role, 'digitalize_documents');
+  const canDelete = can(currentUser.role, 'delete_expedients');
   const employee = useEmployee(employeeId);
   const isNew = !expedientId || expedientId === 'new';
   const existingExpedient = useExpedient(isNew ? null : expedientId);
@@ -320,7 +326,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
   const fullName = `${empForm.firstName} ${empForm.lastName1} ${empForm.lastName2}`.trim();
   const isLocked = expForm.status === 'Finalizado';
   const isFinalized = isLocked;
-  const isReadOnly = isLocked || isAuditor;
+  const isReadOnly = isLocked || isAuditor || !canEdit;
   const hasSnapshot = !isNew && !!existingExpedient?.employeeSnapshot;
   const idReadOnly = isReadOnly || hasSnapshot;
   const { pct, pending: pendingSections } = useExpedientProgress(expForm);
@@ -591,8 +597,8 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                 )}
               </div>
               <button
-                onClick={() => !isAuditor && setCaptureOpen(true)}
-                disabled={isAuditor}
+                onClick={() => canDigitalize && setCaptureOpen(true)}
+                disabled={!canDigitalize}
                 className="mt-3 flex items-center gap-1.5 px-3.5 h-8 border border-slate-200 rounded-lg text-xs font-semibold text-slate-500 hover:border-red-300 hover:text-red-600 hover:bg-red-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Upload size={13} />
@@ -906,8 +912,8 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                   )}
                 </div>
                 <button
-                  onClick={() => !isAuditor && setCaptureOpen(true)}
-                  disabled={isAuditor}
+                  onClick={() => canDigitalize && setCaptureOpen(true)}
+                  disabled={!canDigitalize}
                   className="flex items-center gap-1.5 px-3.5 h-8 bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] disabled:bg-slate-100 disabled:text-slate-400 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm"
                 >
                   <Plus size={13} />
@@ -919,7 +925,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                   icon={FileText}
                   title="Sin documentos adjuntos"
                   description="Usa el módulo de captura para escanear o subir archivos al expediente."
-                  action={!isAuditor && !isFinalized ? { label: 'Importar documentos', icon: Plus, onClick: () => setCaptureOpen(true) } : undefined}
+                  action={canDigitalize && !isFinalized ? { label: 'Importar documentos', icon: Plus, onClick: () => setCaptureOpen(true) } : undefined}
                   compact
                 />
               ) : (
@@ -990,20 +996,22 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                 </button>
                 <button
                   onClick={handleSave}
-                  disabled={saved || isAuditor || saving}
+                  disabled={saved || isReadOnly || saving}
                   className="flex items-center gap-2 px-5 h-9 bg-white border border-slate-200 hover:border-red-300 hover:bg-red-50 text-slate-700 hover:text-red-700 font-semibold text-sm rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                   {saving ? 'Guardando...' : 'Guardar'}
                 </button>
+                {canFinalize && (
                 <button
                   onClick={() => setConfirmFinalize(true)}
-                  disabled={saved || isAuditor || finalizing}
+                  disabled={saved || isReadOnly || finalizing}
                   className="flex items-center gap-2 px-6 py-2.5 bg-green-500 hover:bg-green-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold text-sm rounded-xl transition-colors shadow-sm"
                 >
                   {finalizing ? <Loader2 size={15} className="animate-spin" /> : <Flag size={15} />}
                   {finalizing ? 'Finalizando...' : 'Guardar y finalizar'}
                 </button>
+                )}
               </div>
             </div>
           ) : (
@@ -1027,7 +1035,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                 </p>
                 <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
                   {/* Selector de estado con confirmación */}
-                  {!isAuditor && !isFinalized && (
+                  {canEdit && !isFinalized && (
                     <div className="flex items-center gap-1.5">
                       <span className="text-[11px] text-slate-400 font-semibold">Estado:</span>
                       <select
@@ -1042,17 +1050,17 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                       </select>
                     </div>
                   )}
-                  {!isAuditor && !isFinalized && (
+                  {canEdit && !isFinalized && (
                     <button
                       onClick={handleSave}
-                      disabled={isAuditor || saving}
+                      disabled={isReadOnly || saving}
                       className="flex items-center gap-2 px-4 h-9 bg-white border border-slate-200 hover:border-red-300 hover:bg-red-50 text-slate-700 hover:text-red-700 font-semibold text-sm rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                       {saving ? 'Guardando...' : 'Guardar'}
                     </button>
                   )}
-                  {!isAuditor && !isFinalized && (
+                  {canFinalize && !isFinalized && (
                     <button
                       onClick={() => setConfirmFinalize(true)}
                       disabled={finalizing}
@@ -1062,7 +1070,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                       {finalizing ? 'Finalizando...' : 'Guardar y finalizar'}
                     </button>
                   )}
-                  {!isAuditor && isFinalized && (
+                  {canFinalize && isFinalized && (
                     <button
                       onClick={() => setUnlockOpen(true)}
                       className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm rounded-xl transition-colors shadow-sm flex-shrink-0"
@@ -1071,7 +1079,7 @@ export default function ExpedientForm({ employeeId, expedientId, currentUser, on
                       Desbloquear
                     </button>
                   )}
-                  {!isAuditor && (
+                  {canDelete && (
                     <button
                       onClick={() => setDeleteOpen(true)}
                       className="flex items-center gap-2 px-4 py-2.5 bg-white border border-red-200 hover:bg-red-50 hover:border-red-300 text-red-500 font-bold text-sm rounded-xl transition-all"

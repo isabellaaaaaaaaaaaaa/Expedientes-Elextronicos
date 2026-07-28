@@ -53,6 +53,7 @@ export default function Layout({
         onNavigate={onNavigate}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed(c => !c)}
+        role={user.role}
       />
       <main className={`${leftOffset} pt-14 min-h-screen transition-[margin] duration-200`}>
         <div className="max-w-[1400px] mx-auto px-8 py-8">
