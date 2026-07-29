@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Save, User, Building2, Phone, CircleCheck as CheckCircle2, ChevronRight, Heart, Loader as Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, User, Building2, Phone, CircleCheck as CheckCircle2, ChevronRight, Heart, Loader as Loader2, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import type { NavigationPage, Employee } from '../types';
 import { addEmployee } from '../lib/store';
@@ -44,6 +44,7 @@ export default function NewEmployee({ onNavigate }: NewEmployeeProps) {
   const [form, setForm] = useState<Omit<Employee, 'id'>>(blankEmployee);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [newEmployeeId, setNewEmployeeId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof Employee, string>>>({});
 
   const set = (key: keyof Omit<Employee, 'id'>) => (value: string) => {
@@ -78,15 +79,13 @@ export default function NewEmployee({ onNavigate }: NewEmployeeProps) {
       const newId = `emp-${Date.now()}`;
       const newEmployee: Employee = { id: newId, ...form };
       addEmployee(newEmployee);
+      setNewEmployeeId(newId);
       setSaving(false);
       setSaved(true);
       toast.success('Empleado registrado correctamente', {
         id: toastId,
-        description: 'Iniciando primer expediente médico...',
+        description: 'Ya puedes crear su primer expediente médico cuando lo necesites.',
       });
-      setTimeout(() => {
-        onNavigate('expedient-form', newId, 'new');
-      }, 1000);
     }, 700);
   };
 
@@ -106,7 +105,7 @@ export default function NewEmployee({ onNavigate }: NewEmployeeProps) {
 
       <div>
         <h2 className="text-xl font-bold text-gray-900">Registrar empleado</h2>
-        <p className="text-sm text-slate-400 mt-1">Al guardar, se iniciará automáticamente el primer expediente médico</p>
+        <p className="text-sm text-slate-400 mt-1">Tras guardar, podrás crear su primer expediente médico de forma opcional</p>
       </div>
 
       <div className="space-y-5">
@@ -199,7 +198,7 @@ export default function NewEmployee({ onNavigate }: NewEmployeeProps) {
           {saved ? (
             <div className="flex items-center gap-2 text-green-600">
               <CheckCircle2 size={16} />
-              <span className="text-sm font-semibold">Empleado registrado. Abriendo expediente...</span>
+              <span className="text-sm font-semibold">Empleado registrado correctamente</span>
             </div>
           ) : (
             <p className="text-xs text-slate-400">Los campos marcados con * son obligatorios</p>
@@ -210,10 +209,42 @@ export default function NewEmployee({ onNavigate }: NewEmployeeProps) {
             className="flex items-center gap-2 px-6 h-9 bg-[hsl(355,78%,51%)] hover:bg-[hsl(355,78%,46%)] disabled:bg-slate-100 disabled:text-slate-400 text-white font-semibold text-sm rounded-lg transition-colors shadow-sm"
           >
             {saving ? <Loader2 size={15} className="animate-spin" /> : saved ? <CheckCircle2 size={15} /> : <Save size={15} />}
-            {saving ? 'Guardando...' : saved ? 'Registrado' : 'Guardar y crear registro'}
+            {saving ? 'Guardando...' : saved ? 'Registrado' : 'Guardar empleado'}
           </button>
         </div>
       </div>
+
+      {/* Optional expedient creation */}
+      {saved && newEmployeeId && (
+        <div className="card p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                <FileText size={18} className="text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-gray-900">Crear primer expediente médico</p>
+                <p className="text-xs text-slate-400 mt-0.5">Opcional · Puedes hacerlo más tarde desde el perfil del empleado</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <button
+                onClick={() => onNavigate('employees')}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 h-9 border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-sm rounded-lg transition-colors"
+              >
+                Ver empleados
+              </button>
+              <button
+                onClick={() => onNavigate('expedient-form', newEmployeeId, 'new')}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 h-9 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-lg transition-colors shadow-sm"
+              >
+                <FileText size={14} />
+                Crear expediente
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -40,6 +40,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   Doctora: [
     'view_dashboard',
     'view_employees',
+    'create_employee',
     'view_expedients',
     'review_expedients',
     'validate_info',
