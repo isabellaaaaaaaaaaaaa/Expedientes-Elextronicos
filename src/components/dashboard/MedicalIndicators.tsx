@@ -253,5 +253,3 @@ export function MedicalIndicators({ expedients, employees }: MedicalIndicatorsPr
     </div>
   );
 }
-
-export { MedicalIndicators }
