@@ -238,9 +238,9 @@ export default function Dashboard({ user, planta, onNavigate }: DashboardProps) 
       </div>
 
       {/* 1. Accesos rápidos */}
-      <div className="card p-6">
+      <div className="card px-5 py-4">
         <p className="section-title">Accesos rápidos</p>
-        <p className="section-subtitle mb-5">Navegación directa</p>
+        <p className="section-subtitle mb-3">Navegación directa</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {quickAccess.filter(a => a.show).map(({ label, icon: Icon, page }) => (
             <button
