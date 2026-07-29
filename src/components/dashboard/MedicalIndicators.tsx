@@ -254,5 +254,4 @@ export function MedicalIndicators({ expedients, employees }: MedicalIndicatorsPr
   );
 }
 
-
 export { MedicalIndicators }
