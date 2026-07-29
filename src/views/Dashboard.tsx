@@ -10,13 +10,10 @@ import {
   ScrollText,
   ShieldCheck,
   FolderOpen,
-  CircleAlert,
-  Clock,
   CircleCheck,
   CalendarClock,
-  HeartPulse,
   Stethoscope,
-  AlertTriangle,
+  Clock,
   type LucideIcon,
 } from 'lucide-react';
 import type { NavigationPage, AuthUser, Planta, ExpedientListFilter, MedicalRecordType } from '../types';
@@ -27,22 +24,13 @@ import { getEmployees, getExpedients } from '../lib/store';
 import { useEmployees, useExpedients, useDocuments } from '../hooks/useStore';
 import { can } from '../lib/permissions';
 import { SystemStatusDrawer } from '../components/dashboard/SystemStatusDrawer';
+import { MedicalIndicators } from '../components/dashboard/MedicalIndicators';
 import { simulateExtraction } from '../lib/extractionSimulation';
 
 interface DashboardProps {
   user: AuthUser;
   planta: Planta;
   onNavigate: (page: NavigationPage, employeeId?: string, expedientId?: string, year?: number, filter?: ExpedientListFilter) => void;
-}
-
-interface Indicator {
-  label: string;
-  value: string;
-  icon: LucideIcon;
-  iconBg: string;
-  iconText: string;
-  filter?: ExpedientListFilter;
-  page?: NavigationPage;
 }
 
 const RECORD_TYPE_LABELS: Record<string, string> = {
@@ -67,9 +55,6 @@ export default function Dashboard({ user, planta, onNavigate }: DashboardProps) 
   const sinRevisar = allExpedients.filter(e => e.status === 'Sin revisar').length;
   const enRevision = allExpedients.filter(e => e.status === 'En revisión').length;
   const finalizado = allExpedients.filter(e => e.status === 'Finalizado').length;
-
-  const empleadosActivos = plantaEmployees.filter(e => e.status === 'Activo').length;
-  const empleadosIncapacidad = plantaEmployees.filter(e => e.status === 'Incapacidad').length;
 
   const todayISO = new Date().toISOString().slice(0, 10);
   const isWithinNextDays = (dateStr: string, days: number) => {
@@ -103,15 +88,6 @@ export default function Dashboard({ user, planta, onNavigate }: DashboardProps) 
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
   }, [plantaEmployees]);
-
-  const indicators: Indicator[] = [
-    { label: 'Total de expedientes', value: total.toLocaleString(),        icon: FolderOpen,   iconBg: 'bg-blue-50',   iconText: 'text-blue-600',   filter: undefined },
-    { label: 'Sin revisar',          value: sinRevisar.toLocaleString(),   icon: CircleAlert,  iconBg: 'bg-slate-100', iconText: 'text-slate-600',  filter: { status: 'Sin revisar' } },
-    { label: 'En revisión',          value: enRevision.toLocaleString(),   icon: Clock,        iconBg: 'bg-amber-50',  iconText: 'text-amber-600',  filter: { status: 'En revisión' } },
-    { label: 'Finalizados',          value: finalizado.toLocaleString(),   icon: CircleCheck,  iconBg: 'bg-green-50',  iconText: 'text-green-600',  filter: { status: 'Finalizado' } },
-    { label: 'Empleados activos',    value: empleadosActivos.toLocaleString(),     icon: HeartPulse,    iconBg: 'bg-teal-50',   iconText: 'text-teal-600',   page: 'employees' },
-    { label: 'En incapacidad',       value: empleadosIncapacidad.toLocaleString(),  icon: AlertTriangle, iconBg: 'bg-orange-50', iconText: 'text-orange-600', page: 'employees' },
-  ];
 
   const recentActivity = useMemo(() => {
     type ActItem = {
@@ -362,32 +338,10 @@ export default function Dashboard({ user, planta, onNavigate }: DashboardProps) 
 
       {/* 3. Reportes e indicadores */}
       <div className="space-y-6">
-        {/* Indicator cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          {indicators.map(({ label, value, icon: Icon, iconBg, iconText, filter, page }) => {
-            const clickable = !!filter || !!page;
-            return (
-              <button
-                key={label}
-                onClick={() => {
-                  if (filter) onNavigate('expedients', undefined, undefined, undefined, filter);
-                  else if (page) onNavigate(page);
-                }}
-                className={`text-left rounded-2xl border border-slate-100 bg-white p-5 transition-all ${
-                  clickable ? 'hover:border-slate-300 hover:shadow-md cursor-pointer' : 'cursor-default'
-                }`}
-              >
-                <div className={`w-10 h-10 ${iconBg} rounded-xl flex items-center justify-center mb-4`}>
-                  <Icon size={18} className={iconText} />
-                </div>
-                <p className="text-3xl font-bold text-gray-900 tracking-tight tabular-nums">{value}</p>
-                <p className="text-sm font-semibold text-slate-600 mt-1.5 leading-snug">{label}</p>
-              </button>
-            );
-          })}
-        </div>
+        {/* New medical charts */}
+        <MedicalIndicators expedients={allExpedients} employees={plantaEmployees} />
 
-        {/* Distributions + alerts */}
+        {/* Existing distributions + alerts (preserved) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Record type distribution */}
           <div className="card p-6 lg:col-span-2">
