@@ -1,9 +1,5 @@
 import { useMemo, useState } from 'react';
 import {
-  FolderOpen,
-  CircleAlert,
-  Clock,
-  CircleCheck,
   ArrowRight,
   Activity,
   Inbox,
@@ -11,22 +7,27 @@ import {
   FileText,
   Settings,
   UserPlus,
-  FileUp,
   ScrollText,
   ShieldCheck,
+  FolderOpen,
+  CircleAlert,
+  Clock,
+  CircleCheck,
+  CalendarClock,
+  HeartPulse,
+  Stethoscope,
+  AlertTriangle,
+  type LucideIcon,
 } from 'lucide-react';
-import type { NavigationPage, AuthUser, Planta, ExpedientListFilter, ExpedientStatus } from '../types';
+import type { NavigationPage, AuthUser, Planta, ExpedientListFilter, MedicalRecordType } from '../types';
 import { EmptyState } from '../components/ui/empty-state';
 import { EmployeeTable, sortEmployees } from '../components/employee/EmployeeTable';
 import { getAllBitacora } from '../lib/auditLog';
 import { getEmployees, getExpedients } from '../lib/store';
-import { useEmployees, useExpedients } from '../hooks/useStore';
+import { useEmployees, useExpedients, useDocuments } from '../hooks/useStore';
 import { can } from '../lib/permissions';
-import { statusConfig } from '../lib/statusConfig';
 import { SystemStatusDrawer } from '../components/dashboard/SystemStatusDrawer';
-import { useDocuments } from '../hooks/useStore';
 import { simulateExtraction } from '../lib/extractionSimulation';
-import type { MedicalRecordType } from '../types';
 
 interface DashboardProps {
   user: AuthUser;
@@ -34,14 +35,27 @@ interface DashboardProps {
   onNavigate: (page: NavigationPage, employeeId?: string, expedientId?: string, year?: number, filter?: ExpedientListFilter) => void;
 }
 
-interface StatCard {
+interface Indicator {
   label: string;
-  value: number;
-  icon: typeof FolderOpen;
+  value: string;
+  icon: LucideIcon;
   iconBg: string;
   iconText: string;
   filter?: ExpedientListFilter;
+  page?: NavigationPage;
 }
+
+const RECORD_TYPE_LABELS: Record<string, string> = {
+  'Periódico': 'Examen periódico',
+  'Ingreso': 'Examen de ingreso',
+  'Antidoping': 'Prueba antidoping',
+  'Consulta médica': 'Consulta médica',
+  'Control crónico degenerativo': 'Control crónico',
+  'Control prenatal': 'Control prenatal',
+  'Primeros auxilios': 'Primeros auxilios',
+  'Nota médica': 'Nota médica',
+  'Incapacidad': 'Incapacidad',
+};
 
 export default function Dashboard({ user, planta, onNavigate }: DashboardProps) {
   const [systemStatusOpen, setSystemStatusOpen] = useState(false);
@@ -54,19 +68,55 @@ export default function Dashboard({ user, planta, onNavigate }: DashboardProps) 
   const enRevision = allExpedients.filter(e => e.status === 'En revisión').length;
   const finalizado = allExpedients.filter(e => e.status === 'Finalizado').length;
 
-  const stats: StatCard[] = [
-    { label: 'Total de expedientes', value: total,      icon: FolderOpen,  iconBg: 'bg-blue-50',   iconText: 'text-blue-600',   filter: undefined },
-    { label: 'Sin revisar',         value: sinRevisar,  icon: CircleAlert,  iconBg: 'bg-slate-100', iconText: 'text-slate-500',  filter: { status: 'Sin revisar' } },
-    { label: 'En revisión',          value: enRevision, icon: Clock,        iconBg: 'bg-amber-50',  iconText: 'text-amber-600',  filter: { status: 'En revisión' } },
-    { label: 'Finalizados',         value: finalizado, icon: CircleCheck,  iconBg: 'bg-green-50',  iconText: 'text-green-600',  filter: { status: 'Finalizado' } },
-  ];
+  const empleadosActivos = plantaEmployees.filter(e => e.status === 'Activo').length;
+  const empleadosIncapacidad = plantaEmployees.filter(e => e.status === 'Incapacidad').length;
 
-  const progressPct = total > 0 ? Math.round((finalizado / total) * 100) : 0;
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const isWithinNextDays = (dateStr: string, days: number) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(dateStr + 'T12:00:00');
+    const diff = (target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
+    return diff >= 0 && diff <= days;
+  };
+
+  const examenesHoy = allExpedients.filter(e => e.date === todayISO).length;
+  const examenesSemana = allExpedients.filter(e => isWithinNextDays(e.date, 7) && e.date !== todayISO).length;
+
+  const recordTypeDist = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const e of allExpedients) {
+      const label = RECORD_TYPE_LABELS[e.recordType] ?? e.recordType;
+      counts[label] = (counts[label] ?? 0) + 1;
+    }
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6);
+  }, [allExpedients]);
+
+  const departmentDist = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const emp of plantaEmployees) {
+      counts[emp.department] = (counts[emp.department] ?? 0) + 1;
+    }
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+  }, [plantaEmployees]);
+
+  const indicators: Indicator[] = [
+    { label: 'Total de expedientes', value: total.toLocaleString(),        icon: FolderOpen,   iconBg: 'bg-blue-50',   iconText: 'text-blue-600',   filter: undefined },
+    { label: 'Sin revisar',          value: sinRevisar.toLocaleString(),   icon: CircleAlert,  iconBg: 'bg-slate-100', iconText: 'text-slate-600',  filter: { status: 'Sin revisar' } },
+    { label: 'En revisión',          value: enRevision.toLocaleString(),   icon: Clock,        iconBg: 'bg-amber-50',  iconText: 'text-amber-600',  filter: { status: 'En revisión' } },
+    { label: 'Finalizados',          value: finalizado.toLocaleString(),   icon: CircleCheck,  iconBg: 'bg-green-50',  iconText: 'text-green-600',  filter: { status: 'Finalizado' } },
+    { label: 'Empleados activos',    value: empleadosActivos.toLocaleString(),     icon: HeartPulse,    iconBg: 'bg-teal-50',   iconText: 'text-teal-600',   page: 'employees' },
+    { label: 'En incapacidad',       value: empleadosIncapacidad.toLocaleString(),  icon: AlertTriangle, iconBg: 'bg-orange-50', iconText: 'text-orange-600', page: 'employees' },
+  ];
 
   const recentActivity = useMemo(() => {
     type ActItem = {
       ts: number;
-      icon: typeof FolderOpen;
+      icon: LucideIcon;
       iconBg: string;
       iconText: string;
       text: string;
@@ -83,7 +133,7 @@ export default function Dashboard({ user, planta, onNavigate }: DashboardProps) 
         : Date.now();
       const exp = getExpedients().find(x => x.id === e.expedientId);
       const emp = exp ? getEmployees().find(em => em.id === exp.employeeId) : undefined;
-      let icon: typeof FolderOpen = FolderOpen;
+      let icon: LucideIcon = FolderOpen;
       let iconBg = 'bg-blue-50';
       let iconText = 'text-blue-600';
       if (e.action.includes('Finali')) { icon = CircleCheck; iconBg = 'bg-green-50'; iconText = 'text-green-600'; }
@@ -210,8 +260,7 @@ export default function Dashboard({ user, planta, onNavigate }: DashboardProps) 
       : '0 d';
   }, [allExpedients]);
 
-  const hoy = new Date().toISOString().slice(0, 10);
-  const digitalizadosHoy = allDocuments.filter(d => d.uploadDate === hoy).length;
+  const digitalizadosHoy = allDocuments.filter(d => d.uploadDate === todayISO).length;
 
   const systemStatusData = {
     totalExpedients: total,
@@ -224,14 +273,16 @@ export default function Dashboard({ user, planta, onNavigate }: DashboardProps) 
     sinRevisar,
   };
 
-  const quickAccess: { label: string; icon: typeof FolderOpen; page: NavigationPage; show: boolean }[] = [
-    { label: 'Empleados',        icon: Users,     page: 'employees',         show: can(user.role, 'view_employees') },
-    { label: 'Expedientes',      icon: FileText,  page: 'expedients',         show: can(user.role, 'view_expedients') },
-    { label: 'Nuevo empleado',   icon: UserPlus,  page: 'new-employee',       show: can(user.role, 'create_employee') },
-    { label: 'Digitalizar',      icon: FileUp,    page: 'expedients',         show: can(user.role, 'digitalize_documents') },
-    { label: 'Bitácora',         icon: ScrollText, page: 'bitacora',          show: can(user.role, 'view_bitacora') },
-    { label: 'Configuración',    icon: Settings,  page: 'configuracion',     show: can(user.role, 'configure_system') },
+  const quickAccess: { label: string; icon: LucideIcon; page: NavigationPage; show: boolean }[] = [
+    { label: 'Empleados',      icon: Users,       page: 'employees',     show: can(user.role, 'view_employees') },
+    { label: 'Expedientes',    icon: FileText,    page: 'expedients',    show: can(user.role, 'view_expedients') },
+    { label: 'Nuevo empleado', icon: UserPlus,    page: 'new-employee',  show: can(user.role, 'create_employee') },
+    { label: 'Bitácora',       icon: ScrollText,  page: 'bitacora',      show: can(user.role, 'view_bitacora') },
+    { label: 'Configuración',  icon: Settings,    page: 'configuracion', show: can(user.role, 'configure_system') },
   ];
+
+  const recordTypeColors = ['bg-blue-500', 'bg-teal-500', 'bg-amber-500', 'bg-orange-500', 'bg-rose-500', 'bg-slate-400'];
+  const deptColors = ['bg-blue-400', 'bg-teal-400', 'bg-amber-400', 'bg-orange-400', 'bg-rose-400'];
 
   return (
     <div className="space-y-6">
@@ -242,7 +293,7 @@ export default function Dashboard({ user, planta, onNavigate }: DashboardProps) 
             {greeting()}, {roleHonorific(user.role)} {user.username}
           </h2>
           <p className="text-sm text-slate-400 mt-0.5">
-            Resumen del área médica · Planta {planta}
+            Gestión médica ocupacional · Planta {planta}
           </p>
           <p className="text-xs text-slate-300 mt-0.5 capitalize">
             {new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
@@ -258,74 +309,70 @@ export default function Dashboard({ user, planta, onNavigate }: DashboardProps) 
         </button>
       </div>
 
-      {/* Top row: progress chart (left) + stat cards (right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Progress chart */}
-        <div className="card p-6 lg:col-span-3">
-          <div className="flex items-center justify-between mb-1">
-            <p className="section-title">Avance de expedientes</p>
-            <span className="text-xs font-semibold text-slate-400 tabular-nums">{total} total</span>
-          </div>
-          <p className="section-subtitle mb-6">Progreso de revisión y finalización</p>
-
-          {/* Big progress ring */}
-          <div className="flex items-center gap-8">
-            <div className="relative w-32 h-32 flex-shrink-0">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-                <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" strokeWidth="10" className="text-slate-100" />
-                <circle
-                  cx="60" cy="60" r="52" fill="none" stroke="currentColor" strokeWidth="10"
-                  className="text-green-500 transition-all duration-700"
-                  strokeLinecap="round"
-                  strokeDasharray={`${2 * Math.PI * 52}`}
-                  strokeDashoffset={`${2 * Math.PI * 52 * (1 - progressPct / 100)}`}
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-bold text-gray-900 tabular-nums">{progressPct}%</span>
-                <span className="text-xs text-slate-400 font-semibold mt-0.5">Completado</span>
+      {/* 1. Accesos rápidos */}
+      <div className="card p-6">
+        <p className="section-title">Accesos rápidos</p>
+        <p className="section-subtitle mb-5">Navegación directa</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          {quickAccess.filter(a => a.show).map(({ label, icon: Icon, page }) => (
+            <button
+              key={label}
+              onClick={() => onNavigate(page)}
+              className="flex flex-col items-center gap-3 p-4 rounded-xl border border-slate-100 bg-white hover:border-slate-300 hover:shadow-md transition-all group"
+            >
+              <div className="w-11 h-11 rounded-xl bg-slate-50 group-hover:bg-red-50 flex items-center justify-center transition-colors">
+                <Icon size={20} className="text-slate-500 group-hover:text-red-600 transition-colors" />
               </div>
-            </div>
-
-            <div className="flex-1 space-y-4">
-              {([
-                { label: 'Finalizados',  value: finalizado, status: 'Finalizado' as ExpedientStatus },
-                { label: 'En revisión',  value: enRevision,  status: 'En revisión' as ExpedientStatus },
-                { label: 'Sin revisar',  value: sinRevisar,  status: 'Sin revisar' as ExpedientStatus },
-              ]).map(item => {
-                const cfg = statusConfig[item.status];
-                const pct = total > 0 ? (item.value / total) * 100 : 0;
-                return (
-                  <button
-                    key={item.label}
-                    onClick={() => onNavigate('expedients', undefined, undefined, undefined, { status: item.status })}
-                    className="block w-full text-left group rounded-lg p-1 -m-1 hover:bg-slate-50 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="flex items-center gap-2 text-sm font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">
-                        <span className={`status-dot ${cfg.dot}`} />
-                        {item.label}
-                      </span>
-                      <span className="text-sm font-semibold text-slate-400 tabular-nums">{item.value}</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                      <div className={`h-full rounded-full transition-all duration-700 ${cfg.solid}`} style={{ width: `${pct}%` }} />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+              <span className="text-xs font-semibold text-slate-600 group-hover:text-slate-900 transition-colors text-center">{label}</span>
+            </button>
+          ))}
         </div>
+      </div>
 
-        {/* Stat cards */}
-        <div className="lg:col-span-2 grid grid-cols-2 gap-4">
-          {stats.map(({ label, value, icon: Icon, iconBg, iconText, filter }) => {
-            const clickable = !!filter;
+      {/* 2. Empleados recientes */}
+      <div className="card overflow-hidden">
+        <div className="px-5 py-5 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <p className="section-title">Empleados recientes</p>
+            <p className="section-subtitle">Registros con actividad reciente</p>
+          </div>
+          <button
+            onClick={() => onNavigate('employees')}
+            className="flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-red-600 transition-colors"
+          >
+            Ver todos <ArrowRight size={12} />
+          </button>
+        </div>
+        <EmployeeTable
+          items={sortedEmployees}
+          onNavigate={onNavigate}
+          sortKey="lastRecord"
+          sortDir="desc"
+          canCreateExpedient={can(user.role, 'create_expedient')}
+          emptyState={
+            <EmptyState
+              icon={Users}
+              title="Sin empleados"
+              description="No hay empleados registrados en esta planta."
+              compact
+            />
+          }
+        />
+      </div>
+
+      {/* 3. Reportes e indicadores */}
+      <div className="space-y-6">
+        {/* Indicator cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          {indicators.map(({ label, value, icon: Icon, iconBg, iconText, filter, page }) => {
+            const clickable = !!filter || !!page;
             return (
               <button
                 key={label}
-                onClick={() => filter && onNavigate('expedients', undefined, undefined, undefined, filter)}
+                onClick={() => {
+                  if (filter) onNavigate('expedients', undefined, undefined, undefined, filter);
+                  else if (page) onNavigate(page);
+                }}
                 className={`text-left rounded-2xl border border-slate-100 bg-white p-5 transition-all ${
                   clickable ? 'hover:border-slate-300 hover:shadow-md cursor-pointer' : 'cursor-default'
                 }`}
@@ -333,15 +380,128 @@ export default function Dashboard({ user, planta, onNavigate }: DashboardProps) 
                 <div className={`w-10 h-10 ${iconBg} rounded-xl flex items-center justify-center mb-4`}>
                   <Icon size={18} className={iconText} />
                 </div>
-                <p className="text-3xl font-bold text-gray-900 tracking-tight tabular-nums">{value.toLocaleString()}</p>
+                <p className="text-3xl font-bold text-gray-900 tracking-tight tabular-nums">{value}</p>
                 <p className="text-sm font-semibold text-slate-600 mt-1.5 leading-snug">{label}</p>
               </button>
             );
           })}
         </div>
+
+        {/* Distributions + alerts */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Record type distribution */}
+          <div className="card p-6 lg:col-span-2">
+            <div className="flex items-center justify-between mb-1">
+              <p className="section-title">Distribución por tipo de estudio</p>
+              <span className="text-xs font-semibold text-slate-400 tabular-nums">{total} total</span>
+            </div>
+            <p className="section-subtitle mb-5">Frecuencia de estudios médicos realizados</p>
+
+            <div className="space-y-3.5">
+              {recordTypeDist.map(([label, count], idx) => {
+                const pct = total > 0 ? (count / total) * 100 : 0;
+                return (
+                  <div key={label}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm font-semibold text-slate-600">{label}</span>
+                      <span className="text-sm font-semibold text-slate-400 tabular-nums">{count}</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ${recordTypeColors[idx % recordTypeColors.length]}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+              {recordTypeDist.length === 0 && (
+                <p className="text-sm text-slate-400 py-4 text-center">Sin datos disponibles</p>
+              )}
+            </div>
+          </div>
+
+          {/* Exam alerts + department */}
+          <div className="space-y-6">
+            {/* Exam due alerts */}
+            <div className="card p-6">
+              <div className="flex items-center gap-2 mb-1">
+                <CalendarClock size={16} className="text-orange-500" />
+                <p className="section-title">Exámenes próximos</p>
+              </div>
+              <p className="section-subtitle mb-4">Vencimientos de estudios médicos</p>
+
+              <div className="space-y-3">
+                <button
+                  onClick={() => onNavigate('employees', undefined, undefined, undefined, { examDue: 'today' })}
+                  className="w-full flex items-center justify-between rounded-xl border border-orange-100 bg-orange-50/50 px-4 py-3.5 hover:bg-orange-50 transition-colors group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-orange-100 flex items-center justify-center">
+                      <CalendarClock size={16} className="text-orange-600" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-bold text-orange-900">Vencen hoy</p>
+                      <p className="text-xs text-orange-600 mt-0.5">Requieren atención inmediata</p>
+                    </div>
+                  </div>
+                  <span className="text-xl font-bold text-orange-700 tabular-nums">{examenesHoy}</span>
+                </button>
+
+                <button
+                  onClick={() => onNavigate('employees', undefined, undefined, undefined, { examDue: 'week' })}
+                  className="w-full flex items-center justify-between rounded-xl border border-amber-100 bg-amber-50/50 px-4 py-3.5 hover:bg-amber-50 transition-colors group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center">
+                      <Clock size={16} className="text-amber-600" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-bold text-amber-900">Esta semana</p>
+                      <p className="text-xs text-amber-600 mt-0.5">Programar revisión</p>
+                    </div>
+                  </div>
+                  <span className="text-xl font-bold text-amber-700 tabular-nums">{examenesSemana}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Department distribution */}
+            <div className="card p-6">
+              <div className="flex items-center gap-2 mb-1">
+                <Stethoscope size={16} className="text-teal-500" />
+                <p className="section-title">Por departamento</p>
+              </div>
+              <p className="section-subtitle mb-4">Empleados monitoreados por área</p>
+
+              <div className="space-y-3">
+                {departmentDist.map(([label, count], idx) => {
+                  const pct = plantaEmployees.length > 0 ? (count / plantaEmployees.length) * 100 : 0;
+                  return (
+                    <div key={label}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-semibold text-slate-600 truncate">{label}</span>
+                        <span className="text-xs font-semibold text-slate-400 tabular-nums">{count}</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-700 ${deptColors[idx % deptColors.length]}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+                {departmentDist.length === 0 && (
+                  <p className="text-sm text-slate-400 py-2 text-center">Sin datos disponibles</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Recent activity */}
+      {/* 4. Actividad reciente */}
       <div className="card overflow-hidden">
         <div className="px-5 py-5 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -389,62 +549,11 @@ export default function Dashboard({ user, planta, onNavigate }: DashboardProps) 
         )}
       </div>
 
-      {/* Employees table */}
-      <div className="card overflow-hidden">
-        <div className="px-5 py-5 border-b border-slate-100 flex items-center justify-between">
-          <div>
-            <p className="section-title">Empleados</p>
-            <p className="section-subtitle">Registros recientes</p>
-          </div>
-          <button
-            onClick={() => onNavigate('employees')}
-            className="flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-red-600 transition-colors"
-          >
-            Ver todos <ArrowRight size={12} />
-          </button>
-        </div>
-        <EmployeeTable
-          items={sortedEmployees}
-          onNavigate={onNavigate}
-          sortKey="lastRecord"
-          sortDir="desc"
-          canCreateExpedient={can(user.role, 'create_expedient')}
-          emptyState={
-            <EmptyState
-              icon={Users}
-              title="Sin empleados"
-              description="No hay empleados registrados en esta planta."
-              compact
-            />
-          }
-        />
-      </div>
-
       <SystemStatusDrawer
         open={systemStatusOpen}
         onClose={() => setSystemStatusOpen(false)}
         data={systemStatusData}
       />
-
-      {/* Quick access */}
-      <div className="card p-6">
-        <p className="section-title">Accesos rápidos</p>
-        <p className="section-subtitle mb-5">Navegación directa</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          {quickAccess.filter(a => a.show).map(({ label, icon: Icon, page }) => (
-            <button
-              key={label}
-              onClick={() => onNavigate(page)}
-              className="flex flex-col items-center gap-3 p-4 rounded-xl border border-slate-100 bg-white hover:border-slate-300 hover:shadow-md transition-all group"
-            >
-              <div className="w-11 h-11 rounded-xl bg-slate-50 group-hover:bg-red-50 flex items-center justify-center transition-colors">
-                <Icon size={20} className="text-slate-500 group-hover:text-red-600 transition-colors" />
-              </div>
-              <span className="text-xs font-semibold text-slate-600 group-hover:text-slate-900 transition-colors text-center">{label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
