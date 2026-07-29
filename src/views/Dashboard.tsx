@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   FolderOpen,
   CircleAlert,
@@ -13,6 +13,7 @@ import {
   UserPlus,
   FileUp,
   ScrollText,
+  ShieldCheck,
 } from 'lucide-react';
 import type { NavigationPage, AuthUser, Planta, ExpedientListFilter, ExpedientStatus } from '../types';
 import { EmptyState } from '../components/ui/empty-state';
@@ -22,6 +23,10 @@ import { getEmployees, getExpedients } from '../lib/store';
 import { useEmployees, useExpedients } from '../hooks/useStore';
 import { can } from '../lib/permissions';
 import { statusConfig } from '../lib/statusConfig';
+import { SystemStatusDrawer } from '../components/dashboard/SystemStatusDrawer';
+import { useDocuments } from '../hooks/useStore';
+import { simulateExtraction } from '../lib/extractionSimulation';
+import type { MedicalRecordType } from '../types';
 
 interface DashboardProps {
   user: AuthUser;
@@ -39,8 +44,10 @@ interface StatCard {
 }
 
 export default function Dashboard({ user, planta, onNavigate }: DashboardProps) {
+  const [systemStatusOpen, setSystemStatusOpen] = useState(false);
   const plantaEmployees = useEmployees(planta);
   const allExpedients = useExpedients(planta);
+  const allDocuments = useDocuments(planta);
 
   const total = allExpedients.length;
   const sinRevisar = allExpedients.filter(e => e.status === 'Sin revisar').length;
@@ -174,6 +181,49 @@ export default function Dashboard({ user, planta, onNavigate }: DashboardProps) 
     return sortEmployees(items, 'lastRecord', 'desc');
   }, [plantaEmployees]);
 
+  const aiConfidence = useMemo(() => {
+    const sampleTypes: MedicalRecordType[] = [
+      'Examen médico de ingreso',
+      'Hoja de consulta',
+      'Prueba de antidoping',
+      'Hoja de incapacidad',
+    ];
+    let sum = 0;
+    let count = 0;
+    for (const rt of sampleTypes) {
+      for (const f of simulateExtraction(rt)) {
+        sum += f.confidence;
+        count++;
+      }
+    }
+    return count > 0 ? Math.round((sum / count) * 100) : 0;
+  }, []);
+
+  const tiempoPromedio = useMemo(() => {
+    const tiempos = allExpedients.map(e => {
+      const c = new Date(e.createdAt + 'T00:00:00').getTime();
+      const u = new Date(e.updatedAt + 'T00:00:00').getTime();
+      return Math.max(0, (u - c) / (1000 * 60 * 60 * 24));
+    });
+    return tiempos.length
+      ? `${Math.round((tiempos.reduce((s, t) => s + t, 0) / tiempos.length) * 10) / 10} d`
+      : '0 d';
+  }, [allExpedients]);
+
+  const hoy = new Date().toISOString().slice(0, 10);
+  const digitalizadosHoy = allDocuments.filter(d => d.uploadDate === hoy).length;
+
+  const systemStatusData = {
+    totalExpedients: total,
+    digitalizadosHoy,
+    documentosProcesados: allDocuments.length,
+    aiConfidence,
+    tiempoPromedio,
+    finalizados: finalizado,
+    enRevision,
+    sinRevisar,
+  };
+
   const quickAccess: { label: string; icon: typeof FolderOpen; page: NavigationPage; show: boolean }[] = [
     { label: 'Empleados',        icon: Users,     page: 'employees',         show: can(user.role, 'view_employees') },
     { label: 'Expedientes',      icon: FileText,  page: 'expedients',         show: can(user.role, 'view_expedients') },
@@ -186,16 +236,26 @@ export default function Dashboard({ user, planta, onNavigate }: DashboardProps) 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-xl font-bold text-gray-900">
-          {greeting()}, {roleHonorific(user.role)} {user.username}
-        </h2>
-        <p className="text-sm text-slate-400 mt-0.5">
-          Resumen del área médica · Planta {planta}
-        </p>
-        <p className="text-xs text-slate-300 mt-0.5 capitalize">
-          {new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">
+            {greeting()}, {roleHonorific(user.role)} {user.username}
+          </h2>
+          <p className="text-sm text-slate-400 mt-0.5">
+            Resumen del área médica · Planta {planta}
+          </p>
+          <p className="text-xs text-slate-300 mt-0.5 capitalize">
+            {new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          </p>
+        </div>
+        <button
+          onClick={() => setSystemStatusOpen(true)}
+          className="flex items-center gap-2 px-4 h-9 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm flex-shrink-0"
+        >
+          <ShieldCheck size={15} />
+          <span className="hidden sm:inline">Estado del Sistema</span>
+          <span className="sm:hidden">Sistema</span>
+        </button>
       </div>
 
       {/* Top row: progress chart (left) + stat cards (right) */}
@@ -359,6 +419,12 @@ export default function Dashboard({ user, planta, onNavigate }: DashboardProps) 
           }
         />
       </div>
+
+      <SystemStatusDrawer
+        open={systemStatusOpen}
+        onClose={() => setSystemStatusOpen(false)}
+        data={systemStatusData}
+      />
 
       {/* Quick access */}
       <div className="card p-6">
