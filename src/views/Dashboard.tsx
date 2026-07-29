@@ -11,8 +11,6 @@ import {
   ShieldCheck,
   FolderOpen,
   CircleCheck,
-  CalendarClock,
-  Stethoscope,
   Clock,
   type LucideIcon,
 } from 'lucide-react';
@@ -33,18 +31,6 @@ interface DashboardProps {
   onNavigate: (page: NavigationPage, employeeId?: string, expedientId?: string, year?: number, filter?: ExpedientListFilter) => void;
 }
 
-const RECORD_TYPE_LABELS: Record<string, string> = {
-  'Periódico': 'Examen periódico',
-  'Ingreso': 'Examen de ingreso',
-  'Antidoping': 'Prueba antidoping',
-  'Consulta médica': 'Consulta médica',
-  'Control crónico degenerativo': 'Control crónico',
-  'Control prenatal': 'Control prenatal',
-  'Primeros auxilios': 'Primeros auxilios',
-  'Nota médica': 'Nota médica',
-  'Incapacidad': 'Incapacidad',
-};
-
 export default function Dashboard({ user, planta, onNavigate }: DashboardProps) {
   const [systemStatusOpen, setSystemStatusOpen] = useState(false);
   const plantaEmployees = useEmployees(planta);
@@ -57,37 +43,6 @@ export default function Dashboard({ user, planta, onNavigate }: DashboardProps) 
   const finalizado = allExpedients.filter(e => e.status === 'Finalizado').length;
 
   const todayISO = new Date().toISOString().slice(0, 10);
-  const isWithinNextDays = (dateStr: string, days: number) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const target = new Date(dateStr + 'T12:00:00');
-    const diff = (target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
-    return diff >= 0 && diff <= days;
-  };
-
-  const examenesHoy = allExpedients.filter(e => e.date === todayISO).length;
-  const examenesSemana = allExpedients.filter(e => isWithinNextDays(e.date, 7) && e.date !== todayISO).length;
-
-  const recordTypeDist = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const e of allExpedients) {
-      const label = RECORD_TYPE_LABELS[e.recordType] ?? e.recordType;
-      counts[label] = (counts[label] ?? 0) + 1;
-    }
-    return Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6);
-  }, [allExpedients]);
-
-  const departmentDist = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const emp of plantaEmployees) {
-      counts[emp.department] = (counts[emp.department] ?? 0) + 1;
-    }
-    return Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
-  }, [plantaEmployees]);
 
   const recentActivity = useMemo(() => {
     type ActItem = {
@@ -257,9 +212,6 @@ export default function Dashboard({ user, planta, onNavigate }: DashboardProps) 
     { label: 'Configuración',  icon: Settings,    page: 'configuracion', show: can(user.role, 'configure_system') },
   ];
 
-  const recordTypeColors = ['bg-blue-500', 'bg-teal-500', 'bg-amber-500', 'bg-orange-500', 'bg-rose-500', 'bg-slate-400'];
-  const deptColors = ['bg-blue-400', 'bg-teal-400', 'bg-amber-400', 'bg-orange-400', 'bg-rose-400'];
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -337,122 +289,8 @@ export default function Dashboard({ user, planta, onNavigate }: DashboardProps) 
       </div>
 
       {/* 3. Reportes e indicadores */}
-      <div className="space-y-6">
-        {/* New medical charts */}
+      <div>
         <MedicalIndicators expedients={allExpedients} employees={plantaEmployees} />
-
-        {/* Existing distributions + alerts (preserved) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Record type distribution */}
-          <div className="card p-6 lg:col-span-2">
-            <div className="flex items-center justify-between mb-1">
-              <p className="section-title">Distribución por tipo de estudio</p>
-              <span className="text-xs font-semibold text-slate-400 tabular-nums">{total} total</span>
-            </div>
-            <p className="section-subtitle mb-5">Frecuencia de estudios médicos realizados</p>
-
-            <div className="space-y-3.5">
-              {recordTypeDist.map(([label, count], idx) => {
-                const pct = total > 0 ? (count / total) * 100 : 0;
-                return (
-                  <div key={label}>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-sm font-semibold text-slate-600">{label}</span>
-                      <span className="text-sm font-semibold text-slate-400 tabular-nums">{count}</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-700 ${recordTypeColors[idx % recordTypeColors.length]}`}
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-              {recordTypeDist.length === 0 && (
-                <p className="text-sm text-slate-400 py-4 text-center">Sin datos disponibles</p>
-              )}
-            </div>
-          </div>
-
-          {/* Exam alerts + department */}
-          <div className="space-y-6">
-            {/* Exam due alerts */}
-            <div className="card p-6">
-              <div className="flex items-center gap-2 mb-1">
-                <CalendarClock size={16} className="text-orange-500" />
-                <p className="section-title">Exámenes próximos</p>
-              </div>
-              <p className="section-subtitle mb-4">Vencimientos de estudios médicos</p>
-
-              <div className="space-y-3">
-                <button
-                  onClick={() => onNavigate('employees', undefined, undefined, undefined, { examDue: 'today' })}
-                  className="w-full flex items-center justify-between rounded-xl border border-orange-100 bg-orange-50/50 px-4 py-3.5 hover:bg-orange-50 transition-colors group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-orange-100 flex items-center justify-center">
-                      <CalendarClock size={16} className="text-orange-600" />
-                    </div>
-                    <div className="text-left">
-                      <p className="text-sm font-bold text-orange-900">Vencen hoy</p>
-                      <p className="text-xs text-orange-600 mt-0.5">Requieren atención inmediata</p>
-                    </div>
-                  </div>
-                  <span className="text-xl font-bold text-orange-700 tabular-nums">{examenesHoy}</span>
-                </button>
-
-                <button
-                  onClick={() => onNavigate('employees', undefined, undefined, undefined, { examDue: 'week' })}
-                  className="w-full flex items-center justify-between rounded-xl border border-amber-100 bg-amber-50/50 px-4 py-3.5 hover:bg-amber-50 transition-colors group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center">
-                      <Clock size={16} className="text-amber-600" />
-                    </div>
-                    <div className="text-left">
-                      <p className="text-sm font-bold text-amber-900">Esta semana</p>
-                      <p className="text-xs text-amber-600 mt-0.5">Programar revisión</p>
-                    </div>
-                  </div>
-                  <span className="text-xl font-bold text-amber-700 tabular-nums">{examenesSemana}</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Department distribution */}
-            <div className="card p-6">
-              <div className="flex items-center gap-2 mb-1">
-                <Stethoscope size={16} className="text-teal-500" />
-                <p className="section-title">Por departamento</p>
-              </div>
-              <p className="section-subtitle mb-4">Empleados monitoreados por área</p>
-
-              <div className="space-y-3">
-                {departmentDist.map(([label, count], idx) => {
-                  const pct = plantaEmployees.length > 0 ? (count / plantaEmployees.length) * 100 : 0;
-                  return (
-                    <div key={label}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-semibold text-slate-600 truncate">{label}</span>
-                        <span className="text-xs font-semibold text-slate-400 tabular-nums">{count}</span>
-                      </div>
-                      <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-700 ${deptColors[idx % deptColors.length]}`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-                {departmentDist.length === 0 && (
-                  <p className="text-sm text-slate-400 py-2 text-center">Sin datos disponibles</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* 4. Actividad reciente */}
